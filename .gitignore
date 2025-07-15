@@ -1,0 +1,27 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Claude
+CLADUE.md
+
+# Cursor
+.cursor/
+
+# VSCode
+.vscode
+
+# JetBrains
+.idea/
