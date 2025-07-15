@@ -15,7 +15,7 @@ wheels/
 !.env.example
 
 # Claude
-CLADUE.md
+CLAUDE.md
 
 # Cursor
 .cursor/
