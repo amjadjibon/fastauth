@@ -43,12 +43,14 @@ __all__ = [
     "UserUpdate",
     "Token",
     "TokenRefresh",
+
     # Permission models
     "Permission",
     "PermissionBase",
     "PermissionCreate",
     "PermissionResponse",
     "PermissionUpdate",
+
     # Role models
     "Role",
     "RoleBase",
@@ -56,6 +58,7 @@ __all__ = [
     "RolePermission",
     "RoleResponse",
     "RoleUpdate",
+
     # Health models
     "HealthResponse",
 ]

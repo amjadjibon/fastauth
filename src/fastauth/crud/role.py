@@ -25,9 +25,9 @@ async def create_role(session: AsyncSession, role_create: RoleCreate) -> Role:
     # Add permissions if provided
     if role_create.permission_ids:
         await assign_permissions_to_role(session, role.id, role_create.permission_ids)
-        await session.refresh(role)
     
-    return role
+    # Return role with permissions loaded
+    return await get_role(session, role.id)
 
 
 async def get_role(session: AsyncSession, role_id: int) -> Optional[Role]:
@@ -85,8 +85,9 @@ async def update_role(
         await assign_permissions_to_role(session, role_id, role_update.permission_ids)
     
     await session.commit()
-    await session.refresh(role)
-    return role
+    
+    # Return role with permissions loaded
+    return await get_role(session, role_id)
 
 
 async def delete_role(session: AsyncSession, role_id: int) -> bool:

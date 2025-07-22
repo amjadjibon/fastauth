@@ -72,9 +72,9 @@ async def create_user(session: AsyncSession, user_create: UserCreate) -> User:
     # Assign roles if provided
     if user_create.role_ids:
         await assign_roles_to_user(session, user.id, user_create.role_ids)
-        await session.refresh(user)
     
-    return user
+    # Return user with roles loaded
+    return await get_user_by_id(session, user.id)
 
 
 async def update_user(
@@ -96,8 +96,9 @@ async def update_user(
         await assign_roles_to_user(session, user_id, user_update.role_ids)
     
     await session.commit()
-    await session.refresh(user)
-    return user
+    
+    # Return user with roles loaded
+    return await get_user_by_id(session, user_id)
 
 
 async def update_user_password(

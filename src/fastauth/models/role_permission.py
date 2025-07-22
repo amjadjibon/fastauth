@@ -5,5 +5,5 @@ class RolePermission(SQLModel, table=True):
     """Association table for Role and Permission many-to-many relationship."""
     __tablename__ = "role_permissions"
     
-    role_id: int = Field(foreign_key="role.id", primary_key=True)
-    permission_id: int = Field(foreign_key="permission.id", primary_key=True)
+    role_id: int = Field(foreign_key="roles.id", primary_key=True)
+    permission_id: int = Field(foreign_key="permissions.id", primary_key=True)

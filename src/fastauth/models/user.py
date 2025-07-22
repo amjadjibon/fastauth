@@ -17,7 +17,6 @@ class UserStatus(str, Enum):
     SUSPENDED = "suspended"
 
 
-# Core Models
 class UserBase(SQLModel):
     """Base user model with common fields."""
     email: str = Field(unique=True, index=True, max_length=255)
@@ -30,19 +29,19 @@ class UserBase(SQLModel):
 
 class User(UserBase, table=True):
     """User database model."""
+    __tablename__ = "users"
+
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
     
-    # Relationships
     roles: List["Role"] = Relationship(
         back_populates="users", 
         link_model=UserRole
     )
 
 
-# Request/Response Models
 class UserCreate(UserBase):
     """User creation model."""
     password: str = Field(min_length=8)
@@ -68,7 +67,6 @@ class UserResponse(UserBase):
     roles: List["RoleResponse"] = []
 
 
-# Authentication Models
 class UserLogin(SQLModel):
     """User login model."""
     email: str

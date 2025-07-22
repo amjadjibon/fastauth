@@ -7,6 +7,9 @@ import uvicorn
 from fastauth.api import setup_routers
 from fastauth.core.config import settings
 from fastauth.db.session import init_db
+from fastauth.middleware.exception import ExceptionHandlerMiddleware
+from fastauth.middleware.logging import LoggingMiddleware
+from fastauth.middleware.request_id import RequestIDMiddleware
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +32,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(ExceptionHandlerMiddleware, debug=settings.debug)
+app.add_middleware(LoggingMiddleware, log_level=logging.INFO)
+app.add_middleware(RequestIDMiddleware)
+
 setup_routers(app)
 
 if __name__ == "__main__":
@@ -36,5 +43,5 @@ if __name__ == "__main__":
         "fastauth.main:app",
         host=settings.host,
         port=settings.port,
-        reload=True,
+        reload=settings.debug,
     )

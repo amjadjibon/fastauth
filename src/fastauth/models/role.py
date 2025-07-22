@@ -20,11 +20,12 @@ class RoleBase(SQLModel):
 
 class Role(RoleBase, table=True):
     """Role database model."""
+    __tablename__ = "roles"
+
     id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
     
-    # Relationships
     users: List["User"] = Relationship(
         back_populates="roles", 
         link_model=UserRole
