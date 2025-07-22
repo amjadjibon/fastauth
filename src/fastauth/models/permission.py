@@ -3,13 +3,12 @@ from typing import List, Optional, TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from fastauth.models.role_permissions import RolePermissionLink
+from fastauth.models.role_permission import RolePermission
 
 if TYPE_CHECKING:
     from fastauth.models.role import Role
 
 
-# Core Models
 class PermissionBase(SQLModel):
     """Base permission model with common fields."""
     name: str = Field(unique=True, index=True, max_length=100)
@@ -26,11 +25,10 @@ class Permission(PermissionBase, table=True):
     # Relationships
     roles: List["Role"] = Relationship(
         back_populates="permissions", 
-        link_model=RolePermissionLink
+        link_model=RolePermission
     )
 
 
-# Request/Response Models
 class PermissionCreate(PermissionBase):
     """Permission creation model."""
     pass

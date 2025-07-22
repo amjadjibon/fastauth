@@ -6,9 +6,9 @@ from sqlmodel import select
 from fastauth.models import (
     Permission,
     Role,
-    RolePermissionLink,
+    RolePermission,
     User,
-    UserRoleLink,
+    UserRole,
 )
 
 
@@ -19,7 +19,7 @@ async def assign_roles_to_user(
     """Assign roles to a user."""
     # Remove existing roles
     result = await session.execute(
-        select(UserRoleLink).where(UserRoleLink.user_id == user_id)
+        select(UserRole).where(UserRole.user_id == user_id)
     )
     existing_links = result.scalars().all()
     
@@ -28,7 +28,7 @@ async def assign_roles_to_user(
     
     # Add new roles
     for role_id in role_ids:
-        link = UserRoleLink(user_id=user_id, role_id=role_id)
+        link = UserRole(user_id=user_id, role_id=role_id)
         session.add(link)
     
     await session.commit()
@@ -39,8 +39,8 @@ async def get_user_roles(session: AsyncSession, user_id: int) -> List[Role]:
     """Get all roles for a user."""
     result = await session.execute(
         select(Role)
-        .join(UserRoleLink, Role.id == UserRoleLink.role_id)
-        .where(UserRoleLink.user_id == user_id)
+        .join(UserRole, Role.id == UserRole.role_id)
+        .where(UserRole.user_id == user_id)
         .where(Role.is_active == True)
     )
     return result.scalars().all()
@@ -50,10 +50,10 @@ async def get_user_permissions(session: AsyncSession, user_id: int) -> List[Perm
     """Get all permissions for a user through their roles."""
     result = await session.execute(
         select(Permission)
-        .join(RolePermissionLink, Permission.id == RolePermissionLink.permission_id)
-        .join(Role, RolePermissionLink.role_id == Role.id)
-        .join(UserRoleLink, Role.id == UserRoleLink.role_id)
-        .where(UserRoleLink.user_id == user_id)
+        .join(RolePermission, Permission.id == RolePermission.permission_id)
+        .join(Role, RolePermission.role_id == Role.id)
+        .join(UserRole, Role.id == UserRole.role_id)
+        .where(UserRole.user_id == user_id)
         .where(Role.is_active == True)
         .distinct()
     )
@@ -74,10 +74,10 @@ async def user_has_permission(
     # Check specific permission
     result = await session.execute(
         select(Permission.id)
-        .join(RolePermissionLink, Permission.id == RolePermissionLink.permission_id)
-        .join(Role, RolePermissionLink.role_id == Role.id)
-        .join(UserRoleLink, Role.id == UserRoleLink.role_id)
-        .where(UserRoleLink.user_id == user_id)
+        .join(RolePermission, Permission.id == RolePermission.permission_id)
+        .join(Role, RolePermission.role_id == Role.id)
+        .join(UserRole, Role.id == UserRole.role_id)
+        .where(UserRole.user_id == user_id)
         .where(Permission.resource == resource)
         .where(Permission.action == action)
         .where(Role.is_active == True)
@@ -91,8 +91,8 @@ async def user_has_role(session: AsyncSession, user_id: int, role_name: str) -> 
     """Check if user has a specific role."""
     result = await session.execute(
         select(Role.id)
-        .join(UserRoleLink, Role.id == UserRoleLink.role_id)
-        .where(UserRoleLink.user_id == user_id)
+        .join(UserRole, Role.id == UserRole.role_id)
+        .where(UserRole.user_id == user_id)
         .where(Role.name == role_name)
         .where(Role.is_active == True)
         .limit(1)
@@ -105,9 +105,9 @@ async def add_role_to_user(session: AsyncSession, user_id: int, role_id: int) ->
     """Add a single role to a user."""
     # Check if user already has this role
     existing_result = await session.execute(
-        select(UserRoleLink).where(
-            (UserRoleLink.user_id == user_id) & 
-            (UserRoleLink.role_id == role_id)
+        select(UserRole).where(
+            (UserRole.user_id == user_id) & 
+            (UserRole.role_id == role_id)
         )
     )
     
@@ -115,7 +115,7 @@ async def add_role_to_user(session: AsyncSession, user_id: int, role_id: int) ->
         return True  # Already has the role
     
     # Add the role
-    link = UserRoleLink(user_id=user_id, role_id=role_id)
+    link = UserRole(user_id=user_id, role_id=role_id)
     session.add(link)
     await session.commit()
     return True
@@ -124,9 +124,9 @@ async def add_role_to_user(session: AsyncSession, user_id: int, role_id: int) ->
 async def remove_role_from_user(session: AsyncSession, user_id: int, role_id: int) -> bool:
     """Remove a single role from a user."""
     result = await session.execute(
-        select(UserRoleLink).where(
-            (UserRoleLink.user_id == user_id) & 
-            (UserRoleLink.role_id == role_id)
+        select(UserRole).where(
+            (UserRole.user_id == user_id) & 
+            (UserRole.role_id == role_id)
         )
     )
     
@@ -143,8 +143,8 @@ async def get_users_with_role(session: AsyncSession, role_id: int) -> List[User]
     """Get all users that have a specific role."""
     result = await session.execute(
         select(User)
-        .join(UserRoleLink, User.id == UserRoleLink.user_id)
-        .where(UserRoleLink.role_id == role_id)
+        .join(UserRole, User.id == UserRole.user_id)
+        .where(UserRole.role_id == role_id)
     )
     return result.scalars().all()
 
@@ -155,10 +155,10 @@ async def get_users_with_permission(
     """Get all users that have a specific permission."""
     result = await session.execute(
         select(User)
-        .join(UserRoleLink, User.id == UserRoleLink.user_id)
-        .join(Role, UserRoleLink.role_id == Role.id)
-        .join(RolePermissionLink, Role.id == RolePermissionLink.role_id)
-        .join(Permission, RolePermissionLink.permission_id == Permission.id)
+        .join(UserRole, User.id == UserRole.user_id)
+        .join(Role, UserRole.role_id == Role.id)
+        .join(RolePermission, Role.id == RolePermission.role_id)
+        .join(Permission, RolePermission.permission_id == Permission.id)
         .where(Permission.resource == resource)
         .where(Permission.action == action)
         .where(Role.is_active == True)

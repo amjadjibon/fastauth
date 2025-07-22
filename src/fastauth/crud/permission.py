@@ -7,7 +7,7 @@ from fastauth.models import (
     Permission,
     PermissionCreate,
     PermissionUpdate,
-    RolePermissionLink,
+    RolePermission,
 )
 
 
@@ -78,7 +78,7 @@ async def delete_permission(session: AsyncSession, permission_id: int) -> bool:
     
     # Remove role-permission associations
     result = await session.execute(
-        select(RolePermissionLink).where(RolePermissionLink.permission_id == permission_id)
+        select(RolePermission).where(RolePermission.permission_id == permission_id)
     )
     links = result.scalars().all()
     

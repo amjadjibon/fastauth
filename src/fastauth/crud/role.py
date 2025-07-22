@@ -7,9 +7,9 @@ from sqlmodel import select
 from fastauth.models import (
     Role,
     RoleCreate,
-    RolePermissionLink,
+    RolePermission,
     RoleUpdate,
-    UserRoleLink,
+    UserRole,
 )
 
 
@@ -97,7 +97,7 @@ async def delete_role(session: AsyncSession, role_id: int) -> bool:
     
     # Remove role-permission associations
     result = await session.execute(
-        select(RolePermissionLink).where(RolePermissionLink.role_id == role_id)
+        select(RolePermission).where(RolePermission.role_id == role_id)
     )
     role_permission_links = result.scalars().all()
     
@@ -106,7 +106,7 @@ async def delete_role(session: AsyncSession, role_id: int) -> bool:
     
     # Remove user-role associations
     result = await session.execute(
-        select(UserRoleLink).where(UserRoleLink.role_id == role_id)
+        select(UserRole).where(UserRole.role_id == role_id)
     )
     user_role_links = result.scalars().all()
     
@@ -124,7 +124,7 @@ async def assign_permissions_to_role(
     """Assign permissions to a role."""
     # Remove existing permissions
     result = await session.execute(
-        select(RolePermissionLink).where(RolePermissionLink.role_id == role_id)
+        select(RolePermission).where(RolePermission.role_id == role_id)
     )
     existing_links = result.scalars().all()
     
@@ -133,7 +133,7 @@ async def assign_permissions_to_role(
     
     # Add new permissions
     for permission_id in permission_ids:
-        link = RolePermissionLink(role_id=role_id, permission_id=permission_id)
+        link = RolePermission(role_id=role_id, permission_id=permission_id)
         session.add(link)
     
     await session.commit()

@@ -3,15 +3,14 @@ from typing import List, Optional, TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from .role_permissions import RolePermissionLink
-from .user_roles import UserRoleLink
+from .role_permission import RolePermission
+from .user_role import UserRole
 
 if TYPE_CHECKING:
     from .user import User
     from .permission import Permission, PermissionResponse
 
 
-# Core Models
 class RoleBase(SQLModel):
     """Base role model with common fields."""
     name: str = Field(unique=True, index=True, max_length=50)
@@ -28,15 +27,14 @@ class Role(RoleBase, table=True):
     # Relationships
     users: List["User"] = Relationship(
         back_populates="roles", 
-        link_model=UserRoleLink
+        link_model=UserRole
     )
     permissions: List["Permission"] = Relationship(
         back_populates="roles", 
-        link_model=RolePermissionLink
+        link_model=RolePermission
     )
 
 
-# Request/Response Models
 class RoleCreate(RoleBase):
     """Role creation model."""
     permission_ids: Optional[List[int]] = []

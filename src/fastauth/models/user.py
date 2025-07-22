@@ -4,10 +4,10 @@ from typing import List, Optional, TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from fastauth.models.user_roles import UserRoleLink
+from fastauth.models.user_role import UserRole
 
 if TYPE_CHECKING:
-    from fastauth.models.role import Role
+    from fastauth.models.role import Role, RoleResponse
 
 
 class UserStatus(str, Enum):
@@ -38,7 +38,7 @@ class User(UserBase, table=True):
     # Relationships
     roles: List["Role"] = Relationship(
         back_populates="users", 
-        link_model=UserRoleLink
+        link_model=UserRole
     )
 
 

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from .config import settings
+from fastauth.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

@@ -18,7 +18,6 @@ from fastauth.models import (
 router = APIRouter()
 
 
-# User role management endpoints
 @router.post("/users/{user_id}/roles", dependencies=[Depends(require_role_update)])
 async def assign_roles_to_user_endpoint(
     user_id: int,
