@@ -1,49 +1,40 @@
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI
 import uvicorn
 
-from fastauth.api.auth import router as auth_router
+from fastauth.api import setup_routers
 from fastauth.core.config import settings
 from fastauth.db.session import init_db
 
 
+logger = logging.getLogger(__name__)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
-    # Startup
+    logger.info("starting up fastauth...")
     await init_db()
+
     yield
-    # Shutdown
-    pass
+    logger.info("shutting down fastauth...")
 
 
 app = FastAPI(
     title=settings.app_name,
-    description="High-performance authentication system with FastAPI and async PostgreSQL",
-    version="0.1.0",
+    description=settings.app_description,
+    version=settings.app_version,
+    debug=settings.debug,
     lifespan=lifespan,
 )
 
-# Include routers
-app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
-
-
-@app.get("/")
-async def root():
-    """Root endpoint."""
-    return {"message": "FastAuth API is running"}
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy"}    
+setup_routers(app)
 
 if __name__ == "__main__":
     uvicorn.run(
         "fastauth.main:app",
-        host="0.0.0.0",
-        port=8000,
+        host=settings.host,
+        port=settings.port,
         reload=True,
     )

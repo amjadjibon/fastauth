@@ -1,21 +1,32 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from fastauth.core.config import settings
+from .config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token."""
+def create_access_token(
+    data: Dict[str, Any], 
+    roles: Optional[List[str]] = None,
+    permissions: Optional[List[Dict[str, str]]] = None,
+    expires_delta: Optional[timedelta] = None
+) -> str:
+    """Create a JWT access token with roles and permissions."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+    
+    # Add roles and permissions to token
+    if roles:
+        to_encode["roles"] = roles
+    if permissions:
+        to_encode["permissions"] = permissions
     
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
@@ -38,6 +49,50 @@ def verify_token(token: str, token_type: str = "access") -> Optional[Dict[str, A
         return payload
     except JWTError:
         return None
+
+
+def create_token_data(user_id: int, email: str, is_superuser: bool = False) -> Dict[str, Any]:
+    """Create base token data dictionary."""
+    return {
+        "sub": str(user_id),
+        "email": email,
+        "is_superuser": is_superuser,
+    }
+
+
+def extract_user_roles(token_payload: Dict[str, Any]) -> List[str]:
+    """Extract user roles from token payload."""
+    return token_payload.get("roles", [])
+
+
+def extract_user_permissions(token_payload: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Extract user permissions from token payload."""
+    return token_payload.get("permissions", [])
+
+
+def user_has_permission_in_token(
+    token_payload: Dict[str, Any], 
+    resource: str, 
+    action: str
+) -> bool:
+    """Check if user has permission based on token data."""
+    # Superuser has all permissions
+    if token_payload.get("is_superuser", False):
+        return True
+    
+    # Check permissions in token
+    permissions = extract_user_permissions(token_payload)
+    for perm in permissions:
+        if perm.get("resource") == resource and perm.get("action") == action:
+            return True
+    
+    return False
+
+
+def user_has_role_in_token(token_payload: Dict[str, Any], role_name: str) -> bool:
+    """Check if user has role based on token data."""
+    roles = extract_user_roles(token_payload)
+    return role_name in roles
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
