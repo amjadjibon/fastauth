@@ -1,8 +1,8 @@
-from contextlib import asynccontextmanager
 import logging
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
 import uvicorn
+from fastapi import FastAPI
 
 from fastauth.api import setup_routers
 from fastauth.core.config import settings
@@ -11,8 +11,8 @@ from fastauth.middleware.exception import ExceptionHandlerMiddleware
 from fastauth.middleware.logging import LoggingMiddleware
 from fastauth.middleware.request_id import RequestIDMiddleware
 
-
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -29,34 +29,34 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         # Get request ID if available
         request_id = getattr(request.state, "request_id", "unknown")
-        
+
         # Log request
         start_time = time.time()
         client_ip = self._get_client_ip(request)
-        
+
         logger.log(
             self.log_level,
             f"Request started - {request.method} {request.url.path} "
-            f"[ID: {request_id}] [IP: {client_ip}]"
+            f"[ID: {request_id}] [IP: {client_ip}]",
         )
 
         # Process request
         response = await call_next(request)
-        
+
         # Calculate processing time
         process_time = time.time() - start_time
-        
+
         # Log response
         logger.log(
             self.log_level,
             f"Request completed - {request.method} {request.url.path} "
             f"[ID: {request_id}] [Status: {response.status_code}] "
-            f"[Time: {process_time:.3f}s]"
+            f"[Time: {process_time:.3f}s]",
         )
-        
+
         # Add process time to response headers
         response.headers["X-Process-Time"] = str(process_time)
-        
+
         return response
 
     def _get_client_ip(self, request: Request) -> str:
@@ -65,13 +65,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
             return forwarded_for.split(",")[0].strip()
-        
+
         real_ip = request.headers.get("X-Real-IP")
         if real_ip:
             return real_ip
-        
+
         # Fallback to client host
         if hasattr(request.client, "host"):
             return request.client.host
-        
+
         return "unknown"

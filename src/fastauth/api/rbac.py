@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +19,7 @@ router = APIRouter()
 @router.post("/users/{user_id}/roles", dependencies=[Depends(require_role_update)])
 async def assign_roles_to_user_endpoint(
     user_id: int,
-    role_ids: List[int],
+    role_ids: list[int],
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     """Assign roles to user."""
@@ -29,22 +27,23 @@ async def assign_roles_to_user_endpoint(
     return {"message": "Roles assigned successfully"}
 
 
-@router.get("/users/{user_id}/permissions", response_model=List[PermissionResponse])
+@router.get("/users/{user_id}/permissions", response_model=list[PermissionResponse])
 async def get_user_permissions_endpoint(
     user_id: int,
     current_user: User = Depends(require_user_read),
     session: AsyncSession = Depends(get_session),
-) -> List[PermissionResponse]:
+) -> list[PermissionResponse]:
     """Get all permissions for a user."""
     # Users can view their own permissions, others need permission
     if current_user.id != user_id and not current_user.is_superuser:
-        has_permission = await user_has_permission(session, current_user.id, "user", "read")
+        has_permission = await user_has_permission(
+            session, current_user.id, "user", "read"
+        )
         if not has_permission:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not enough permissions"
+                status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
             )
-    
+
     permissions = await get_user_permissions(session, user_id)
     return [PermissionResponse.model_validate(permission) for permission in permissions]
 
@@ -60,17 +59,18 @@ async def check_user_permission_endpoint(
     """Check if user has specific permission."""
     # Users can check their own permissions, others need permission
     if current_user.id != user_id and not current_user.is_superuser:
-        has_permission = await user_has_permission(session, current_user.id, "user", "read")
+        has_permission = await user_has_permission(
+            session, current_user.id, "user", "read"
+        )
         if not has_permission:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not enough permissions"
+                status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
             )
-    
+
     has_permission = await user_has_permission(session, user_id, resource, action)
     return {
         "user_id": user_id,
         "resource": resource,
         "action": action,
-        "has_permission": has_permission
+        "has_permission": has_permission,
     }

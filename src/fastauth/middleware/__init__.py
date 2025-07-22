@@ -4,6 +4,6 @@ from fastauth.middleware.request_id import RequestIDMiddleware
 
 __all__ = [
     "ExceptionHandlerMiddleware",
-    "LoggingMiddleware", 
+    "LoggingMiddleware",
     "RequestIDMiddleware",
 ]

@@ -1,5 +1,5 @@
 import uuid
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -16,14 +16,14 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         """Add request ID to the request and response."""
         # Generate or extract request ID
         request_id = request.headers.get(self.header_name) or str(uuid.uuid4())
-        
+
         # Store in request state for access in routes
         request.state.request_id = request_id
-        
+
         # Process request
         response = await call_next(request)
-        
+
         # Add request ID to response headers
         response.headers[self.header_name] = request_id
-        
+
         return response

@@ -1,16 +1,4 @@
-from fastauth.models.user_role import UserRole
-from fastauth.models.role_permission import RolePermission
-from fastauth.models.user import (
-    User,
-    UserBase,
-    UserCreate,
-    UserLogin,
-    UserResponse,
-    UserStatus,
-    UserUpdate,
-    Token,
-    TokenRefresh,
-)
+from fastauth.models.health import HealthResponse
 from fastauth.models.permission import (
     Permission,
     PermissionBase,
@@ -25,7 +13,19 @@ from fastauth.models.role import (
     RoleResponse,
     RoleUpdate,
 )
-from fastauth.models.health import HealthResponse
+from fastauth.models.role_permission import RolePermission
+from fastauth.models.user import (
+    Token,
+    TokenRefresh,
+    User,
+    UserBase,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    UserStatus,
+    UserUpdate,
+)
+from fastauth.models.user_role import UserRole
 
 UserResponse.model_rebuild()
 RoleResponse.model_rebuild()
@@ -43,14 +43,12 @@ __all__ = [
     "UserUpdate",
     "Token",
     "TokenRefresh",
-
     # Permission models
     "Permission",
     "PermissionBase",
     "PermissionCreate",
     "PermissionResponse",
     "PermissionUpdate",
-
     # Role models
     "Role",
     "RoleBase",
@@ -58,7 +56,6 @@ __all__ = [
     "RolePermission",
     "RoleResponse",
     "RoleUpdate",
-
     # Health models
     "HealthResponse",
 ]

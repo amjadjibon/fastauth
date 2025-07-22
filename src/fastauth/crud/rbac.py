@@ -1,5 +1,3 @@
-from typing import List
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -14,28 +12,26 @@ from fastauth.models import (
 
 # User role management
 async def assign_roles_to_user(
-    session: AsyncSession, user_id: int, role_ids: List[int]
+    session: AsyncSession, user_id: int, role_ids: list[int]
 ) -> bool:
     """Assign roles to a user."""
     # Remove existing roles
-    result = await session.execute(
-        select(UserRole).where(UserRole.user_id == user_id)
-    )
+    result = await session.execute(select(UserRole).where(UserRole.user_id == user_id))
     existing_links = result.scalars().all()
-    
+
     for link in existing_links:
         await session.delete(link)
-    
+
     # Add new roles
     for role_id in role_ids:
         link = UserRole(user_id=user_id, role_id=role_id)
         session.add(link)
-    
+
     await session.commit()
     return True
 
 
-async def get_user_roles(session: AsyncSession, user_id: int) -> List[Role]:
+async def get_user_roles(session: AsyncSession, user_id: int) -> list[Role]:
     """Get all roles for a user."""
     result = await session.execute(
         select(Role)
@@ -46,7 +42,7 @@ async def get_user_roles(session: AsyncSession, user_id: int) -> List[Role]:
     return result.scalars().all()
 
 
-async def get_user_permissions(session: AsyncSession, user_id: int) -> List[Permission]:
+async def get_user_permissions(session: AsyncSession, user_id: int) -> list[Permission]:
     """Get all permissions for a user through their roles."""
     result = await session.execute(
         select(Permission)
@@ -67,10 +63,10 @@ async def user_has_permission(
     # First check if user is superuser
     user_result = await session.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
-    
+
     if user and user.is_superuser:
         return True
-    
+
     # Check specific permission
     result = await session.execute(
         select(Permission.id)
@@ -83,7 +79,7 @@ async def user_has_permission(
         .where(Role.is_active == True)
         .limit(1)
     )
-    
+
     return result.scalar_one_or_none() is not None
 
 
@@ -97,7 +93,7 @@ async def user_has_role(session: AsyncSession, user_id: int, role_name: str) -> 
         .where(Role.is_active == True)
         .limit(1)
     )
-    
+
     return result.scalar_one_or_none() is not None
 
 
@@ -106,14 +102,13 @@ async def add_role_to_user(session: AsyncSession, user_id: int, role_id: int) ->
     # Check if user already has this role
     existing_result = await session.execute(
         select(UserRole).where(
-            (UserRole.user_id == user_id) & 
-            (UserRole.role_id == role_id)
+            (UserRole.user_id == user_id) & (UserRole.role_id == role_id)
         )
     )
-    
+
     if existing_result.scalar_one_or_none():
         return True  # Already has the role
-    
+
     # Add the role
     link = UserRole(user_id=user_id, role_id=role_id)
     session.add(link)
@@ -121,25 +116,26 @@ async def add_role_to_user(session: AsyncSession, user_id: int, role_id: int) ->
     return True
 
 
-async def remove_role_from_user(session: AsyncSession, user_id: int, role_id: int) -> bool:
+async def remove_role_from_user(
+    session: AsyncSession, user_id: int, role_id: int
+) -> bool:
     """Remove a single role from a user."""
     result = await session.execute(
         select(UserRole).where(
-            (UserRole.user_id == user_id) & 
-            (UserRole.role_id == role_id)
+            (UserRole.user_id == user_id) & (UserRole.role_id == role_id)
         )
     )
-    
+
     link = result.scalar_one_or_none()
     if not link:
         return False
-    
+
     await session.delete(link)
     await session.commit()
     return True
 
 
-async def get_users_with_role(session: AsyncSession, role_id: int) -> List[User]:
+async def get_users_with_role(session: AsyncSession, role_id: int) -> list[User]:
     """Get all users that have a specific role."""
     result = await session.execute(
         select(User)
@@ -151,7 +147,7 @@ async def get_users_with_role(session: AsyncSession, role_id: int) -> List[User]
 
 async def get_users_with_permission(
     session: AsyncSession, resource: str, action: str
-) -> List[User]:
+) -> list[User]:
     """Get all users that have a specific permission."""
     result = await session.execute(
         select(User)
@@ -164,15 +160,15 @@ async def get_users_with_permission(
         .where(Role.is_active == True)
         .distinct()
     )
-    
+
     # Also include superusers
     superuser_result = await session.execute(
         select(User).where(User.is_superuser == True)
     )
-    
+
     regular_users = result.scalars().all()
     superusers = superuser_result.scalars().all()
-    
+
     # Combine and deduplicate
     all_users = {user.id: user for user in regular_users + superusers}
     return list(all_users.values())

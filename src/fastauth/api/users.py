@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +35,9 @@ from fastauth.models import (
 router = APIRouter()
 
 
-@router.post("/", response_model=UserResponse, dependencies=[Depends(require_user_create)])
+@router.post(
+    "/", response_model=UserResponse, dependencies=[Depends(require_user_create)]
+)
 async def create_user_endpoint(
     user_create: UserCreate,
     session: AsyncSession = Depends(get_session),
@@ -47,23 +47,24 @@ async def create_user_endpoint(
     existing_user = await get_user_by_email(session, user_create.email)
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
-    
+
     user = await create_user(session, user_create)
     return UserResponse.model_validate(user)
 
 
-@router.get("/", response_model=List[UserResponse], dependencies=[Depends(require_user_read)])
+@router.get(
+    "/", response_model=list[UserResponse], dependencies=[Depends(require_user_read)]
+)
 async def get_users_endpoint(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status_filter: Optional[UserStatus] = Query(None, alias="status"),
-    is_active: Optional[bool] = None,
-    is_superuser: Optional[bool] = None,
+    status_filter: UserStatus | None = Query(None, alias="status"),
+    is_active: bool | None = None,
+    is_superuser: bool | None = None,
     session: AsyncSession = Depends(get_session),
-) -> List[UserResponse]:
+) -> list[UserResponse]:
     """Get all users with optional filtering."""
     users = await get_users(
         session,
@@ -76,13 +77,17 @@ async def get_users_endpoint(
     return [UserResponse.model_validate(user) for user in users]
 
 
-@router.get("/search", response_model=List[UserResponse], dependencies=[Depends(require_user_read)])
+@router.get(
+    "/search",
+    response_model=list[UserResponse],
+    dependencies=[Depends(require_user_read)],
+)
 async def search_users_endpoint(
     q: str = Query(..., min_length=1, description="Search query"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     session: AsyncSession = Depends(get_session),
-) -> List[UserResponse]:
+) -> list[UserResponse]:
     """Search users by email, first name, or last name."""
     users = await search_users(session, q, skip=skip, limit=limit)
     return [UserResponse.model_validate(user) for user in users]
@@ -107,8 +112,7 @@ async def get_user_endpoint(
     user = await get_user_by_id(session, user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return UserResponse.model_validate(user)
 
@@ -126,18 +130,17 @@ async def update_user_endpoint(
         if user_update.is_superuser is not None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot modify superuser status"
+                detail="Cannot modify superuser status",
             )
         if current_user.id == user_id:
             # Users can't change their own status or active state
             user_update.status = None
             user_update.is_active = None
-    
+
     user = await update_user(session, user_id, user_update)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return UserResponse.model_validate(user)
 
@@ -153,14 +156,13 @@ async def update_user_password_endpoint(
     if len(new_password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters long"
+            detail="Password must be at least 8 characters long",
         )
-    
+
     success = await update_user_password(session, user_id, new_password)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return {"message": "Password updated successfully"}
 
@@ -174,8 +176,7 @@ async def activate_user_endpoint(
     success = await activate_user(session, user_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return {"message": "User activated successfully"}
 
@@ -189,8 +190,7 @@ async def deactivate_user_endpoint(
     success = await deactivate_user(session, user_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return {"message": "User deactivated successfully"}
 
@@ -204,8 +204,7 @@ async def suspend_user_endpoint(
     success = await suspend_user(session, user_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return {"message": "User suspended successfully"}
 
@@ -221,14 +220,13 @@ async def delete_user_endpoint(
     if current_user.id == user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete your own account"
+            detail="Cannot delete your own account",
         )
-    
+
     success = await delete_user(session, user_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return {"message": "User deleted successfully"}
 
@@ -253,12 +251,11 @@ async def update_my_profile(
     user_update.is_active = None
     user_update.is_superuser = None
     user_update.role_ids = None
-    
+
     user = await update_user(session, current_user.id, user_update)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return UserResponse.model_validate(user)
 
@@ -273,13 +270,12 @@ async def update_my_password(
     if len(new_password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters long"
+            detail="Password must be at least 8 characters long",
         )
-    
+
     success = await update_user_password(session, current_user.id, new_password)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return {"message": "Password updated successfully"}

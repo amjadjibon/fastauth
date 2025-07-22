@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class UserStatus(str, Enum):
     """User status enumeration."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
@@ -19,9 +20,10 @@ class UserStatus(str, Enum):
 
 class UserBase(SQLModel):
     """Base user model with common fields."""
+
     email: str = Field(unique=True, index=True, max_length=255)
-    first_name: Optional[str] = Field(max_length=100)
-    last_name: Optional[str] = Field(max_length=100)
+    first_name: str | None = Field(max_length=100)
+    last_name: str | None = Field(max_length=100)
     is_active: bool = True
     is_superuser: bool = False
     status: UserStatus = UserStatus.ACTIVE
@@ -29,52 +31,55 @@ class UserBase(SQLModel):
 
 class User(UserBase, table=True):
     """User database model."""
+
     __tablename__ = "users"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     hashed_password: str
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
-    
-    roles: List["Role"] = Relationship(
-        back_populates="users", 
-        link_model=UserRole
-    )
+
+    roles: list["Role"] = Relationship(back_populates="users", link_model=UserRole)
 
 
 class UserCreate(UserBase):
     """User creation model."""
+
     password: str = Field(min_length=8)
-    role_ids: Optional[List[int]] = []
+    role_ids: list[int] | None = []
 
 
 class UserUpdate(SQLModel):
     """User update model."""
-    email: Optional[str] = Field(None, max_length=255)
-    first_name: Optional[str] = Field(None, max_length=100)
-    last_name: Optional[str] = Field(None, max_length=100)
-    is_active: Optional[bool] = None
-    is_superuser: Optional[bool] = None
-    status: Optional[UserStatus] = None
-    role_ids: Optional[List[int]] = None
+
+    email: str | None = Field(None, max_length=255)
+    first_name: str | None = Field(None, max_length=100)
+    last_name: str | None = Field(None, max_length=100)
+    is_active: bool | None = None
+    is_superuser: bool | None = None
+    status: UserStatus | None = None
+    role_ids: list[int] | None = None
 
 
 class UserResponse(UserBase):
     """User response model."""
+
     id: int
     created_at: datetime
     updated_at: datetime
-    roles: List["RoleResponse"] = []
+    roles: list["RoleResponse"] = []
 
 
 class UserLogin(SQLModel):
     """User login model."""
+
     email: str
     password: str
 
 
 class Token(SQLModel):
     """Token response model."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -82,4 +87,5 @@ class Token(SQLModel):
 
 class TokenRefresh(SQLModel):
     """Token refresh model."""
+
     refresh_token: str
