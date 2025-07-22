@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
-# Forward references - will be resolved when importing other models
-from typing import TYPE_CHECKING
+from fastauth.models.role_permissions import RolePermissionLink
+
 if TYPE_CHECKING:
-    from fastauth.models.role import Role, RolePermissionLink
+    from fastauth.models.role import Role
 
 
 # Core Models
@@ -26,7 +26,7 @@ class Permission(PermissionBase, table=True):
     # Relationships
     roles: List["Role"] = Relationship(
         back_populates="permissions", 
-        link_model="RolePermissionLink"
+        link_model=RolePermissionLink
     )
 
 

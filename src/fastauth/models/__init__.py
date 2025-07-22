@@ -1,10 +1,11 @@
+from fastauth.models.user_roles import UserRoleLink
+from fastauth.models.role_permissions import RolePermissionLink
 from fastauth.models.user import (
     User,
     UserBase,
     UserCreate,
     UserLogin,
     UserResponse,
-    UserRoleLink,
     UserStatus,
     UserUpdate,
     Token,
@@ -21,7 +22,6 @@ from fastauth.models.role import (
     Role,
     RoleBase,
     RoleCreate,
-    RolePermissionLink,
     RoleResponse,
     RoleUpdate,
 )

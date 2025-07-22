@@ -1,28 +1,20 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
 
-# Forward reference - will be resolved when importing role models
-from typing import TYPE_CHECKING
+from fastauth.models.user_roles import UserRoleLink
+
 if TYPE_CHECKING:
-    from fastauth.models.role import Role, RoleResponse
+    from fastauth.models.role import Role
+
 
 class UserStatus(str, Enum):
     """User status enumeration."""
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
-
-
-# Association Tables
-class UserRoleLink(SQLModel, table=True):
-    """Association table for User and Role many-to-many relationship."""
-    __tablename__ = "user_roles"
-    
-    user_id: int = Field(foreign_key="user.id", primary_key=True)
-    role_id: int = Field(foreign_key="role.id", primary_key=True)
 
 
 # Core Models

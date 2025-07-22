@@ -14,4 +14,4 @@ def setup_routers(app: FastAPI):
     app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])
     app.include_router(permissions_router, prefix="/api/v1/permissions", tags=["permissions"])
     app.include_router(rbac_router, prefix="/api/v1/rbac", tags=["rbac"])
-    app.include_router(health_router, prefix="health", tags=["health"])
+    app.include_router(health_router, prefix="/health", tags=["health"])
