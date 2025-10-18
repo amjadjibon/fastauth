@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
+from uuid import UUID, uuid4
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -24,7 +25,7 @@ class Role(RoleBase, table=True):
 
     __tablename__ = "roles"
 
-    id: int | None = Field(default=None, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
 
@@ -37,7 +38,7 @@ class Role(RoleBase, table=True):
 class RoleCreate(RoleBase):
     """Role creation model."""
 
-    permission_ids: list[int] | None = []
+    permission_ids: list[UUID] | None = []
 
 
 class RoleUpdate(SQLModel):
@@ -46,13 +47,13 @@ class RoleUpdate(SQLModel):
     name: str | None = Field(None, max_length=50)
     description: str | None = Field(None, max_length=255)
     is_active: bool | None = None
-    permission_ids: list[int] | None = None
+    permission_ids: list[UUID] | None = None
 
 
 class RoleResponse(RoleBase):
     """Role response model."""
 
-    id: int
+    id: UUID
     created_at: datetime
     updated_at: datetime
     permissions: list["PermissionResponse"] = []

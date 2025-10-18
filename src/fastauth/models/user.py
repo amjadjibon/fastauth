@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
+from uuid import UUID, uuid4
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -34,7 +35,7 @@ class User(UserBase, table=True):
 
     __tablename__ = "users"
 
-    id: int | None = Field(default=None, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
@@ -46,7 +47,7 @@ class UserCreate(UserBase):
     """User creation model."""
 
     password: str = Field(min_length=8)
-    role_ids: list[int] | None = []
+    role_ids: list[UUID] | None = []
 
 
 class UserUpdate(SQLModel):
@@ -58,13 +59,13 @@ class UserUpdate(SQLModel):
     is_active: bool | None = None
     is_superuser: bool | None = None
     status: UserStatus | None = None
-    role_ids: list[int] | None = None
+    role_ids: list[UUID] | None = None
 
 
 class UserResponse(UserBase):
     """User response model."""
 
-    id: int
+    id: UUID
     created_at: datetime
     updated_at: datetime
     roles: list["RoleResponse"] = []

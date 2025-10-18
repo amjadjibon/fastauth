@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
+from uuid import UUID, uuid4
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -23,7 +24,7 @@ class Permission(PermissionBase, table=True):
 
     __tablename__ = "permissions"
 
-    id: int | None = Field(default=None, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
     # Relationships
@@ -50,5 +51,5 @@ class PermissionUpdate(SQLModel):
 class PermissionResponse(PermissionBase):
     """Permission response model."""
 
-    id: int
+    id: UUID
     created_at: datetime
