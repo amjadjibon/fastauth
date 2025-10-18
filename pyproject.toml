@@ -10,12 +10,14 @@ dependencies = [
     "sqlmodel>=0.0.24",
     "psycopg[asyncpg]>=3.2.9",
     "asyncpg>=0.30.0",
+    "aiosqlite>=0.20.0",
     "alembic>=1.16.4",
     "passlib[bcrypt]>=1.7.4",
     "python-jose[cryptography]>=3.5.0",
     "python-dotenv>=1.1.1",
     "python-multipart>=0.0.20",
     "pydantic-settings>=2.10.1",
+    "greenlet>=3.2.3",
 ]
 
 [dependency-groups]

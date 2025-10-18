@@ -25,3 +25,7 @@ CLAUDE.md
 
 # JetBrains
 .idea/
+
+# DB
+*.sqlite3
+*.db

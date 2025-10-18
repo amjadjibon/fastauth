@@ -5,7 +5,11 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Database
-    database_url: str = "postgresql+asyncpg://user:password@localhost/fastauth"
+    # Supports both PostgreSQL and SQLite:
+    # - PostgreSQL: postgresql+asyncpg://user:password@host:port/dbname
+    # - SQLite: sqlite+aiosqlite:///path/to/database.db
+    # - SQLite (in-memory): sqlite+aiosqlite:///:memory:
+    database_url: str = "sqlite+aiosqlite:///./fastauth.db"
 
     # JWT
     secret_key: str

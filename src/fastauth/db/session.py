@@ -2,11 +2,24 @@ from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel
 
 from fastauth.core.config import settings
 
-engine = create_async_engine(settings.database_url, echo=settings.debug)
+# Configure engine based on database type
+engine_kwargs = {"echo": settings.debug}
+
+# SQLite specific configuration
+if settings.database_url.startswith("sqlite"):
+    engine_kwargs.update(
+        {
+            "connect_args": {"check_same_thread": False},
+            "poolclass": StaticPool,
+        }
+    )
+
+engine = create_async_engine(settings.database_url, **engine_kwargs)
 
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
