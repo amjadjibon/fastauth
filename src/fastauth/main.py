@@ -161,5 +161,138 @@ def version() -> None:
     typer.echo(f"Python JWT Algorithm: {settings.algorithm}")
 
 
+@app.command(name="migrate")
+def migrate(
+    message: str = typer.Option(
+        ...,
+        "--message",
+        "-m",
+        prompt="Migration message",
+        help="Migration description",
+    ),
+    autogenerate: bool = typer.Option(
+        True,
+        "--autogenerate/--no-autogenerate",
+        help="Auto-generate migration from model changes",
+    ),
+) -> None:
+    """Create a new database migration."""
+    import subprocess
+
+    typer.echo(f"🔄 Creating migration: {message}")
+
+    cmd = ["alembic", "revision", "-m", message]
+    if autogenerate:
+        cmd.insert(2, "--autogenerate")
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    if result.returncode == 0:
+        typer.echo("✅ Migration created successfully!")
+        typer.echo(result.stdout)
+    else:
+        typer.echo("❌ Failed to create migration!", err=True)
+        typer.echo(result.stderr, err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command(name="upgrade")
+def upgrade(
+    revision: str = typer.Option(
+        "head",
+        "--revision",
+        "-r",
+        help="Revision to upgrade to (default: head)",
+    ),
+) -> None:
+    """Upgrade database to a specific revision."""
+    import subprocess
+
+    typer.echo(f"⬆️  Upgrading database to: {revision}")
+
+    result = subprocess.run(
+        ["alembic", "upgrade", revision],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode == 0:
+        typer.echo("✅ Database upgraded successfully!")
+        typer.echo(result.stdout)
+    else:
+        typer.echo("❌ Failed to upgrade database!", err=True)
+        typer.echo(result.stderr, err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command(name="downgrade")
+def downgrade(
+    revision: str = typer.Option(
+        "-1",
+        "--revision",
+        "-r",
+        help="Revision to downgrade to (default: -1)",
+    ),
+) -> None:
+    """Downgrade database to a specific revision."""
+    import subprocess
+
+    typer.echo(f"⬇️  Downgrading database to: {revision}")
+
+    result = subprocess.run(
+        ["alembic", "downgrade", revision],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode == 0:
+        typer.echo("✅ Database downgraded successfully!")
+        typer.echo(result.stdout)
+    else:
+        typer.echo("❌ Failed to downgrade database!", err=True)
+        typer.echo(result.stderr, err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command(name="migration-history")
+def migration_history() -> None:
+    """Show migration history."""
+    import subprocess
+
+    result = subprocess.run(
+        ["alembic", "history", "--verbose"],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode == 0:
+        typer.echo("📜 Migration History:")
+        typer.echo(result.stdout)
+    else:
+        typer.echo("❌ Failed to get migration history!", err=True)
+        typer.echo(result.stderr, err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command(name="current-revision")
+def current_revision() -> None:
+    """Show current database revision."""
+    import subprocess
+
+    result = subprocess.run(
+        ["alembic", "current"],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode == 0:
+        typer.echo("📌 Current Revision:")
+        typer.echo(result.stdout)
+    else:
+        typer.echo("❌ Failed to get current revision!", err=True)
+        typer.echo(result.stderr, err=True)
+        raise typer.Exit(code=1)
+
+
 if __name__ == "__main__":
     app()
