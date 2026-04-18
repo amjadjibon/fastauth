@@ -9,8 +9,9 @@ RUN uv sync --frozen --no-dev
 
 COPY alembic.ini ./
 COPY migrations ./migrations
-COPY src ./src
+COPY app ./app
+COPY main.py ./
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["fastapi", "run", "src/main.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["fastapi", "run", "main.py", "--host", "0.0.0.0", "--port", "8000"]

@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from app.auth.router import router as auth_router
 from app.health.router import router as health_router
 
-_ALEMBIC_INI = Path(__file__).resolve().parents[1] / "alembic.ini"
+_ALEMBIC_INI = Path(__file__).resolve().parent / "alembic.ini"
 
 
 def _migrate() -> None:

@@ -1,15 +1,10 @@
 import asyncio
-import sys
 import time
 from logging.config import fileConfig
-from pathlib import Path
 
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
-
-# make src/ importable when running alembic from the project root
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 # import models so their metadata is registered before autogenerate
 import app.auth.models  # noqa: F401
