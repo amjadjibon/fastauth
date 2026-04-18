@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi_limiter.depends import RateLimiter
 from jose import JWTError
+
+from app.core.ratelimit import RateLimiter
 
 from app.auth import store
 from app.auth.deps import CurrentUser, SessionDep, make_tokens
