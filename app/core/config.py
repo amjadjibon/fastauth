@@ -1,15 +1,18 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def _asyncpg_url(url: str) -> str:
-    return url.replace("postgresql://", "postgresql+asyncpg://", 1).replace(
-        "postgres://", "postgresql+asyncpg://", 1
+def _async_url(url: str) -> str:
+    return (
+        url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        .replace("postgres://", "postgresql+asyncpg://", 1)
+        .replace("sqlite://", "sqlite+aiosqlite://", 1)
     )
 
 
-def _psycopg2_url(url: str) -> str:
-    return url.replace("postgresql://", "postgresql+psycopg2://", 1).replace(
-        "postgres://", "postgresql+psycopg2://", 1
+def _sync_url(url: str) -> str:
+    return (
+        url.replace("postgresql://", "postgresql+psycopg2://", 1)
+        .replace("postgres://", "postgresql+psycopg2://", 1)
     )
 
 
@@ -21,15 +24,19 @@ class Settings(BaseSettings):
     access_token_expire_seconds: int = 60
     refresh_token_expire_seconds: int = 3600
     database_url: str
-    redis_url: str
+    redis_url: str | None = None
+
+    @property
+    def is_sqlite(self) -> bool:
+        return self.database_url.startswith("sqlite")
 
     @property
     def async_database_url(self) -> str:
-        return _asyncpg_url(self.database_url)
+        return _async_url(self.database_url)
 
     @property
     def sync_database_url(self) -> str:
-        return _psycopg2_url(self.database_url)
+        return _sync_url(self.database_url)
 
 
 settings = Settings()  # ty: ignore[missing-argument]

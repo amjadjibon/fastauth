@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Create account — FastAuth{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="logo">Fast<span>Auth</span></div>
+  <div class="subtitle">Create a new account</div>
+
+  <div class="error" id="err"></div>
+
+  <form id="form">
+    <label for="username">Username</label>
+    <input id="username" type="text" placeholder="your_username" autocomplete="username" required />
+
+    <label for="email">Email</label>
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+
+    <label for="password">Password</label>
+    <input id="password" type="password" placeholder="••••••••" autocomplete="new-password" required />
+
+    <button type="submit" id="btn">Create account</button>
+  </form>
+
+  <div class="link-row">
+    Already have an account? <a href="/login">Sign in</a>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("form");
+  const btn  = document.getElementById("btn");
+  const err  = document.getElementById("err");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.style.display = "none";
+    btn.disabled = true;
+    btn.textContent = "Creating…";
+
+    const res = await fetch("/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: document.getElementById("username").value,
+        email:    document.getElementById("email").value,
+        password: document.getElementById("password").value,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      err.textContent = data.detail ?? "Registration failed";
+      err.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "Create account";
+      return;
+    }
+
+    localStorage.setItem("access_token",  data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
+    window.location.href = "/dashboard";
+  });
+</script>
+{% endblock %}

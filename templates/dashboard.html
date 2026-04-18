@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — FastAuth{% endblock %}
+
+{% block content %}
+<style>
+  body { justify-content: flex-start; padding: 2rem 1rem; }
+
+  .topbar {
+    width: 100%;
+    max-width: 860px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .dashboard-grid {
+    width: 100%;
+    max-width: 860px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .tile {
+    background: #1a1a1f;
+    border: 1px solid #2a2a35;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .tile-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+  }
+
+  .tile-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    word-break: break-all;
+  }
+
+  .tile-value.mono {
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: #7c6af7;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #1a2e1a;
+    border: 1px solid #166534;
+    color: #86efac;
+    font-size: 0.75rem;
+    border-radius: 99px;
+    padding: 0.2rem 0.65rem;
+    font-weight: 600;
+  }
+
+  .logout-btn {
+    background: transparent;
+    border: 1px solid #2a2a35;
+    color: #94a3b8;
+    border-radius: 8px;
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .logout-btn:hover { border-color: #7c6af7; color: #e2e8f0; }
+
+  #loading { color: #64748b; font-size: 0.9rem; }
+</style>
+
+<div class="topbar">
+  <div class="logo">Fast<span>Auth</span></div>
+  <button class="logout-btn" onclick="logout()">Sign out</button>
+</div>
+
+<div id="loading">Loading…</div>
+
+<div class="dashboard-grid" id="grid" style="display:none">
+  <div class="tile">
+    <div class="tile-label">Username</div>
+    <div class="tile-value" id="val-username">—</div>
+  </div>
+  <div class="tile">
+    <div class="tile-label">Email</div>
+    <div class="tile-value" id="val-email">—</div>
+  </div>
+  <div class="tile">
+    <div class="tile-label">User ID</div>
+    <div class="tile-value mono" id="val-id">—</div>
+  </div>
+  <div class="tile">
+    <div class="tile-label">Status</div>
+    <div class="tile-value"><span class="badge">Active</span></div>
+  </div>
+  <div class="tile">
+    <div class="tile-label">Access token</div>
+    <div class="tile-value mono" id="val-token">—</div>
+  </div>
+</div>
+
+<script>
+  async function load() {
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "/login"; return; }
+
+    const res = await fetch("/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.status === 401) { window.location.href = "/login"; return; }
+
+    const user = await res.json();
+    document.getElementById("val-username").textContent = user.username;
+    document.getElementById("val-email").textContent    = user.email;
+    document.getElementById("val-id").textContent       = user.id;
+    document.getElementById("val-token").textContent    = token.slice(0, 40) + "…";
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("grid").style.display    = "";
+  }
+
+  function logout() {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    window.location.href = "/login";
+  }
+
+  load();
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Sign in — FastAuth{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="logo">Fast<span>Auth</span></div>
+  <div class="subtitle">Sign in to your account</div>
+
+  <div class="error" id="err"></div>
+
+  <form id="form">
+    <label for="username">Username</label>
+    <input id="username" type="text" placeholder="your_username" autocomplete="username" required />
+
+    <label for="password">Password</label>
+    <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+
+    <button type="submit" id="btn">Sign in</button>
+  </form>
+
+  <div class="link-row">
+    No account? <a href="/register">Create one</a>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("form");
+  const btn  = document.getElementById("btn");
+  const err  = document.getElementById("err");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.style.display = "none";
+    btn.disabled = true;
+    btn.textContent = "Signing in…";
+
+    const res = await fetch("/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: document.getElementById("username").value,
+        password: document.getElementById("password").value,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      err.textContent = data.detail ?? "Login failed";
+      err.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "Sign in";
+      return;
+    }
+
+    localStorage.setItem("access_token",  data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
+    window.location.href = "/dashboard";
+  });
+</script>
+{% endblock %}
