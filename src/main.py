@@ -1,15 +1,24 @@
+import asyncio
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 
 from app.auth.router import router as auth_router
 from app.health.router import router as health_router
-from app.core.db import init_db
+
+_ALEMBIC_INI = Path(__file__).resolve().parents[1] / "alembic.ini"
+
+
+def _migrate() -> None:
+    command.upgrade(Config(str(_ALEMBIC_INI)), "head")
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await init_db()
+    await asyncio.to_thread(_migrate)
     yield
 
 

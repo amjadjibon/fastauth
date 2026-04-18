@@ -1,31 +1,78 @@
 # fastauth
 
-A project created with FastAPI CLI.
+JWT authentication API built with FastAPI, SQLModel, and Alembic. Supports SQLite for local development and PostgreSQL for production.
 
-## Quick Start
+## Stack
 
-### Start the development server
+- **FastAPI** — web framework
+- **SQLModel** — ORM (SQLAlchemy + Pydantic)
+- **Alembic** — database migrations
+- **bcrypt** — password hashing
+- **python-jose** — JWT tokens
+- **aiosqlite** / **asyncpg** — async DB drivers
+
+## Endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/auth/register` | — | Create account, returns token pair |
+| `POST` | `/auth/login` | — | Authenticate, returns token pair |
+| `POST` | `/auth/refresh` | — | Swap refresh token for new pair |
+| `GET` | `/auth/me` | Bearer | Current user profile |
+| `GET` | `/healthz` | — | Health check (DB ping) |
+| `GET` | `/livez` | — | Liveness check |
+
+## Setup
+
+Copy the example env file and fill in required values:
 
 ```bash
-uv run fastapi dev
+cp .env.example .env
 ```
 
-Visit http://localhost:8000
+| Variable | Default | Required |
+|----------|---------|----------|
+| `SECRET_KEY` | — | yes |
+| `ALGORITHM` | `HS256` | no |
+| `ACCESS_TOKEN_EXPIRE_SECONDS` | `60` | no |
+| `REFRESH_TOKEN_EXPIRE_SECONDS` | `3600` | no |
+| `DATABASE_URL` | `sqlite+aiosqlite:///fastauth.db` | no |
 
-### Deploy to FastAPI Cloud
-
-> FastAPI Cloud is currently in private beta. Join the waitlist at https://fastapicloud.com
+## Local development
 
 ```bash
-uv run fastapi deploy
+uv sync
+uv run fastapi dev src/main.py
 ```
 
-## Project Structure
+Migrations run automatically on startup. API docs at <http://localhost:8000/docs>.
 
-- `main.py` - Your FastAPI application
-- `pyproject.toml` - Project dependencies
+## Docker Compose (PostgreSQL)
 
-## Learn More
+```bash
+docker compose up --build
+```
 
-- [FastAPI Documentation](https://fastapi.tiangolo.com)
-- [FastAPI Cloud](https://fastapicloud.com)
+Starts PostgreSQL and the app at <http://localhost:8000>.
+
+## Migrations
+
+```bash
+# generate after model changes
+uv run alembic revision --autogenerate -m "description"
+
+# apply
+uv run alembic upgrade head
+
+# roll back one step
+uv run alembic downgrade -1
+
+# show current state
+uv run alembic current
+```
+
+## Tests
+
+```bash
+uv run pytest
+```
