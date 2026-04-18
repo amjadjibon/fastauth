@@ -13,6 +13,8 @@ dependencies = [
     "pydantic-settings>=2.13.1",
     "python-jose[cryptography]>=3.5.0",
     "sqlmodel>=0.0.38",
+    "redis>=7.4.0",
+    "fastapi-limiter>=0.2.0",
 ]
 
 [dependency-groups]

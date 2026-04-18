@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi_limiter.depends import RateLimiter
 from jose import JWTError
 
 from app.auth import store
@@ -15,7 +16,12 @@ from app.core.security import decode_token, verify_password
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))],
+)
 async def register(body: RegisterRequest, session: SessionDep):
     if await store.username_exists(session, body.username):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
@@ -24,7 +30,11 @@ async def register(body: RegisterRequest, session: SessionDep):
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+)
 async def login(body: LoginRequest, session: SessionDep):
     user = await store.get_by_username(session, body.username)
     if user is None or not verify_password(body.password, user.hashed_password):
@@ -33,7 +43,11 @@ async def login(body: LoginRequest, session: SessionDep):
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+    dependencies=[Depends(RateLimiter(times=20, seconds=60))],
+)
 async def refresh(body: RefreshRequest, session: SessionDep):
     try:
         payload = decode_token(body.refresh_token)

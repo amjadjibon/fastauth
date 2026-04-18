@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     access_token_expire_seconds: int = 60
     refresh_token_expire_seconds: int = 3600
     database_url: str
+    redis_url: str
 
     @property
     def async_database_url(self) -> str:
