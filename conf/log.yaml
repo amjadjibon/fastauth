@@ -1,0 +1,48 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  json:
+    (): pythonjsonlogger.json.JsonFormatter
+    fmt: "%(asctime)s %(levelname)s %(name)s %(message)s"
+    datefmt: "%Y-%m-%dT%H:%M:%S"
+    rename_fields:
+      asctime: timestamp
+      levelname: level
+      name: logger
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: json
+    stream: ext://sys.stdout
+
+loggers:
+  fastauth:
+    level: DEBUG
+    handlers: [console]
+    propagate: false
+
+  uvicorn:
+    level: INFO
+    handlers: [console]
+    propagate: false
+
+  uvicorn.access:
+    level: WARNING
+    handlers: [console]
+    propagate: false
+
+  sqlalchemy.engine:
+    level: WARNING
+    handlers: [console]
+    propagate: false
+
+  alembic:
+    level: INFO
+    handlers: [console]
+    propagate: false
+
+root:
+  level: WARNING
+  handlers: [console]

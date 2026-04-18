@@ -14,6 +14,8 @@ dependencies = [
     "python-jose[cryptography]>=3.5.0",
     "sqlmodel>=0.0.38",
     "redis>=7.4.0",
+    "python-json-logger>=4.1.0",
+    "pyyaml>=6.0.3",
 ]
 
 [dependency-groups]

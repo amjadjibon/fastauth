@@ -8,6 +8,10 @@ from redis.asyncio import from_url
 
 from app.core.config import settings
 from app.core.limiter import close_redis, set_redis
+from app.core.logging import setup_logging
+from app.core.middleware import LoggerMiddleware, RequestIDMiddleware
+
+setup_logging()
 from app.auth.router import router as auth_router
 from app.health.router import router as health_router
 
@@ -27,6 +31,9 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="FastAuth", lifespan=lifespan)
+
+app.add_middleware(LoggerMiddleware)
+app.add_middleware(RequestIDMiddleware)
 
 app.include_router(auth_router)
 app.include_router(health_router)
