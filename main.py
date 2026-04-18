@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -18,7 +17,7 @@ def _migrate() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await asyncio.to_thread(_migrate)
+    _migrate()
     yield
 
 
