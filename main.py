@@ -5,23 +5,29 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
+from prometheus_client import make_asgi_app as _make_metrics_app
 from redis.asyncio import from_url
 from sqlalchemy import create_engine
 from sqlmodel import SQLModel
 
+import app.auth.models  # noqa: F401 — register models for SQLModel.metadata
+from app.auth.router import router as auth_router
 from app.core.config import settings
+from app.core.db import engine as _db_engine
 from app.core.limiter import close_redis, set_redis
 from app.core.logging import setup_logging
 from app.core.middleware import LoggerMiddleware, MetricsMiddleware, RequestIDMiddleware
-from app.core.telemetry import instrument_app, instrument_redis, instrument_sqlalchemy, setup_telemetry
+from app.core.telemetry import (
+    instrument_app,
+    instrument_redis,
+    instrument_sqlalchemy,
+    setup_telemetry,
+)
+from app.health.router import router as health_router
+from app.web.router import router as web_router
 
 setup_logging()
 setup_telemetry()
-
-import app.auth.models  # noqa: F401 — register models for SQLModel.metadata
-from app.auth.router import router as auth_router
-from app.health.router import router as health_router
-from app.web.router import router as web_router
 
 _ALEMBIC_INI = Path(__file__).resolve().parent / "alembic.ini"
 logger = logging.getLogger("fastauth")
@@ -62,10 +68,7 @@ app.add_middleware(LoggerMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
 instrument_app(app)
-from app.core.db import engine as _db_engine  # noqa: E402
 instrument_sqlalchemy(_db_engine)
-
-from prometheus_client import make_asgi_app as _make_metrics_app  # noqa: E402
 
 app.mount("/metrics", _make_metrics_app())
 

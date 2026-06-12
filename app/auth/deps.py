@@ -30,8 +30,10 @@ def make_tokens(user_id: str) -> tuple[str, str]:
 async def get_current_user(credentials: BearerDep, session: SessionDep) -> User:
     try:
         payload = decode_token(credentials.credentials)
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except JWTError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        ) from exc
 
     if payload.get("type") != "access":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
@@ -41,6 +43,7 @@ async def get_current_user(credentials: BearerDep, session: SessionDep) -> User:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     return user
+
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 BearerDep = Annotated[HTTPAuthorizationCredentials, Depends(bearer)]

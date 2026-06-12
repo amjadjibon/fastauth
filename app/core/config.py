@@ -10,9 +10,8 @@ def _async_url(url: str) -> str:
 
 
 def _sync_url(url: str) -> str:
-    return (
-        url.replace("postgresql://", "postgresql+psycopg2://", 1)
-        .replace("postgres://", "postgresql+psycopg2://", 1)
+    return url.replace("postgresql://", "postgresql+psycopg2://", 1).replace(
+        "postgres://", "postgresql+psycopg2://", 1
     )
 
 

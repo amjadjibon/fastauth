@@ -14,6 +14,7 @@ REGISTER_PAYLOAD = {
 # /auth/register
 # ---------------------------------------------------------------------------
 
+
 async def test_register_success(client: AsyncClient):
     r = await client.post("/auth/register", json=REGISTER_PAYLOAD)
     assert r.status_code == 201
@@ -40,28 +41,33 @@ async def test_register_invalid_username_special_chars(client: AsyncClient):
 
 
 async def test_register_invalid_email(client: AsyncClient):
-    r = await client.post("/auth/register", json={**REGISTER_PAYLOAD, "username": "other1", "email": "not-an-email"})
+    payload = {**REGISTER_PAYLOAD, "username": "other1", "email": "not-an-email"}
+    r = await client.post("/auth/register", json=payload)
     assert r.status_code == 422
 
 
 async def test_register_weak_password_no_uppercase(client: AsyncClient):
-    r = await client.post("/auth/register", json={**REGISTER_PAYLOAD, "username": "other2", "password": "secret123"})
+    payload = {**REGISTER_PAYLOAD, "username": "other2", "password": "secret123"}
+    r = await client.post("/auth/register", json=payload)
     assert r.status_code == 422
 
 
 async def test_register_weak_password_no_digit(client: AsyncClient):
-    r = await client.post("/auth/register", json={**REGISTER_PAYLOAD, "username": "other3", "password": "Secretpass"})
+    payload = {**REGISTER_PAYLOAD, "username": "other3", "password": "Secretpass"}
+    r = await client.post("/auth/register", json=payload)
     assert r.status_code == 422
 
 
 async def test_register_password_too_short(client: AsyncClient):
-    r = await client.post("/auth/register", json={**REGISTER_PAYLOAD, "username": "other4", "password": "S1a"})
+    payload = {**REGISTER_PAYLOAD, "username": "other4", "password": "S1a"}
+    r = await client.post("/auth/register", json=payload)
     assert r.status_code == 422
 
 
 # ---------------------------------------------------------------------------
 # /auth/login
 # ---------------------------------------------------------------------------
+
 
 async def test_login_success(client: AsyncClient):
     r = await client.post("/auth/login", json={"username": "testuser", "password": "Secret123"})
@@ -86,6 +92,7 @@ async def test_login_unknown_user(client: AsyncClient):
 # ---------------------------------------------------------------------------
 # /auth/refresh
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="session")
 async def tokens(client: AsyncClient):
@@ -121,6 +128,7 @@ async def test_refresh_empty_token(client: AsyncClient):
 # ---------------------------------------------------------------------------
 # /auth/me
 # ---------------------------------------------------------------------------
+
 
 async def test_me_success(client: AsyncClient, tokens: dict):
     r = await client.get("/auth/me", headers={"Authorization": f"Bearer {tokens['access_token']}"})

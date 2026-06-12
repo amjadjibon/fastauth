@@ -8,6 +8,6 @@ from app.core.config import settings
 engine = create_async_engine(settings.async_database_url, echo=False)
 
 
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_session() -> AsyncGenerator[AsyncSession]:
     async with AsyncSession(engine) as session:
         yield session

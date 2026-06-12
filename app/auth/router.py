@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError
 
-from app.core.ratelimit import RateLimiter
-
 from app.auth import store
 from app.auth.deps import CurrentUser, SessionDep, make_tokens
 from app.auth.models import (
@@ -13,7 +11,12 @@ from app.auth.models import (
     TokenResponse,
     UserResponse,
 )
-from app.core.metrics import auth_login_attempts_total, auth_registrations_total, auth_token_refreshes_total
+from app.core.metrics import (
+    auth_login_attempts_total,
+    auth_registrations_total,
+    auth_token_refreshes_total,
+)
+from app.core.ratelimit import RateLimiter
 from app.core.security import decode_token, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -56,15 +59,19 @@ async def login(body: LoginRequest, session: SessionDep):
 async def refresh(body: RefreshRequest, session: SessionDep):
     try:
         payload = decode_token(body.refresh_token)
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+    except JWTError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+        ) from exc
 
     if payload.get("type") != "refresh":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
     user_id: str | None = payload.get("sub")
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+        )
 
     user = await store.get_by_id(session, user_id)
     if user is None:

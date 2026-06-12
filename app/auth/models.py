@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import EmailStr, field_validator
 from sqlalchemy import Column, DateTime, String
@@ -7,21 +7,30 @@ from sqlmodel import Field, SQLModel
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # --- DB table ---
 
+
 class User(SQLModel, table=True):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), sa_column=Column(String(36), primary_key=True))
+    id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        sa_column=Column(String(36), primary_key=True),
+    )
     username: str = Field(sa_column=Column(String(32), unique=True, index=True))
     email: str = Field(sa_column=Column(String(254), unique=True))
     hashed_password: str = Field(sa_column=Column(String(60)))
-    created_at: datetime = Field(default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False))
-    updated_at: datetime = Field(default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False))
+    created_at: datetime = Field(
+        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
+    updated_at: datetime = Field(
+        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
 
 
 # --- Request models ---
+
 
 class RegisterRequest(SQLModel):
     username: str = Field(min_length=3, max_length=32)
@@ -55,6 +64,7 @@ class RefreshRequest(SQLModel):
 
 
 # --- Response models ---
+
 
 class TokenResponse(SQLModel):
     access_token: str
