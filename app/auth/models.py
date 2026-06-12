@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from pydantic import EmailStr, field_validator
-from sqlalchemy import Column, String
+from sqlalchemy import Column, DateTime, String
 from sqlmodel import Field, SQLModel
 
 
@@ -17,8 +17,8 @@ class User(SQLModel, table=True):
     username: str = Field(sa_column=Column(String(32), unique=True, index=True))
     email: str = Field(sa_column=Column(String(254), unique=True))
     hashed_password: str = Field(sa_column=Column(String(60)))
-    created_at: datetime = Field(default_factory=_now)
-    updated_at: datetime = Field(default_factory=_now)
+    created_at: datetime = Field(default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False))
+    updated_at: datetime = Field(default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False))
 
 
 # --- Request models ---
@@ -60,6 +60,10 @@ class TokenResponse(SQLModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+
+class RegisterResponse(SQLModel):
+    user_id: str
 
 
 class UserResponse(SQLModel):
