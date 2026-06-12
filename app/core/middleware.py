@@ -54,15 +54,33 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 class LoggerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         start = time.perf_counter()
-        response = await call_next(request)
-        duration_ms = round((time.perf_counter() - start) * 1000, 2)
-
-        status = response.status_code
+        status = 500
 
         span = trace.get_current_span()
         raw_trace_id = format(span.get_span_context().trace_id, "032x")
         trace_id = raw_trace_id if raw_trace_id != _ZERO_TRACE_ID else None
         set_trace_id(trace_id)
+
+        try:
+            response = await call_next(request)
+            status = response.status_code
+        except Exception:
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
+            logger.error(
+                "http",
+                extra={
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status_code": status,
+                    "duration_ms": duration_ms,
+                    "client_ip": request.client.host if request.client else None,
+                    "user_agent": request.headers.get("user-agent"),
+                    "content_length": None,
+                },
+            )
+            raise
+
+        duration_ms = round((time.perf_counter() - start) * 1000, 2)
 
         extra = {
             "method": request.method,

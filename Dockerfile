@@ -10,6 +10,7 @@ RUN uv sync --frozen --no-dev
 COPY alembic.ini ./
 COPY conf ./conf
 COPY migrations ./migrations
+COPY templates ./templates
 COPY app ./app
 COPY main.py ./
 
