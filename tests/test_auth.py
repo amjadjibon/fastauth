@@ -18,9 +18,9 @@ async def test_register_success(client: AsyncClient):
     r = await client.post("/auth/register", json=REGISTER_PAYLOAD)
     assert r.status_code == 201
     body = r.json()
-    assert "access_token" in body
-    assert "refresh_token" in body
-    assert body["token_type"] == "bearer"
+    assert "user_id" in body
+    assert "access_token" not in body
+    assert "refresh_token" not in body
 
 
 async def test_register_duplicate_username(client: AsyncClient):
@@ -69,6 +69,7 @@ async def test_login_success(client: AsyncClient):
     body = r.json()
     assert "access_token" in body
     assert "refresh_token" in body
+    assert body["token_type"] == "bearer"
 
 
 async def test_login_wrong_password(client: AsyncClient):
@@ -86,7 +87,7 @@ async def test_login_unknown_user(client: AsyncClient):
 # /auth/refresh
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 async def tokens(client: AsyncClient):
     r = await client.post("/auth/login", json={"username": "testuser", "password": "Secret123"})
     return r.json()

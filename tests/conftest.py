@@ -1,7 +1,7 @@
 import os
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
-os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 import app.auth.models as _models  # noqa: F401 — registers metadata before create_all
 import pytest_asyncio
