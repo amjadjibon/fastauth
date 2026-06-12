@@ -6,7 +6,6 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8000';
 
 const authErrors = new Counter('auth_errors');
 const errorRate = new Rate('error_rate');
-const authFlowDuration = new Trend('auth_flow_duration_ms');
 
 export const options = {
   scenarios: {
