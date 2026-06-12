@@ -1,0 +1,39 @@
+# GitGuardian configuration to prevent false positives
+# See https://docs.gitguardian.com/secrets-detection/configuration-file
+
+paths-ignore:
+  - "*.env.example"
+  - "*.env.sample"
+  - "*.env.template"
+  - "*.env.dist"
+  - "**/examples/**"
+  - "**/docs/**"
+  - "**/tests/**"
+  - "**/test_*.py"
+  - "**/conftest.py"
+  - ".github/**"
+
+allow-rules:
+  # Example secrets that are safe to ignore
+  - description: "Example/placeholder secrets"
+    regexes:
+      - "change-me(?! )"
+      - "changeme"
+      - "example.*key"
+      - "test.*secret"
+      - "dummy.*password"
+      - "your-secret-here"
+      - "localhost"
+      - "127\\.0\\.0\\.1"
+      - "0\\.0\\.0\\.0"
+      - "testuser"
+      - "example\\.com"
+      - "@example"
+      - "sqlite.*db"
+      - "fastauth\\.db"
+    paths:
+      - "*.env.example"
+      - "*.env.sample"
+      - "*.env.template"
+      - "**/README.md"
+      - "**/docs/**"
