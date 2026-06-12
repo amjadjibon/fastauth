@@ -17,6 +17,10 @@ class RequestContextFilter(logging.Filter):
     """Injects request_id and trace_id from context vars into every log record."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        record.request_id = _request_id.get()  # type: ignore[attr-defined]
-        record.trace_id = _trace_id.get()  # type: ignore[attr-defined]
+        try:
+            record.request_id = _request_id.get()  # type: ignore[attr-defined]
+            record.trace_id = _trace_id.get()  # type: ignore[attr-defined]
+        except Exception:
+            record.request_id = None  # type: ignore[attr-defined]
+            record.trace_id = None  # type: ignore[attr-defined]
         return True
