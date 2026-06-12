@@ -9,9 +9,11 @@ from app.auth.models import (
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
+    RegisterResponse,
     TokenResponse,
     UserResponse,
 )
+from app.core.metrics import auth_login_attempts_total, auth_registrations_total, auth_token_refreshes_total
 from app.core.security import decode_token, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -19,7 +21,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post(
     "/register",
-    response_model=TokenResponse,
+    response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(RateLimiter(times=10, seconds=60))],
 )
@@ -27,8 +29,8 @@ async def register(body: RegisterRequest, session: SessionDep):
     if await store.username_exists(session, body.username):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
     user = await store.create_user(session, body.username, body.email, body.password)
-    access, refresh = make_tokens(user.id)
-    return TokenResponse(access_token=access, refresh_token=refresh)
+    auth_registrations_total.inc()
+    return RegisterResponse(user_id=user.id)
 
 
 @router.post(
@@ -39,7 +41,9 @@ async def register(body: RegisterRequest, session: SessionDep):
 async def login(body: LoginRequest, session: SessionDep):
     user = await store.get_by_username(session, body.username)
     if user is None or not verify_password(body.password, user.hashed_password):
+        auth_login_attempts_total.labels(success="false").inc()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    auth_login_attempts_total.labels(success="true").inc()
     access, refresh = make_tokens(user.id)
     return TokenResponse(access_token=access, refresh_token=refresh)
 
@@ -67,6 +71,7 @@ async def refresh(body: RefreshRequest, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     access, new_refresh = make_tokens(user.id)
+    auth_token_refreshes_total.inc()
     return TokenResponse(access_token=access, refresh_token=new_refresh)
 
 
