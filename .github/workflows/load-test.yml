@@ -1,0 +1,25 @@
+name: Load Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # daily at 2am UTC
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start stack
+        run: docker compose up -d --build --wait
+        env:
+          SECRET_KEY: ci-load-test-secret
+
+      - name: Run k6
+        run: docker compose -f compose.yaml -f compose.load.yaml run --rm k6
+
+      - name: Show app logs on failure
+        if: failure()
+        run: docker compose logs app

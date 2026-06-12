@@ -1,0 +1,15 @@
+services:
+  k6:
+    image: grafana/k6:latest
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./tests/load:/scripts:ro
+    environment:
+      BASE_URL: http://app:8000
+      # Uncomment to stream results to Prometheus (needs Prometheus remote-write):
+      # K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+    command: run /scripts/k6.js
+    networks:
+      - default
