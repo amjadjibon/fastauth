@@ -7,11 +7,13 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.core.log_context import set_request_id, set_trace_id
 from app.core.metrics import http_request_duration_seconds, http_requests_total
 
 logger = logging.getLogger("fastauth.access")
 
 _ZERO_TRACE_ID = "0" * 32
+_SLOW_REQUEST_THRESHOLD_MS = 1000
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -30,6 +32,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
         request.state.request_id = request_id
+        set_request_id(request_id)
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
@@ -50,7 +53,6 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
 class LoggerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
-        request_id = getattr(request.state, "request_id", "-")
         start = time.perf_counter()
         response = await call_next(request)
         duration_ms = round((time.perf_counter() - start) * 1000, 2)
@@ -60,9 +62,9 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         span = trace.get_current_span()
         raw_trace_id = format(span.get_span_context().trace_id, "032x")
         trace_id = raw_trace_id if raw_trace_id != _ZERO_TRACE_ID else None
+        set_trace_id(trace_id)
 
         extra = {
-            "request_id": request_id,
             "method": request.method,
             "path": request.url.path,
             "status_code": status,
@@ -70,8 +72,13 @@ class LoggerMiddleware(BaseHTTPMiddleware):
             "client_ip": request.client.host if request.client else None,
             "user_agent": request.headers.get("user-agent"),
             "content_length": response.headers.get("content-length"),
-            "trace_id": trace_id,
         }
+
+        if duration_ms >= _SLOW_REQUEST_THRESHOLD_MS:
+            logger.warning(
+                "slow request",
+                extra={**extra, "threshold_ms": _SLOW_REQUEST_THRESHOLD_MS},
+            )
 
         if status >= 500:
             logger.error("http", extra=extra)

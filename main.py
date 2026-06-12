@@ -1,12 +1,14 @@
 import asyncio
 import logging
+import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app as _make_metrics_app
 from redis.asyncio import from_url
 from sqlalchemy import create_engine
@@ -88,6 +90,21 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="FastAuth", lifespan=lifespan)
+
+
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error(
+        "unhandled exception",
+        extra={
+            "path": request.url.path,
+            "method": request.method,
+            "exc_type": type(exc).__name__,
+            "traceback": traceback.format_exc(),
+        },
+    )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(MetricsMiddleware)

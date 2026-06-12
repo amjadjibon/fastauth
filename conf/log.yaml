@@ -1,10 +1,14 @@
 version: 1
 disable_existing_loggers: false
 
+filters:
+  request_context:
+    (): app.core.log_context.RequestContextFilter
+
 formatters:
   json:
     (): pythonjsonlogger.json.JsonFormatter
-    fmt: "%(asctime)s %(levelname)s %(name)s %(message)s %(request_id)s %(method)s %(path)s %(status_code)s %(duration_ms)s %(client_ip)s %(user_agent)s %(content_length)s %(trace_id)s"
+    fmt: "%(asctime)s %(levelname)s %(name)s %(message)s %(request_id)s %(trace_id)s %(method)s %(path)s %(status_code)s %(duration_ms)s %(client_ip)s %(user_agent)s %(content_length)s"
     datefmt: "%Y-%m-%dT%H:%M:%SZ"
     rename_fields:
       asctime: timestamp
@@ -15,6 +19,7 @@ handlers:
   console:
     class: logging.StreamHandler
     formatter: json
+    filters: [request_context]
     stream: ext://sys.stdout
 
 loggers:
