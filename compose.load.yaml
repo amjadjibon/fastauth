@@ -1,4 +1,8 @@
 services:
+  app:
+    environment:
+      LOAD_TEST: "true"
+
   k6:
     image: grafana/k6:latest
     depends_on:

@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = []
 
+    # Load testing
+    load_test: bool = False
+
     # OpenTelemetry
     otel_enabled: bool = False
     otel_service_name: str = "fastauth"

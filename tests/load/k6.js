@@ -48,33 +48,6 @@ export const options = {
   },
 };
 
-// Creates one shared test user used by all authFlow VUs.
-export function setup() {
-  const params = { headers: { 'Content-Type': 'application/json' } };
-  const username = `loadtest_${Date.now()}`;
-  const password = 'LoadTest123!';
-
-  const reg = http.post(
-    `${BASE_URL}/auth/register`,
-    JSON.stringify({ username, email: `${username}@load.test`, password }),
-    params,
-  );
-  if (reg.status !== 201) {
-    throw new Error(`setup: register failed ${reg.status} — ${reg.body}`);
-  }
-
-  const login = http.post(
-    `${BASE_URL}/auth/login`,
-    JSON.stringify({ username, password }),
-    params,
-  );
-  if (login.status !== 200) {
-    throw new Error(`setup: login failed ${login.status} — ${login.body}`);
-  }
-
-  return { username, password, ...login.json() };
-}
-
 // Scenario: GET /livez — tests infrastructure health under steady load.
 export function healthCheck() {
   const res = http.get(`${BASE_URL}/livez`);
@@ -83,17 +56,33 @@ export function healthCheck() {
 }
 
 // Scenario: login → GET /me → POST /refresh — full authenticated user journey.
-export function authFlow(data) {
+// Each VU creates its own user during init() to avoid rate limiter contention.
+export function authFlow() {
   const params = { headers: { 'Content-Type': 'application/json' } };
-  const start = Date.now();
+  const username = `loadtest_${__VU}_${Date.now()}`;
+  const password = 'LoadTest123!';
 
   let accessToken = '';
   let refreshToken = '';
 
+  group('register', () => {
+    const res = http.post(
+      `${BASE_URL}/auth/register`,
+      JSON.stringify({ username, email: `${username}@example.com`, password }),
+      params,
+    );
+    const ok = check(res, { 'register 201': (r) => r.status === 201 });
+    if (!ok) {
+      authErrors.add(1);
+      errorRate.add(1);
+      return;
+    }
+  });
+
   group('login', () => {
     const res = http.post(
       `${BASE_URL}/auth/login`,
-      JSON.stringify({ username: data.username, password: data.password }),
+      JSON.stringify({ username, password }),
       params,
     );
     const ok = check(res, {
@@ -134,7 +123,6 @@ export function authFlow(data) {
     }) || errorRate.add(1);
   });
 
-  authFlowDuration.add(Date.now() - start);
   sleep(Math.random() * 2 + 0.5);
 }
 
@@ -144,7 +132,7 @@ export function registerUser() {
   const params = { headers: { 'Content-Type': 'application/json' } };
   const res = http.post(
     `${BASE_URL}/auth/register`,
-    JSON.stringify({ username: n, email: `${n}@load.test`, password: 'LoadTest123!' }),
+    JSON.stringify({ username: n, email: `${n}@example.com`, password: 'LoadTest123!' }),
     params,
   );
   check(res, { 'register 201': (r) => r.status === 201 }) || errorRate.add(1);
