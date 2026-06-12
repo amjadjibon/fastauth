@@ -28,7 +28,7 @@ services:
       OTEL_ENABLED: "true"
       OTEL_EXPORTER: otlp
       OTEL_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
-      CORS_ORIGINS: ""
+      CORS_ORIGINS: "[]"
     ports:
       - "8000:8000"
     healthcheck:
