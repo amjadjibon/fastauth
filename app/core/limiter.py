@@ -27,7 +27,7 @@ async def is_rate_limited(key: str, times: int, seconds: int) -> bool:
 
 async def _redis_limited(key: str, times: int, seconds: int) -> bool:
     assert _redis is not None
-    count = await _redis.incr(key)
+    count = await _redis.incr(key)  # ty: ignore[invalid-await]
     if count == 1:
         await _redis.expire(key, seconds)
     return count > times

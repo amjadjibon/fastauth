@@ -38,13 +38,25 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         request_id = getattr(request.state, "request_id", "-")
         start = time.perf_counter()
         response = await call_next(request)
-        duration_ms = (time.perf_counter() - start) * 1000
-        logger.info(
-            "%s %s %d %.1fms",
-            request.method,
-            request.url.path,
-            response.status_code,
-            duration_ms,
-            extra={"request_id": request_id},
-        )
+        duration_ms = round((time.perf_counter() - start) * 1000, 2)
+
+        status = response.status_code
+        extra = {
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": status,
+            "duration_ms": duration_ms,
+            "client_ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "content_length": response.headers.get("content-length"),
+        }
+
+        if status >= 500:
+            logger.error("http", extra=extra)
+        elif status >= 400:
+            logger.warning("http", extra=extra)
+        else:
+            logger.info("http", extra=extra)
+
         return response
