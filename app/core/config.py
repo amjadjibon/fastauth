@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str | None = None
 
+    # OpenTelemetry
+    otel_enabled: bool = False
+    otel_service_name: str = "fastauth"
+    otel_exporter: str = "otlp"  # "otlp" | "console" | "none"
+    otel_otlp_endpoint: str | None = None  # e.g. http://localhost:4318/v1/traces
+
     @property
     def is_sqlite(self) -> bool:
         return self.database_url.startswith("sqlite")
