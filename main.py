@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -5,9 +6,11 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app as _make_metrics_app
 from redis.asyncio import from_url
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 from sqlmodel import SQLModel
 
 import app.auth.models as _auth_models  # noqa: F401 — register models for SQLModel.metadata
@@ -16,7 +19,12 @@ from app.core.config import settings
 from app.core.db import engine as _db_engine
 from app.core.limiter import close_redis, set_redis
 from app.core.logging import setup_logging
-from app.core.middleware import LoggerMiddleware, MetricsMiddleware, RequestIDMiddleware
+from app.core.middleware import (
+    LoggerMiddleware,
+    MetricsMiddleware,
+    RequestIDMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.core.telemetry import (
     instrument_app,
     instrument_redis,
@@ -32,6 +40,9 @@ setup_telemetry()
 _ALEMBIC_INI = Path(__file__).resolve().parent / "alembic.ini"
 logger = logging.getLogger("fastauth")
 
+_MIGRATE_MAX_ATTEMPTS = 10
+_MIGRATE_BACKOFF_SECONDS = 2
+
 
 def _migrate() -> None:
     if settings.is_sqlite:
@@ -42,9 +53,24 @@ def _migrate() -> None:
         command.upgrade(Config(str(_ALEMBIC_INI)), "head")
 
 
+async def _migrate_with_retry() -> None:
+    for attempt in range(1, _MIGRATE_MAX_ATTEMPTS + 1):
+        try:
+            _migrate()
+            return
+        except OperationalError as exc:
+            if attempt == _MIGRATE_MAX_ATTEMPTS:
+                raise
+            logger.warning(
+                "DB not ready, retrying migration",
+                extra={"attempt": attempt, "error": str(exc)},
+            )
+            await asyncio.sleep(_MIGRATE_BACKOFF_SECONDS)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    _migrate()
+    await _migrate_with_retry()
     logger.info("migrations applied")
 
     if settings.redis_url:
@@ -63,9 +89,18 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="FastAuth", lifespan=lifespan)
 
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(MetricsMiddleware)
 app.add_middleware(LoggerMiddleware)
 app.add_middleware(RequestIDMiddleware)
+if settings.cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 instrument_app(app)
 instrument_sqlalchemy(_db_engine)

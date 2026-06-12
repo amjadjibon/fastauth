@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str | None = None
 
+    # CORS
+    cors_origins: list[str] = []
+
     # OpenTelemetry
     otel_enabled: bool = False
     otel_service_name: str = "fastauth"

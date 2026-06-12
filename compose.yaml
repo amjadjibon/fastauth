@@ -28,8 +28,15 @@ services:
       OTEL_ENABLED: "true"
       OTEL_EXPORTER: otlp
       OTEL_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+      CORS_ORIGINS: ""
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/livez"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   jaeger:
     image: jaegertracing/all-in-one:latest
@@ -46,7 +53,8 @@ services:
     image: prom/prometheus:latest
     restart: unless-stopped
     volumes:
-      - ./conf/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./conf/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - promdata:/prometheus
     ports:
       - "9090:9090"
