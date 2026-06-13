@@ -67,9 +67,9 @@ The FastAPI-generated `/docs` and `/redoc` endpoints show schemas but no example
 
 **Goal**: Add examples to role and permission management models.
 
-- [ ] TASK-012: Add examples to `CreateRoleRequest`, `RoleResponse`, `UpdateRoleRequest` in `app/auth/rbac/models.py`.
-- [ ] TASK-013: Add examples to `AssignPermissionRequest`, `PermissionResponse`.
-- [ ] TASK-014: Add examples to `AssignRoleRequest`.
+- [x] TASK-012: Add examples to `CreateRoleRequest`, `RoleResponse`, `UpdateRoleRequest` in `app/auth/rbac/models.py`.
+- [x] TASK-013: Add examples to `AssignPermissionRequest`, `PermissionResponse`.
+- [x] TASK-014: Add examples to `AssignRoleRequest`.
 
 **Completion criteria**: RBAC models show examples in `/docs`.
 
