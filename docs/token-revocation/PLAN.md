@@ -45,10 +45,11 @@ Refresh tokens are already tied to `UserSession` rows (via `refresh_token_jti`) 
 
 **Goal**: Implement the two blocklist operations: block a JTI and check if a JTI is blocked.
 
-- [ ] TASK-003: Create `app/core/token_blocklist.py` with two functions:
+- [x] TASK-003: Create `app/core/token_blocklist.py` with two functions:
   - `async def block_token(jti: str, ttl_seconds: int) -> None` — sets `jti:blocked:{jti}` in Redis with the given TTL; no-ops silently if Redis is not configured.
   - `async def is_blocked(jti: str) -> bool` — returns `True` if the key exists; returns `False` on Redis error (log warning, fail open).
-- [ ] TASK-004: Import and use the same Redis client used by the rate limiter (`app/core/limiter.py` exports `get_redis`).
+- [x] TASK-004: Import and use the same Redis client used by the rate limiter (`app/core/limiter.py` exports `get_redis`).
+  > Added `get_redis()` accessor to `limiter.py`; `token_blocklist.py` imports and uses it.
 
 **Completion criteria**: Unit test (no HTTP): `block_token("abc", 10)` followed by `is_blocked("abc")` returns `True`; `is_blocked("xyz")` returns `False`.
 

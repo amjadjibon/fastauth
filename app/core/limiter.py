@@ -14,6 +14,10 @@ def set_redis(client: Redis) -> None:
     _redis = client
 
 
+def get_redis() -> Redis | None:
+    return _redis
+
+
 async def close_redis() -> None:
     if _redis:
         await _redis.aclose()
