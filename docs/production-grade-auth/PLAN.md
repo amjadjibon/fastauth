@@ -58,14 +58,14 @@ This plan transforms the current FastAuth basic JWT implementation into a produc
 
 **Goal**: Implement service layer with repository pattern and dependency injection.
 
-- [ ] TASK-001: Create `app/auth/repositories/user_repository.py` with methods: `find_by_id`, `find_by_username`, `find_by_email`, `create`, `update`, `delete`
-- [ ] TASK-002: Create `app/auth/repositories/session_repository.py` with methods: `create_session`, `find_by_refresh_token_jti`, `revoke_session`, `revoke_all_user_sessions`
-- [ ] TASK-003: Create `app/auth/repositories/oauth_repository.py` with methods: `find_client_by_id`, `create_authorization_code`, `consume_authorization_code`
-- [ ] TASK-004: Create `app/auth/services/auth_service.py` with methods: `authenticate_user`, `register_user`, `change_password`
-- [ ] TASK-005: Create `app/auth/services/session_service.py` with methods: `create_session`, `refresh_session`, `revoke_session`, `list_active_sessions`
-- [ ] TASK-006: Create `app/auth/services/mfa_service.py` with methods: `enable_mfa`, `verify_totp`, `generate_backup_codes`, `verify_backup_code`
-- [ ] TASK-007: Create `app/auth/services/oauth_service.py` with methods: `authorize_client`, `exchange_code_for_token`, `validate_token`
-- [ ] TASK-008: Create `app/auth/services/social_service.py` with methods: `get_oauth_url`, `exchange_code_for_user_info`, `link_social_account`
+- [x] TASK-001: Create `app/auth/repositories/user_repository.py` with methods: `find_by_id`, `find_by_username`, `find_by_email`, `create`, `update`, `delete`
+- [x] TASK-002: Create `app/auth/repositories/session_repository.py` with methods: `create_session`, `find_by_refresh_token_jti`, `revoke_session`, `revoke_all_user_sessions`
+- [x] TASK-003: Create `app/auth/repositories/oauth_repository.py` with methods: `find_client_by_id`, `create_authorization_code`, `consume_authorization_code`
+- [x] TASK-004: Create `app/auth/services/auth_service.py` with methods: `authenticate_user`, `register_user`, `change_password`
+- [x] TASK-005: Create `app/auth/services/session_service.py` with methods: `create_session`, `refresh_session`, `revoke_session`, `list_active_sessions`
+- [x] TASK-006: Create `app/auth/services/mfa_service.py` with methods: `enable_mfa`, `verify_totp`, `generate_backup_codes`, `verify_backup_code`
+- [x] TASK-007: Create `app/auth/services/oauth_service.py` with methods: `authorize_client`, `exchange_code_for_token`, `validate_token`
+- [x] TASK-008: Create `app/auth/services/social_service.py` with methods: `get_oauth_url`, `exchange_code_for_user_info`, `link_social_account`
 
 **Completion criteria**: All services have 90%+ test coverage, integration tests pass with real database
 
