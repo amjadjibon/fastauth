@@ -15,13 +15,15 @@ from app.core.security import create_token, decode_token
 bearer = HTTPBearer()
 
 
-def make_tokens(user_id: str) -> tuple[str, str]:
+def make_tokens(user_id: str, amr: list[str] | None = None) -> tuple[str, str]:
+    import uuid
+    jti = str(uuid.uuid4())
     access = create_token(
-        {"sub": user_id, "type": "access"},
+        {"sub": user_id, "type": "access", "amr": amr or ["pwd"]},
         timedelta(seconds=settings.access_token_expire_seconds),
     )
     refresh = create_token(
-        {"sub": user_id, "type": "refresh"},
+        {"sub": user_id, "type": "refresh", "jti": jti},
         timedelta(seconds=settings.refresh_token_expire_seconds),
     )
     return access, refresh

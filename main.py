@@ -18,6 +18,7 @@ from sqlmodel import SQLModel
 import app.auth.models as _auth_models  # noqa: F401 — register models for SQLModel.metadata
 import app.auth.db_models as _auth_db_models  # noqa: F401 — register extended models for SQLModel.metadata
 from app.auth.router import router as auth_router
+from app.auth.mfa.router import router as mfa_router
 from app.auth.oauth.router import router as oauth_router
 from app.core.config import settings
 from app.core.db import engine as _db_engine
@@ -128,5 +129,6 @@ app.mount("/metrics", _make_metrics_app())
 
 app.include_router(web_router)
 app.include_router(auth_router)
+app.include_router(mfa_router)
 app.include_router(oauth_router)
 app.include_router(health_router)

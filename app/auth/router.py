@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError
+from pydantic import BaseModel
 
 from app.auth import store
 from app.auth.deps import CurrentUser, SessionDep, make_tokens
+from app.auth.mfa.models import MfaLoginRequest
+from app.auth.mfa.totp import verify_totp as _verify_totp
 from app.auth.models import (
     LoginRequest,
     RefreshRequest,
@@ -11,15 +14,24 @@ from app.auth.models import (
     TokenResponse,
     UserResponse,
 )
+from app.auth.services import mfa_service
 from app.core.metrics import (
     auth_login_attempts_total,
     auth_registrations_total,
     auth_token_refreshes_total,
 )
 from app.core.ratelimit import RateLimiter
-from app.core.security import decode_token, verify_password
+from app.core.security import create_token, decode_token, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+class LoginResponse(BaseModel):
+    access_token: str | None = None
+    refresh_token: str | None = None
+    token_type: str = "bearer"
+    mfa_required: bool = False
+    mfa_session_token: str | None = None
 
 
 @router.post(
@@ -38,16 +50,61 @@ async def register(body: RegisterRequest, session: SessionDep):
 
 @router.post(
     "/login",
-    response_model=TokenResponse,
+    response_model=LoginResponse,
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )
 async def login(body: LoginRequest, session: SessionDep):
+    from datetime import timedelta
     user = await store.get_by_username(session, body.username)
     if user is None or not verify_password(body.password, user.hashed_password):
         auth_login_attempts_total.labels(success="false").inc()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     auth_login_attempts_total.labels(success="true").inc()
+
+    if await mfa_service.is_mfa_enabled(session, user.id):
+        # Issue a short-lived MFA session token; full tokens issued after TOTP
+        mfa_token = create_token(
+            {"sub": user.id, "type": "mfa_pending"},
+            timedelta(minutes=5),
+        )
+        return LoginResponse(mfa_required=True, mfa_session_token=mfa_token)
+
     access, refresh = make_tokens(user.id)
+    return LoginResponse(access_token=access, refresh_token=refresh)
+
+
+@router.post(
+    "/login/mfa",
+    response_model=TokenResponse,
+    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+)
+async def login_mfa(body: MfaLoginRequest, session: SessionDep):
+    try:
+        payload = decode_token(body.mfa_session_token)
+    except JWTError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA session token") from exc
+
+    if payload.get("type") != "mfa_pending":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
+
+    user_id = payload.get("sub")
+    user = await store.get_by_id(session, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+    mfa = await mfa_service.get_mfa_secret(session, user.id)
+    if mfa is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA not configured")
+
+    if body.is_backup_code:
+        ok = await mfa_service.verify_backup_code(session, user.id, body.code)
+    else:
+        ok = _verify_totp(mfa.secret_encrypted, body.code)
+
+    if not ok:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
+
+    access, refresh = make_tokens(user.id, amr=["pwd", "mfa"])
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 

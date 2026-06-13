@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = []
 
+    # MFA
+    mfa_required_for_all_users: bool = False
+
     # Load testing
     load_test: bool = False
 
