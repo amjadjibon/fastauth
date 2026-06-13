@@ -58,11 +58,11 @@ fastauth currently only authenticates human users via JWT. Service-to-service ca
 
 **Goal**: Implement key generation (raw + hash) and CRUD repository functions.
 
-- [ ] TASK-003: Create `app/auth/api_keys/` package with `__init__.py`.
-- [ ] TASK-004: Create `app/auth/api_keys/utils.py` with:
+- [x] TASK-003: Create `app/auth/api_keys/` package with `__init__.py`.
+- [x] TASK-004: Create `app/auth/api_keys/utils.py` with:
   - `generate_api_key() -> tuple[str, str]` — returns `(raw_key, sha256_hash)`. Raw key: `"fak_" + secrets.token_urlsafe(32)`.
   - `hash_api_key(raw: str) -> str` — `hashlib.sha256(raw.encode()).hexdigest()`.
-- [ ] TASK-005: Create `app/auth/api_keys/repository.py` with:
+- [x] TASK-005: Create `app/auth/api_keys/repository.py` with:
   - `create(session, owner_user_id, name, scopes, expires_at) -> tuple[APIKey, str]` — creates the row, returns `(db_row, raw_key)`.
   - `find_by_hash(session, key_hash) -> APIKey | None` — used during authentication.
   - `list_for_user(session, user_id) -> list[APIKey]` — for management UI.
