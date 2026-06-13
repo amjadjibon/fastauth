@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     # MFA
     mfa_required_for_all_users: bool = False
 
+    # Social login providers (optional)
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    github_client_id: str | None = None
+    github_client_secret: str | None = None
+    gitlab_client_id: str | None = None
+    gitlab_client_secret: str | None = None
+
     # Load testing
     load_test: bool = False
 

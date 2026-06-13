@@ -135,14 +135,14 @@ This plan transforms the current FastAuth basic JWT implementation into a produc
 
 **Goal**: Implement OAuth2 social login for Google, GitHub, GitLab.
 
-- [ ] TASK-001: Create `app/auth/social/config.py` with provider configs: `google`, `github`, `gitlab` containing client_id, client_secret, redirect_uri, scopes
-- [ ] TASK-002: Create `app/auth/social/router.py` with endpoints: `GET /auth/social/{provider}/authorize`, `GET /auth/social/{provider}/callback`
-- [ ] TASK-003: Create `app/auth/social/providers/base.py` with abstract class: `SocialAuthProvider` defining `get_authorization_url`, `exchange_code_for_tokens`, `get_user_info`
-- [ ] TASK-004: Create `app/auth/social/providers/google.py` implementing Google OAuth2 flow
-- [ ] TASK-005: Create `app/auth/social/providers/github.py` implementing GitHub OAuth flow
-- [ ] TASK-006: Create `app/auth/social/providers/gitlab.py` implementing GitLab OAuth flow
-- [ ] TASK-007: Update `app/auth/services/social_service.py` with methods: `handle_social_login`, `auto_create_user_on_social_login`
-- [ ] TASK-008: Add social account linking: `POST /auth/social/link`, `GET /auth/social/linked`, `DELETE /auth/social/unlink`
+- [x] TASK-001: Create `app/auth/social/config.py` with provider configs: `google`, `github`, `gitlab` containing client_id, client_secret, redirect_uri, scopes
+- [x] TASK-002: Create `app/auth/social/router.py` with endpoints: `GET /auth/social/{provider}/authorize`, `GET /auth/social/{provider}/callback`
+- [x] TASK-003: Create `app/auth/social/providers/base.py` with abstract class: `SocialAuthProvider` defining `get_authorization_url`, `exchange_code_for_tokens`, `get_user_info`
+- [x] TASK-004: Create `app/auth/social/providers/google.py` implementing Google OAuth2 flow
+- [x] TASK-005: Create `app/auth/social/providers/github.py` implementing GitHub OAuth flow
+- [x] TASK-006: Create `app/auth/social/providers/gitlab.py` implementing GitLab OAuth flow
+- [x] TASK-007: Update `app/auth/services/social_service.py` with methods: `handle_social_login`, `auto_create_user_on_social_login`
+- [x] TASK-008: Add social account linking: `POST /auth/social/link`, `GET /auth/social/linked`, `DELETE /auth/social/unlink`
 
 **Completion criteria**: Social login flow works end-to-end for all three providers, auto-creates users on first login
 
