@@ -9,17 +9,6 @@ services:
       jaeger:
         condition: service_started
 
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
   jaeger:
     image: jaegertracing/all-in-one:latest
     restart: unless-stopped
