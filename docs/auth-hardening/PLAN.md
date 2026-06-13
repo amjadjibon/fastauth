@@ -41,12 +41,12 @@ Ten gaps were identified after the initial production-grade auth implementation.
 
 **Goal**: Add the two most commonly expected auth endpoints that are entirely absent — logout and change-password.
 
-- [ ] TASK-001: Add `POST /auth/logout` to `app/auth/router.py`. Decode the bearer access token, extract `jti` from its payload, call `session_service.revoke_session(session, jti, current_user.id)`, and return `{"ok": true}`. If no session exists for the JTI, still return 200 (idempotent).
-- [ ] TASK-002: Add `POST /auth/change-password` to `app/auth/router.py`. Accept `{current_password, new_password}`. Verify `current_password` against `current_user.hashed_password` via `verify_password`; if it fails return 401. Hash and save the new password. Emit `AuditEvent.PASSWORD_CHANGED`. Rate-limit to 5/min.
-- [ ] TASK-003: Add `ChangePasswordRequest` Pydantic model to `app/auth/models.py` with fields `current_password: str` and `new_password: str` (apply same validators as `RegisterRequest.password`).
-- [ ] TASK-004: Update `app/auth/deps.py` — change `make_tokens` to embed the session's JTI in the access token payload (`"jti"` claim) so `/auth/logout` can look up the session without a separate DB call for the session ID.
-  > Note: access tokens already carry `sub` (user_id); adding `jti` allows direct revocation lookup.
-- [ ] TASK-005: Emit `AuditEvent.LOGOUT` in the logout handler after revocation.
+- [x] TASK-001: Add `POST /auth/logout` to `app/auth/router.py`. Decode the bearer access token, extract `jti` from its payload, call `session_service.revoke_session(session, jti, current_user.id)`, and return `{"ok": true}`. If no session exists for the JTI, still return 200 (idempotent).
+- [x] TASK-002: Add `POST /auth/change-password` to `app/auth/router.py`. Accept `{current_password, new_password}`. Verify `current_password` against `current_user.hashed_password` via `verify_password`; if it fails return 401. Hash and save the new password. Emit `AuditEvent.PASSWORD_CHANGED`. Rate-limit to 5/min.
+- [x] TASK-003: Add `ChangePasswordRequest` Pydantic model to `app/auth/models.py` with fields `current_password: str` and `new_password: str` (apply same validators as `RegisterRequest.password`).
+- [x] TASK-004: Update `app/auth/deps.py` — change `make_tokens` to embed the session's JTI in the access token payload (`"jti"` claim) so `/auth/logout` can look up the session without a separate DB call for the session ID.
+  > Note: Updated `session_service.create_session` instead, since login already uses it. JTI is now embedded in access token payload.
+- [x] TASK-005: Emit `AuditEvent.LOGOUT` in the logout handler after revocation.
 
 **Completion criteria**: `POST /auth/logout` returns 200 and subsequent `POST /auth/refresh` with the same refresh token returns 401. `POST /auth/change-password` with wrong current password returns 401; with correct password returns 200 and old password no longer works on login.
 
@@ -74,11 +74,11 @@ Ten gaps were identified after the initial production-grade auth implementation.
 
 **Goal**: Let users reset their password via a signed email token — standard for any auth system.
 
-- [ ] TASK-011: Add `password_reset_tokens` table migration `migrations/versions/2000000007_add_password_reset_tokens.py` with columns: `id UUID PK`, `user_id FK`, `token_hash VARCHAR(64)`, `expires_at TIMESTAMP`, `used_at TIMESTAMP nullable`. Index on `token_hash`.
-- [ ] TASK-012: Add `PasswordResetToken` SQLModel in `app/auth/db_models.py`.
-- [ ] TASK-013: Add `POST /auth/forgot-password` to `app/auth/router.py`. Accept `{email}`. Look up user; if found, generate `secrets.token_urlsafe(32)`, hash it with SHA-256, store in `password_reset_tokens` (expires 10 min), and log the plaintext token at `DEBUG` level only (never INFO/ERROR). Return `{"message": "If that email exists, a reset link was sent"}` regardless of whether the user exists (prevents enumeration).
-- [ ] TASK-014: Add `POST /auth/reset-password` to `app/auth/router.py`. Accept `{token, new_password}`. Hash the incoming token, look it up in `password_reset_tokens` where `used_at IS NULL AND expires_at > now`. If valid, update `user.hashed_password`, set `used_at = now`, revoke all sessions (`session_service.revoke_all_user_sessions`), emit `AuditEvent.PASSWORD_RESET`.
-- [ ] TASK-015: Add `ForgotPasswordRequest` and `ResetPasswordRequest` models to `app/auth/models.py`.
+- [x] TASK-011: Add `password_reset_tokens` table migration `migrations/versions/2000000007_add_password_reset_tokens.py` with columns: `id UUID PK`, `user_id FK`, `token_hash VARCHAR(64)`, `expires_at TIMESTAMP`, `used_at TIMESTAMP nullable`. Index on `token_hash`.
+- [x] TASK-012: Add `PasswordResetToken` SQLModel in `app/auth/db_models.py`.
+- [x] TASK-013: Add `POST /auth/forgot-password` to `app/auth/router.py`. Accept `{email}`. Look up user; if found, generate `secrets.token_urlsafe(32)`, hash it with SHA-256, store in `password_reset_tokens` (expires 10 min), and log the plaintext token at `DEBUG` level only (never INFO/ERROR). Return `{"message": "If that email exists, a reset link was sent"}` regardless of whether the user exists (prevents enumeration).
+- [x] TASK-014: Add `POST /auth/reset-password` to `app/auth/router.py`. Accept `{token, new_password}`. Hash the incoming token, look it up in `password_reset_tokens` where `used_at IS NULL AND expires_at > now`. If valid, update `user.hashed_password`, set `used_at = now`, revoke all sessions (`session_service.revoke_all_user_sessions`), emit `AuditEvent.PASSWORD_RESET`.
+- [x] TASK-015: Add `ForgotPasswordRequest` and `ResetPasswordRequest` models to `app/auth/models.py`.
 
 **Completion criteria**: `POST /auth/forgot-password` always returns 200. `POST /auth/reset-password` with a valid token updates the password and returns 200. Replaying the same token returns 400. An expired token returns 400.
 

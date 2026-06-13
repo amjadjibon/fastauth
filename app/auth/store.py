@@ -25,3 +25,8 @@ async def get_by_id(session: AsyncSession, user_id: str) -> User | None:
 async def username_exists(session: AsyncSession, username: str) -> bool:
     result = await session.exec(select(User.id).where(User.username == username))
     return result.first() is not None
+
+
+async def get_by_email(session: AsyncSession, email: str) -> User | None:
+    result = await session.exec(select(User).where(User.email == email))
+    return result.first()

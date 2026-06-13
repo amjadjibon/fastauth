@@ -199,6 +199,22 @@ class RolePermission(SQLModel, table=True):
 
 
 # ---------------------------------------------------------------------------
+# Password reset tokens table
+# ---------------------------------------------------------------------------
+
+
+class PasswordResetToken(SQLModel, table=True):
+    __tablename__ = "password_reset_tokens"
+
+    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
+    user_id: str = Field(sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False))
+    token_hash: str = Field(sa_column=Column(String(64), nullable=False, index=True))
+    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    used_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    created_at: datetime = Field(default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False))
+
+
+# ---------------------------------------------------------------------------
 # Audit log table
 # ---------------------------------------------------------------------------
 

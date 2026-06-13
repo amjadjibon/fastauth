@@ -21,3 +21,4 @@ class AuditEvent:
     ACCOUNT_UNLOCKED = "account_unlocked"
     TOKEN_REFRESHED = "token_refreshed"
     OAUTH_AUTHORIZE = "oauth_authorize"
+    PASSWORD_RESET = "password_reset"

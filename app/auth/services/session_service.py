@@ -31,7 +31,7 @@ async def create_session(
     expires_at = datetime.now(UTC) + timedelta(seconds=settings.refresh_token_expire_seconds)
 
     access_token = create_token(
-        {"sub": user_id, "type": "access"},
+        {"sub": user_id, "type": "access", "jti": jti},
         timedelta(seconds=settings.access_token_expire_seconds),
     )
     refresh_token = create_token(
@@ -92,6 +92,21 @@ async def refresh_session(
         browser=db_session.browser,
         os=db_session.os,
     )
+
+
+async def revoke_session_by_jti(session: AsyncSession, jti: str, user_id: str) -> bool:
+    """Revoke a session identified by its refresh_token_jti (embedded in the access token)."""
+    db_session = await repo.session.find_by_refresh_token_jti(session, jti)
+    if db_session is None or db_session.user_id != user_id:
+        return False
+    if db_session.revoked_at is not None:
+        return False
+    await repo.session.revoke_session(session, db_session)
+    return True
+
+
+async def revoke_all_user_sessions(session: AsyncSession, user_id: str) -> int:
+    return await repo.session.revoke_all_user_sessions(session, user_id)
 
 
 async def revoke_session(session: AsyncSession, session_id: str, user_id: str) -> bool:
