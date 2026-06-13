@@ -90,11 +90,11 @@ Ten gaps were identified after the initial production-grade auth implementation.
 
 **Goal**: Allow OAuth clients to be registered via API instead of raw SQL. The `oauth_clients` table exists but has no management endpoints.
 
-- [ ] TASK-016: Add `POST /admin/oauth/clients` (admin-only) to `app/admin/router.py`. Accept `{name, redirect_uris: list[str], scopes: list[str], is_confidential: bool}`. Generate a UUID `client_id` and a `client_secret` (32-byte hex, returned once and never stored in plaintext — store its bcrypt hash). Return `{client_id, client_secret}`.
-- [ ] TASK-017: Add `GET /admin/oauth/clients` — list all clients (no secrets). Add `GET /admin/oauth/clients/{client_id}` — get one. Add `DELETE /admin/oauth/clients/{client_id}` — revoke (soft-delete via `is_active=False`).
-- [ ] TASK-018: Add `OAuthClientCreateRequest`, `OAuthClientResponse` to `app/admin/models.py`.
-- [ ] TASK-019: Update `app/auth/oauth/dependencies.py` `client_authenticated` to verify the incoming `client_secret` against the stored hash (currently it does a direct string compare via `OAuthClient.client_secret`).
-- [ ] TASK-020: Add `is_active: bool` column to `OAuthClient` in `app/auth/db_models.py` and a new migration `2000000008_add_oauth_client_active.py`. Filter inactive clients out of all lookups.
+- [x] TASK-016: Add `POST /admin/oauth/clients` (admin-only) to `app/admin/router.py`. Accept `{name, redirect_uris: list[str], scopes: list[str], is_confidential: bool}`. Generate a UUID `client_id` and a `client_secret` (32-byte hex, returned once and never stored in plaintext — store its bcrypt hash). Return `{client_id, client_secret}`.
+- [x] TASK-017: Add `GET /admin/oauth/clients` — list all clients (no secrets). Add `GET /admin/oauth/clients/{client_id}` — get one. Add `DELETE /admin/oauth/clients/{client_id}` — revoke (soft-delete via `is_active=False`).
+- [x] TASK-018: Add `OAuthClientCreateRequest`, `OAuthClientResponse` to `app/admin/models.py`.
+- [x] TASK-019: Update `app/auth/oauth/dependencies.py` `client_authenticated` to verify the incoming `client_secret` against the stored hash (currently it does a direct string compare via `OAuthClient.client_secret`).
+- [x] TASK-020: Add `is_active: bool` column to `OAuthClient` in `app/auth/db_models.py` and a new migration `2000000008_add_oauth_client_active.py`. Filter inactive clients out of all lookups.
 
 **Completion criteria**: Admin can `POST /admin/oauth/clients`, receive a `client_id`+`client_secret`, then successfully use those credentials in `POST /oauth/token` Basic auth. `DELETE /admin/oauth/clients/{id}` causes subsequent token requests to fail with 401.
 

@@ -3,6 +3,8 @@ from fastapi import APIRouter, HTTPException, Query, status
 from app.admin.dashboard import get_dashboard_metrics
 from app.admin.models import (
     DashboardMetrics,
+    OAuthClientCreateRequest,
+    OAuthClientResponse,
     PaginatedUsersResponse,
     UpdateUserRequest,
     UserDetailResponse,
@@ -109,3 +111,62 @@ async def bulk_delete_users(user_ids: list[str], session: SessionDep):
         user = await session.get(User, uid)
         if user:
             await repo.user.delete(session, user)
+
+
+# ---------------------------------------------------------------------------
+# OAuth client management
+# ---------------------------------------------------------------------------
+
+@router.post("/oauth/clients", dependencies=[_RequireAdmin])
+async def create_oauth_client(body: OAuthClientCreateRequest, session: SessionDep):
+    import secrets
+    from app.auth.db_models import OAuthClient
+    from app.core.security import hash_password as _hash
+
+    client_id = secrets.token_hex(16)
+    raw_secret = secrets.token_hex(32)
+    secret_hash = _hash(raw_secret)
+
+    client = OAuthClient(
+        id=client_id,
+        name=body.name,
+        client_secret_hash=secret_hash,
+        redirect_uris=" ".join(body.redirect_uris),
+        scopes=" ".join(body.scopes),
+        is_confidential=body.is_confidential,
+        is_active=True,
+    )
+    session.add(client)
+    await session.commit()
+    return {"client_id": client_id, "client_secret": raw_secret}
+
+
+@router.get("/oauth/clients", response_model=list[OAuthClientResponse], dependencies=[_RequireAdmin])
+async def list_oauth_clients(session: SessionDep):
+    from sqlmodel import select
+    from app.auth.db_models import OAuthClient
+
+    result = await session.exec(select(OAuthClient))
+    return list(result.all())
+
+
+@router.get("/oauth/clients/{client_id}", response_model=OAuthClientResponse, dependencies=[_RequireAdmin])
+async def get_oauth_client(client_id: str, session: SessionDep):
+    from app.auth.db_models import OAuthClient
+
+    client = await session.get(OAuthClient, client_id)
+    if client is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+    return client
+
+
+@router.delete("/oauth/clients/{client_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[_RequireAdmin])
+async def revoke_oauth_client(client_id: str, session: SessionDep):
+    from app.auth.db_models import OAuthClient
+
+    client = await session.get(OAuthClient, client_id)
+    if client is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+    client.is_active = False
+    session.add(client)
+    await session.commit()
