@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError
 from pydantic import BaseModel
 
@@ -15,6 +15,8 @@ from app.auth.models import (
     UserResponse,
 )
 from app.auth.services import mfa_service
+from app.auth.security.brute_force import get_brute_force_protection
+from app.auth.security.lockout import is_account_locked
 from app.core.metrics import (
     auth_login_attempts_total,
     auth_registrations_total,
@@ -53,12 +55,32 @@ async def register(body: RegisterRequest, session: SessionDep):
     response_model=LoginResponse,
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )
-async def login(body: LoginRequest, session: SessionDep):
+async def login(body: LoginRequest, session: SessionDep, request: Request):
     from datetime import timedelta
+    from app.core.limiter import _redis  # use the shared redis instance if available
+
+    ip = request.client.host if request.client else "unknown"
+    bf = get_brute_force_protection(redis=_redis)
+
+    if await bf.is_blocked(f"user:{body.username}") or await bf.is_blocked(f"ip:{ip}"):
+        auth_login_attempts_total.labels(success="false").inc()
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many failed attempts, try again later")
+
     user = await store.get_by_username(session, body.username)
+
+    if user and await is_account_locked(user.id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account locked")
+
     if user is None or not verify_password(body.password, user.hashed_password):
+        await bf.check_and_record(body.username, ip)
         auth_login_attempts_total.labels(success="false").inc()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    # Clear brute-force counter on successful login
+    from app.auth.security.brute_force import _WINDOW_SECONDS
+    if _redis:
+        await _redis.delete(f"bf:attempts:user:{body.username}", f"bf:attempts:ip:{ip}")
+
     auth_login_attempts_total.labels(success="true").inc()
 
     if await mfa_service.is_mfa_enabled(session, user.id):
