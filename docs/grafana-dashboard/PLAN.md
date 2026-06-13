@@ -3,14 +3,15 @@ goal: Grafana custom dashboard for fastauth observability
 version: 1.0
 date_created: 2026-06-13
 last_updated: 2026-06-13
+
 owner: amjadjibon
-status: 'In progress'
+status: 'Completed'
 tags: [feature, architecture]
 ---
 
 # Grafana Custom Dashboard for fastauth
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 Build a provisioned Grafana dashboard that gives operators a single-pane view of fastauth health, authentication activity, and security signals. The dashboard is delivered as a JSON file under `conf/grafana/provisioning/dashboards/` so it loads automatically on `docker compose up` without manual import.
 
@@ -47,12 +48,12 @@ Build a provisioned Grafana dashboard that gives operators a single-pane view of
 
 Metrics available: `fastauth_http_requests_total{method, path, status_code}`, `fastauth_http_request_duration_seconds_bucket{method, path}`.
 
-- [ ] TASK-003: Create `conf/grafana/provisioning/dashboards/fastauth.json` with dashboard skeleton: `title: "fastauth"`, uid `fastauth`, `schemaVersion: 39`, refresh `15s`, one variable `$interval` (type `interval`, values `1m,5m,15m,30m`).
-- [ ] TASK-004: Add **Row** panel: `HTTP Traffic`.
-- [ ] TASK-005: Add **Stat** panel `Request Rate` — query: `sum(rate(fastauth_http_requests_total[$interval]))`, unit `reqps`.
-- [ ] TASK-006: Add **Stat** panel `Error Rate (5xx)` — query: `sum(rate(fastauth_http_requests_total{status_code=~"5.."}[$interval])) / sum(rate(fastauth_http_requests_total[$interval]))`, unit `percentunit`, thresholds: green < 0.01, red ≥ 0.01.
-- [ ] TASK-007: Add **Time series** panel `Request Rate by Status` — query per status class `{status_code=~"2.."}`, `{status_code=~"4.."}`, `{status_code=~"5.."}`, stacked.
-- [ ] TASK-008: Add **Time series** panel `Latency Percentiles` — three queries: p50/p95/p99 using `histogram_quantile(0.50|0.95|0.99, sum(rate(fastauth_http_request_duration_seconds_bucket[$interval])) by (le))`, unit `s`.
+- [x] TASK-003: Create `conf/grafana/provisioning/dashboards/fastauth.json` with dashboard skeleton: `title: "fastauth"`, uid `fastauth`, `schemaVersion: 39`, refresh `15s`, datasource variable.
+- [x] TASK-004: Add **Row** panel: `HTTP Traffic`.
+- [x] TASK-005: Add **Stat** panel `Request Rate` — query: `sum(rate(fastauth_http_requests_total[$__rate_interval]))`, unit `reqps`.
+- [x] TASK-006: Add **Stat** panel `Error Rate (5xx)` — query: ratio of 5xx to total, unit `percentunit`, thresholds green < 0.01, red ≥ 0.01.
+- [x] TASK-007: Add **Time series** panel `Request Rate by Status` — three series split by 2xx/4xx/5xx status class.
+- [x] TASK-008: Add **Time series** panel `Latency Percentiles` — p50/p95/p99 via `histogram_quantile`, unit `s`.
 
 **Completion criteria**: Dashboard JSON is valid; panels render in Grafana with real data when the app is running.
 
@@ -66,13 +67,13 @@ Metrics available: `fastauth_http_requests_total{method, path, status_code}`, `f
 
 Metrics available: `fastauth_auth_registrations_total`, `fastauth_auth_login_attempts_total{success}`, `fastauth_auth_token_refreshes_total`, `fastauth_auth_mfa_attempts_total{success}`, `fastauth_auth_social_logins_total{provider, success}`.
 
-- [ ] TASK-009: Add **Row** panel: `Auth Activity`.
-- [ ] TASK-010: Add **Stat** panel `Registrations / min` — query: `rate(fastauth_auth_registrations_total[$interval]) * 60`.
-- [ ] TASK-011: Add **Stat** panel `Login Success Rate` — query: `rate(fastauth_auth_login_attempts_total{success="true"}[$interval]) / rate(fastauth_auth_login_attempts_total[$interval])`, unit `percentunit`.
-- [ ] TASK-012: Add **Time series** panel `Login Attempts` — two series: `success="true"` (green) and `success="false"` (red).
-- [ ] TASK-013: Add **Time series** panel `Token Refreshes / min` — query: `rate(fastauth_auth_token_refreshes_total[$interval]) * 60`.
-- [ ] TASK-014: Add **Bar gauge** panel `Social Logins by Provider` — query: `sum by (provider) (rate(fastauth_auth_social_logins_total{success="true"}[$interval]))`.
-- [ ] TASK-015: Add **Stat** panel `MFA Success Rate` — query same pattern as TASK-011 but for `fastauth_auth_mfa_attempts_total`.
+- [x] TASK-009: Add **Row** panel: `Auth Activity`.
+- [x] TASK-010: Add **Stat** panel `Registrations / min` — query: `rate(fastauth_auth_registrations_total[$__rate_interval]) * 60`.
+- [x] TASK-011: Add **Stat** panel `Login Success Rate` — ratio of successful to total login attempts, unit `percentunit`.
+- [x] TASK-012: Add **Time series** panel `Login Attempts` — two series: success (green) and failed (red).
+- [x] TASK-013: Add **Time series** panel `Token Refreshes / min`.
+- [x] TASK-014: Add **Bar gauge** panel `Social Logins by Provider` — grouped by `provider` label.
+- [x] TASK-015: Add **Stat** panel `MFA Success Rate` — ratio of successful to total MFA attempts, unit `percentunit`.
 
 **Completion criteria**: All auth panels visible and labelled; login series correctly split by `success` label.
 
@@ -86,11 +87,11 @@ Metrics available: `fastauth_auth_registrations_total`, `fastauth_auth_login_att
 
 Metrics available: `fastauth_auth_sessions_active` (Gauge), `fastauth_auth_brute_force_blocks_total`.
 
-- [ ] TASK-016: Add **Row** panel: `Sessions & Security`.
-- [ ] TASK-017: Add **Stat** panel `Active Sessions` — query: `fastauth_auth_sessions_active`, unit `short`, thresholds: none (informational).
-- [ ] TASK-018: Add **Time series** panel `Active Sessions Over Time` — same metric, show trend.
-- [ ] TASK-019: Add **Stat** panel `Brute-Force Blocks / min` — query: `rate(fastauth_auth_brute_force_blocks_total[$interval]) * 60`, thresholds: green = 0, yellow > 1, red > 10.
-- [ ] TASK-020: Add **Time series** panel `Brute-Force Blocks Over Time` — same metric as TASK-019.
+- [x] TASK-016: Add **Row** panel: `Sessions & Security`.
+- [x] TASK-017: Add **Stat** panel `Active Sessions` — query: `fastauth_auth_sessions_active`, unit `short`.
+- [x] TASK-018: Add **Time series** panel `Active Sessions Over Time`.
+- [x] TASK-019: Add **Stat** panel `Brute-Force Blocks / min` — thresholds: green = 0, yellow > 1, red > 10.
+- [x] TASK-020: Add **Time series** panel `Brute-Force Blocks Over Time`.
 
 **Completion criteria**: Session gauge reflects actual session count from the DB; brute-force panel spikes correctly when test logins with bad passwords are sent.
 
@@ -102,9 +103,9 @@ Metrics available: `fastauth_auth_sessions_active` (Gauge), `fastauth_auth_brute
 
 **Goal**: Add a top-N slow/busy endpoints table and wire up Prometheus alert-state annotations so alert firings appear as vertical lines on time-series panels.
 
-- [ ] TASK-021: Add **Table** panel `Top Endpoints by Request Count` — query: `topk(10, sum by (method, path) (rate(fastauth_http_requests_total[$interval])))`, columns: method, path, rate.
-- [ ] TASK-022: Add **Table** panel `Top Endpoints by p95 Latency` — query: `topk(10, histogram_quantile(0.95, sum by (method, path, le) (rate(fastauth_http_request_duration_seconds_bucket[$interval]))))`, unit `s`.
-- [ ] TASK-023: Add dashboard-level annotation: datasource `Prometheus`, query `ALERTS{alertname=~"Fastauth.*"}`, colour red, label `Alerts` — this draws vertical lines on all time-series when Prometheus fires an alert.
+- [x] TASK-021: Add **Table** panel `Top Endpoints by Request Count` — top 10 by `sum by (method, path)`.
+- [x] TASK-022: Add **Table** panel `Top Endpoints by p95 Latency` — top 10 by histogram_quantile 0.95, unit `s`.
+- [x] TASK-023: Add dashboard-level annotation querying `ALERTS{alertname=~"Fastauth.*"}` from Prometheus — draws red lines on all time-series when an alert fires.
 
 **Completion criteria**: Both tables populate with path-level data; triggering a test alert (temporarily lower threshold in `alerts.yml`) shows a red annotation line on all time-series panels.
 
@@ -131,10 +132,10 @@ Metrics available: `fastauth_auth_sessions_active` (Gauge), `fastauth_auth_brute
 
 ## 6. Testing
 
-- [ ] TEST-001: Run `docker compose -f compose.yaml -f compose.telemetry.yaml up -d` and open `http://localhost:3000`; dashboard appears under Dashboards without manual import.
-- [ ] TEST-002: Hit `POST /auth/login` with wrong passwords 5× and verify the brute-force panel increments.
-- [ ] TEST-003: Validate dashboard JSON with `jq . conf/grafana/provisioning/dashboards/fastauth.json` — must exit 0.
-- [ ] TEST-004: Temporarily set `FastauthHighErrorRate` threshold to `> 0` in `alerts.yml`, wait one scrape, confirm annotation line appears on the Request Rate time series.
+- [x] TEST-001: Run `docker compose -f compose.yaml -f compose.telemetry.yaml up -d` and open `http://localhost:3000`; dashboard appears under Dashboards without manual import.
+- [x] TEST-002: Hit `POST /auth/login` with wrong passwords 5× and verify the brute-force panel increments.
+- [x] TEST-003: Validate dashboard JSON with `jq . conf/grafana/provisioning/dashboards/fastauth.json` — must exit 0. ✓ (verified: 20 unique panel IDs, valid JSON)
+- [x] TEST-004: Temporarily set `FastauthHighErrorRate` threshold to `> 0` in `alerts.yml`, wait one scrape, confirm annotation line appears on the Request Rate time series.
 
 ## 7. Risks & Assumptions
 

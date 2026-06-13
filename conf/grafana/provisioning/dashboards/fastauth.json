@@ -1,0 +1,409 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "enable": true,
+        "expr": "ALERTS{alertname=~\"Fastauth.*\", alertstate=\"firing\"}",
+        "hide": false,
+        "iconColor": "red",
+        "name": "Alerts",
+        "step": "60s",
+        "titleFormat": "{{alertname}}"
+      }
+    ]
+  },
+  "description": "fastauth — HTTP traffic, auth activity, sessions, and security signals",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "HTTP Traffic",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 2,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "sum(rate(fastauth_http_requests_total[$__rate_interval]))",
+          "legendFormat": "req/s"
+        }
+      ],
+      "title": "Request Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0.01 }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "id": 3,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "sum(rate(fastauth_http_requests_total{status_code=~\"5..\"}[$__rate_interval])) / sum(rate(fastauth_http_requests_total[$__rate_interval]))",
+          "legendFormat": "5xx rate"
+        }
+      ],
+      "title": "Error Rate (5xx)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 1, "fillOpacity": 10 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "2xx" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "4xx" }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "5xx" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 8, "y": 1 },
+      "id": 4,
+      "options": { "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(rate(fastauth_http_requests_total{status_code=~\"2..\"}[$__rate_interval]))", "legendFormat": "2xx" },
+        { "expr": "sum(rate(fastauth_http_requests_total{status_code=~\"4..\"}[$__rate_interval]))", "legendFormat": "4xx" },
+        { "expr": "sum(rate(fastauth_http_requests_total{status_code=~\"5..\"}[$__rate_interval]))", "legendFormat": "5xx" }
+      ],
+      "title": "Request Rate by Status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "lineWidth": 1 } }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 5 },
+      "id": 5,
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(fastauth_http_request_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(fastauth_http_request_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(fastauth_http_request_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p99" }
+      ],
+      "title": "Latency Percentiles",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "id": 6,
+      "title": "Auth Activity",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 14 },
+      "id": 7,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "rate(fastauth_auth_registrations_total[$__rate_interval]) * 60", "legendFormat": "reg/min" }
+      ],
+      "title": "Registrations / min",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.8 },
+              { "color": "green", "value": 0.95 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 14 },
+      "id": 8,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "rate(fastauth_auth_login_attempts_total{success=\"true\"}[$__rate_interval]) / rate(fastauth_auth_login_attempts_total[$__rate_interval])",
+          "legendFormat": "success rate"
+        }
+      ],
+      "title": "Login Success Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 1, "fillOpacity": 10 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "success" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "failed" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 14 },
+      "id": 9,
+      "targets": [
+        { "expr": "rate(fastauth_auth_login_attempts_total{success=\"true\"}[$__rate_interval])", "legendFormat": "success" },
+        { "expr": "rate(fastauth_auth_login_attempts_total{success=\"false\"}[$__rate_interval])", "legendFormat": "failed" }
+      ],
+      "title": "Login Attempts",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 1 } } },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 14 },
+      "id": 10,
+      "targets": [
+        { "expr": "rate(fastauth_auth_token_refreshes_total[$__rate_interval]) * 60", "legendFormat": "refreshes/min" }
+      ],
+      "title": "Token Refreshes / min",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 18 },
+      "id": 11,
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "sum by (provider) (rate(fastauth_auth_social_logins_total{success=\"true\"}[$__rate_interval]))", "legendFormat": "{{provider}}" }
+      ],
+      "title": "Social Logins by Provider",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.8 },
+              { "color": "green", "value": 0.95 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 18 },
+      "id": 12,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "rate(fastauth_auth_mfa_attempts_total{success=\"true\"}[$__rate_interval]) / rate(fastauth_auth_mfa_attempts_total[$__rate_interval])",
+          "legendFormat": "mfa success rate"
+        }
+      ],
+      "title": "MFA Success Rate",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "id": 13,
+      "title": "Sessions & Security",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 23 },
+      "id": 14,
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "fastauth_auth_sessions_active", "legendFormat": "active sessions" }
+      ],
+      "title": "Active Sessions",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 1, "fillOpacity": 10 } } },
+      "gridPos": { "h": 8, "w": 10, "x": 4, "y": 23 },
+      "id": 15,
+      "targets": [
+        { "expr": "fastauth_auth_sessions_active", "legendFormat": "active sessions" }
+      ],
+      "title": "Active Sessions Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 27 },
+      "id": 16,
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "rate(fastauth_auth_brute_force_blocks_total[$__rate_interval]) * 60", "legendFormat": "blocks/min" }
+      ],
+      "title": "Brute-Force Blocks / min",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 1, "fillOpacity": 20 },
+          "color": { "fixedColor": "red", "mode": "fixed" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 23 },
+      "id": 17,
+      "targets": [
+        { "expr": "rate(fastauth_auth_brute_force_blocks_total[$__rate_interval]) * 60", "legendFormat": "blocks/min" }
+      ],
+      "title": "Brute-Force Blocks Over Time",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "id": 18,
+      "title": "Top Endpoints",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "method" }, "properties": [{ "id": "custom.width", "value": 70 }] },
+          { "matcher": { "id": "byName", "options": "path" }, "properties": [{ "id": "custom.width", "value": 260 }] }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 32 },
+      "id": 19,
+      "options": { "sortBy": [{ "displayName": "Value", "desc": true }] },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (method, path) (rate(fastauth_http_requests_total[$__rate_interval])))",
+          "legendFormat": "{{method}} {{path}}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "title": "Top Endpoints by Request Count",
+      "transformations": [
+        { "id": "organize", "options": { "renameByName": { "Value": "req/s" } } }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "method" }, "properties": [{ "id": "custom.width", "value": 70 }] },
+          { "matcher": { "id": "byName", "options": "path" }, "properties": [{ "id": "custom.width", "value": 260 }] }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 32 },
+      "id": 20,
+      "options": { "sortBy": [{ "displayName": "Value", "desc": true }] },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (method, path, le) (rate(fastauth_http_request_duration_seconds_bucket[$__rate_interval]))))",
+          "legendFormat": "{{method}} {{path}}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "title": "Top Endpoints by p95 Latency",
+      "transformations": [
+        { "id": "organize", "options": { "renameByName": { "Value": "p95" } } }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "tags": ["fastauth", "auth", "security"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource",
+        "label": "Datasource"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "fastauth",
+  "uid": "fastauth",
+  "version": 1
+}
