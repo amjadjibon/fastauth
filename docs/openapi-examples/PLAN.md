@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: amjadjibon
-status: 'Planned'
+status: 'In progress'
 tags: [chore, feature]
 ---
 
 # OpenAPI Examples
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 The FastAPI-generated `/docs` and `/redoc` endpoints show schemas but no example values, so developers integrating with fastauth must read source code to understand request shapes. This plan adds concrete `openapi_examples` (or `model_config` examples) to all major request/response models and a few key route-level response examples for error cases.
 
