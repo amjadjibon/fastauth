@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: amjadjibon
-status: 'In progress'
+status: 'Completed'
 tags: [feature, architecture]
 ---
 
 # Access Token Revocation (JTI Blocklist)
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 Refresh tokens are already tied to `UserSession` rows (via `refresh_token_jti`) and can be revoked by setting `revoked_at`. Access tokens are stateless JWTs with no server-side revocation path — once issued they are valid until expiry (`access_token_expire_seconds`, default 60s). For logout to be instantaneous, the access token's JTI must be added to a Redis blocklist that `decode_token` checks on every request.
 
