@@ -10,7 +10,7 @@ from app.auth.db_models import AuditLog
 async def failed_login_attempts_24h(session: AsyncSession) -> int:
     since = datetime.now(UTC) - timedelta(hours=24)
     result = await session.exec(
-        select(func.count(AuditLog.id)).where(
+        select(func.count()).where(
             AuditLog.event_type == AuditEvent.LOGIN_FAILED,
             AuditLog.created_at >= since,
         )
@@ -20,10 +20,11 @@ async def failed_login_attempts_24h(session: AsyncSession) -> int:
 
 async def active_sessions_count(session: AsyncSession) -> int:
     from app.auth.db_models import UserSession
+
     now = datetime.now(UTC)
     result = await session.exec(
-        select(func.count(UserSession.id)).where(
-            UserSession.revoked_at.is_(None),  # type: ignore[attr-defined]
+        select(func.count()).where(
+            UserSession.revoked_at.is_(None),  # type: ignore
             UserSession.expires_at > now,
         )
     )
@@ -32,7 +33,8 @@ async def active_sessions_count(session: AsyncSession) -> int:
 
 async def mfa_enabled_users_count(session: AsyncSession) -> int:
     from app.auth.db_models import UserMfaSecret
+
     result = await session.exec(
-        select(func.count(UserMfaSecret.id)).where(UserMfaSecret.is_verified == True)  # noqa: E712
+        select(func.count()).where(UserMfaSecret.is_verified == True)  # noqa: E712
     )
     return result.one() or 0

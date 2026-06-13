@@ -32,7 +32,9 @@ async def delete(session: AsyncSession, role: Role) -> None:
     await session.commit()
 
 
-async def assign_to_user(session: AsyncSession, user_id: str, role_id: str, assigned_by: str | None = None) -> UserRole:
+async def assign_to_user(
+    session: AsyncSession, user_id: str, role_id: str, assigned_by: str | None = None
+) -> UserRole:
     existing = await session.exec(
         select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
     )
@@ -59,7 +61,7 @@ async def remove_from_user(session: AsyncSession, user_id: str, role_id: str) ->
 
 async def get_user_roles(session: AsyncSession, user_id: str) -> list[Role]:
     result = await session.exec(
-        select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == user_id)
+        select(Role).join(UserRole, Role.id == UserRole.role_id).where(UserRole.user_id == user_id)  # type: ignore
     )
     return list(result.all())
 
@@ -67,9 +69,9 @@ async def get_user_roles(session: AsyncSession, user_id: str) -> list[Role]:
 async def get_user_permissions(session: AsyncSession, user_id: str) -> list[Permission]:
     result = await session.exec(
         select(Permission)
-        .join(RolePermission, Permission.id == RolePermission.permission_id)
-        .join(Role, Role.id == RolePermission.role_id)
-        .join(UserRole, UserRole.role_id == Role.id)
+        .join(RolePermission, Permission.id == RolePermission.permission_id)  # type: ignore
+        .join(Role, Role.id == RolePermission.role_id)  # type: ignore
+        .join(UserRole, UserRole.role_id == Role.id)  # type: ignore
         .where(UserRole.user_id == user_id)
     )
     return list(result.all())

@@ -19,7 +19,7 @@ def get_jwks() -> dict:
         with open(settings.rsa_private_key_path, "rb") as f:
             private_key = load_pem_private_key(f.read(), password=None)
 
-        numbers = private_key.public_key().public_numbers()  # type: ignore[union-attr]
+        numbers = private_key.public_key().public_numbers()  # type: ignore
 
         def _b64(n: int) -> str:
             byte_length = (n.bit_length() + 7) // 8
@@ -32,8 +32,8 @@ def get_jwks() -> dict:
                     "use": "sig",
                     "alg": "RS256",
                     "kid": "default",
-                    "n": _b64(numbers.n),
-                    "e": _b64(numbers.e),
+                    "n": _b64(numbers.n),  # type: ignore
+                    "e": _b64(numbers.e),  # type: ignore
                 }
             ]
         }

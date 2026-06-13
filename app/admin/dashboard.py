@@ -7,11 +7,10 @@ from app.auth.audit.reports import (
     failed_login_attempts_24h,
     mfa_enabled_users_count,
 )
-from app.auth.models import User
 
 
 async def get_dashboard_metrics(session: AsyncSession) -> DashboardMetrics:
-    user_count_result = await session.exec(select(func.count(User.id)))
+    user_count_result = await session.exec(select(func.count()))
     total_users = user_count_result.one() or 0
 
     return DashboardMetrics(

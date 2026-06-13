@@ -5,6 +5,8 @@ from jose import JWTError
 from pydantic import BaseModel
 
 from app.auth import store
+from app.auth.audit.events import AuditEvent
+from app.auth.audit.logger import audit_log as _audit
 from app.auth.deps import BearerDep, CurrentUser, SessionDep
 from app.auth.mfa.models import MfaLoginRequest
 from app.auth.mfa.totp import verify_totp as _verify_totp
@@ -19,11 +21,9 @@ from app.auth.models import (
     TokenResponse,
     UserResponse,
 )
-from app.auth.services import mfa_service
 from app.auth.security.brute_force import get_brute_force_protection
 from app.auth.security.lockout import is_account_locked
-from app.auth.audit.logger import audit_log as _audit
-from app.auth.audit.events import AuditEvent
+from app.auth.services import mfa_service
 from app.core.metrics import (
     auth_login_attempts_total,
     auth_registrations_total,
@@ -64,16 +64,20 @@ async def register(body: RegisterRequest, session: SessionDep):
 )
 async def login(body: LoginRequest, session: SessionDep, request: Request):
     from datetime import timedelta
-    from app.core.limiter import _redis  # use the shared redis instance if available
+
     from app.auth.services import session_service as svc
     from app.auth.sessions.device_info import parse_user_agent
+    from app.core.limiter import _redis  # use the shared redis instance if available
 
     ip = request.client.host if request.client else "unknown"
     bf = get_brute_force_protection(redis=_redis)
 
     if await bf.is_blocked(f"user:{body.username}") or await bf.is_blocked(f"ip:{ip}"):
         auth_login_attempts_total.labels(success="false").inc()
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many failed attempts, try again later")
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed attempts, try again later",
+        )
 
     user = await store.get_by_username(session, body.username)
 
@@ -83,8 +87,13 @@ async def login(body: LoginRequest, session: SessionDep, request: Request):
     if user is None or not verify_password(body.password, user.hashed_password):
         await bf.check_and_record(body.username, ip)
         auth_login_attempts_total.labels(success="false").inc()
-        await _audit(session, AuditEvent.LOGIN_FAILED, ip_address=ip, outcome="failure",
-                     metadata={"username": body.username})
+        await _audit(
+            session,
+            AuditEvent.LOGIN_FAILED,
+            ip_address=ip,
+            outcome="failure",
+            metadata={"username": body.username},
+        )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     # Clear brute-force counter on successful login
@@ -126,13 +135,15 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
     try:
         payload = decode_token(body.mfa_session_token)
     except JWTError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA session token") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA session token"
+        ) from exc
 
     if payload.get("type") != "mfa_pending":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
     user_id = payload.get("sub")
-    user = await store.get_by_id(session, user_id)
+    user = await store.get_by_id(session, user_id)  # type: ignore
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
@@ -144,12 +155,14 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
         ok = await mfa_service.verify_backup_code(session, user.id, body.code)
     else:
         from app.core.encryption import decrypt as _decrypt
+
         ok = _verify_totp(_decrypt(mfa.secret_encrypted), body.code)
 
     if not ok:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
 
     from app.auth.services import session_service as svc
+
     access, refresh, _ = await svc.create_session(session, user_id=user.id)
     return TokenResponse(access_token=access, refresh_token=refresh)
 
@@ -161,9 +174,12 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
 )
 async def refresh(body: RefreshRequest, session: SessionDep):
     from app.auth.services import session_service as svc
+
     result = await svc.refresh_session(session, body.refresh_token)
     if result is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or revoked refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or revoked refresh token"
+        )
     access, refresh_token, _ = result
     auth_token_refreshes_total.inc()
     return TokenResponse(access_token=access, refresh_token=refresh_token)
@@ -172,6 +188,7 @@ async def refresh(body: RefreshRequest, session: SessionDep):
 @router.get("/me")
 async def me(current_user: CurrentUser, session: SessionDep):
     from app.auth.rbac.repositories import role_repository
+
     roles = await role_repository.get_user_roles(session, current_user.id)
     perms = await role_repository.get_user_permissions(session, current_user.id)
     user_data = UserResponse.model_validate(current_user).model_dump()
@@ -181,8 +198,11 @@ async def me(current_user: CurrentUser, session: SessionDep):
 
 
 @router.post("/logout")
-async def logout(current_user: CurrentUser, credentials: BearerDep, session: SessionDep, request: Request):
+async def logout(
+    current_user: CurrentUser, credentials: BearerDep, session: SessionDep, request: Request
+):
     from app.auth.services import session_service as svc
+
     try:
         payload = decode_token(credentials.credentials)
     except Exception:
@@ -201,14 +221,23 @@ async def logout(current_user: CurrentUser, credentials: BearerDep, session: Ses
     "/change-password",
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )
-async def change_password(body: ChangePasswordRequest, current_user: CurrentUser, session: SessionDep, request: Request):
-    from app.auth.security.password_history import add_password_to_history, check_password_not_reused
+async def change_password(
+    body: ChangePasswordRequest, current_user: CurrentUser, session: SessionDep, request: Request
+):
+    from app.auth.security.password_history import (
+        add_password_to_history,
+        check_password_not_reused,
+    )
 
     if not verify_password(body.current_password, current_user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Current password is incorrect")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Current password is incorrect"
+        )
 
     if not await check_password_not_reused(session, current_user.id, body.new_password):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password was recently used")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Password was recently used"
+        )
 
     new_hashed = hash_password(body.new_password)
     await add_password_to_history(session, current_user.id, current_user.hashed_password)
@@ -227,6 +256,7 @@ async def forgot_password(body: ForgotPasswordRequest, session: SessionDep):
     import logging
     import secrets
     from datetime import timedelta
+
     from app.auth.db_models import PasswordResetToken
 
     logger = logging.getLogger("fastauth.auth")
@@ -250,9 +280,11 @@ async def forgot_password(body: ForgotPasswordRequest, session: SessionDep):
 @router.post("/reset-password")
 async def reset_password(body: ResetPasswordRequest, session: SessionDep, request: Request):
     import hashlib
+
+    from sqlmodel import select
+
     from app.auth.db_models import PasswordResetToken
     from app.auth.services import session_service as svc
-    from sqlmodel import select
 
     token_hash = hashlib.sha256(body.token.encode()).hexdigest()
     now = datetime.now(UTC)
@@ -260,22 +292,29 @@ async def reset_password(body: ResetPasswordRequest, session: SessionDep, reques
     result = await session.exec(
         select(PasswordResetToken).where(
             PasswordResetToken.token_hash == token_hash,
-            PasswordResetToken.used_at.is_(None),  # type: ignore[attr-defined]
+            PasswordResetToken.used_at.is_(None),  # type: ignore
             PasswordResetToken.expires_at > now,
         )
     )
     reset_token = result.first()
     if reset_token is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token"
+        )
 
     user = await store.get_by_id(session, reset_token.user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
 
-    from app.auth.security.password_history import add_password_to_history, check_password_not_reused
+    from app.auth.security.password_history import (
+        add_password_to_history,
+        check_password_not_reused,
+    )
 
     if not await check_password_not_reused(session, user.id, body.new_password):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password was recently used")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Password was recently used"
+        )
 
     await add_password_to_history(session, user.id, user.hashed_password)
     user.hashed_password = hash_password(body.new_password)

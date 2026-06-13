@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from sqlmodel import select
 
 from app.auth.db_models import AuditLog
-from app.auth.deps import CurrentUser, SessionDep
+from app.auth.deps import SessionDep
 from app.auth.rbac.dependencies import RequireRoles
 
 router = APIRouter(prefix="/auth/audit", tags=["audit"])
@@ -33,21 +33,21 @@ async def list_audit_logs(
         query = query.where(AuditLog.created_at >= since)
     if until:
         query = query.where(AuditLog.created_at <= until)
-    query = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit)  # type: ignore[attr-defined]
+    query = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit)  # type: ignore
     result = await session.exec(query)
     logs = list(result.all())
     return {
         "logs": [
             {
-                "id": l.id,
-                "event_type": l.event_type,
-                "user_id": l.user_id,
-                "ip_address": l.ip_address,
-                "outcome": l.outcome,
-                "created_at": l.created_at.isoformat(),
-                "metadata": json.loads(l.metadata_json) if l.metadata_json else None,
+                "id": log.id,
+                "event_type": log.event_type,
+                "user_id": log.user_id,
+                "ip_address": log.ip_address,
+                "outcome": log.outcome,
+                "created_at": log.created_at.isoformat(),
+                "metadata": json.loads(log.metadata_json) if log.metadata_json else None,
             }
-            for l in logs
+            for log in logs
         ],
         "total": len(logs),
     }
@@ -60,22 +60,24 @@ async def export_audit_logs(
     limit: int = Query(default=10000, le=50000),
 ):
     result = await session.exec(
-        select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)  # type: ignore[attr-defined]
+        select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)  # type: ignore
     )
     logs = list(result.all())
 
     if format == "json":
-        data = json.dumps([
-            {
-                "id": l.id,
-                "event_type": l.event_type,
-                "user_id": l.user_id,
-                "ip_address": l.ip_address,
-                "outcome": l.outcome,
-                "created_at": l.created_at.isoformat(),
-            }
-            for l in logs
-        ])
+        data = json.dumps(
+            [
+                {
+                    "id": log.id,
+                    "event_type": log.event_type,
+                    "user_id": log.user_id,
+                    "ip_address": log.ip_address,
+                    "outcome": log.outcome,
+                    "created_at": log.created_at.isoformat(),
+                }
+                for log in logs
+            ]
+        )
         return StreamingResponse(
             iter([data]),
             media_type="application/json",
@@ -85,8 +87,11 @@ async def export_audit_logs(
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(["id", "event_type", "user_id", "ip_address", "outcome", "created_at"])
-    for l in logs:
-        writer.writerow([l.id, l.event_type, l.user_id, l.ip_address, l.outcome, l.created_at.isoformat()])
+    for log in logs:
+        writer.writerow([
+            log.id, log.event_type, log.user_id,
+            log.ip_address, log.outcome, log.created_at.isoformat(),
+        ])
 
     buf.seek(0)
     return StreamingResponse(

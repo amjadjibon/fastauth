@@ -46,7 +46,7 @@ async def find_active_by_user_id(session: AsyncSession, user_id: str) -> list[Us
     result = await session.exec(
         select(UserSession).where(
             UserSession.user_id == user_id,
-            UserSession.revoked_at.is_(None),  # type: ignore[attr-defined]
+            UserSession.revoked_at.is_(None),  # type: ignore
             UserSession.expires_at > now,
         )
     )

@@ -21,6 +21,7 @@ def test_totp_qr_code_uri():
 
 def test_totp_verify_with_pyotp():
     import pyotp
+
     secret = generate_secret()
     totp = pyotp.TOTP(secret)
     code = totp.now()
@@ -50,20 +51,26 @@ async def test_mfa_setup_requires_auth(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_mfa_login_flow(client: AsyncClient):
     # Register a user
-    r = await client.post("/auth/register", json={
-        "username": "mfatestuser",
-        "email": "mfatestuser@example.com",
-        "password": "Test1234!",
-    })
+    r = await client.post(
+        "/auth/register",
+        json={
+            "username": "mfatestuser",
+            "email": "mfatestuser@example.com",
+            "password": "Test1234!",
+        },
+    )
     if r.status_code == 429:
         pytest.skip("registration rate limited")
     assert r.status_code == 201
 
     # Login should succeed without MFA
-    r = await client.post("/auth/login", json={
-        "username": "mfatestuser",
-        "password": "Test1234!",
-    })
+    r = await client.post(
+        "/auth/login",
+        json={
+            "username": "mfatestuser",
+            "password": "Test1234!",
+        },
+    )
     assert r.status_code == 200
     data = r.json()
     assert data["mfa_required"] is False
@@ -74,11 +81,14 @@ async def test_mfa_login_flow(client: AsyncClient):
 async def test_totp_secret_is_encrypted_in_db(client: AsyncClient):
     """After MFA setup, the DB value should be a Fernet ciphertext (starts with gAAAAA)."""
     # Register + login
-    r0 = await client.post("/auth/register", json={
-        "username": "mfa_enc_test",
-        "email": "mfa_enc_test@example.com",
-        "password": "Test1234!",
-    })
+    r0 = await client.post(
+        "/auth/register",
+        json={
+            "username": "mfa_enc_test",
+            "email": "mfa_enc_test@example.com",
+            "password": "Test1234!",
+        },
+    )
     if r0.status_code == 429:
         pytest.skip("registration rate limited")
     r = await client.post("/auth/login", json={"username": "mfa_enc_test", "password": "Test1234!"})
@@ -91,17 +101,18 @@ async def test_totp_secret_is_encrypted_in_db(client: AsyncClient):
     # Query the DB directly
     from sqlmodel import select
     from sqlmodel.ext.asyncio.session import AsyncSession
+
     from app.auth.db_models import UserMfaSecret
     from app.core.db import engine
 
     async with AsyncSession(engine) as session:
         result = await session.exec(
-            select(UserMfaSecret).join(
+            select(UserMfaSecret)
+            .join(
                 __import__("app.auth.models", fromlist=["User"]).User,
-                UserMfaSecret.user_id == __import__("app.auth.models", fromlist=["User"]).User.id
-            ).where(
-                __import__("app.auth.models", fromlist=["User"]).User.username == "mfa_enc_test"
+                UserMfaSecret.user_id == __import__("app.auth.models", fromlist=["User"]).User.id,  # type: ignore
             )
+            .where(__import__("app.auth.models", fromlist=["User"]).User.username == "mfa_enc_test")
         )
         mfa = result.first()
 

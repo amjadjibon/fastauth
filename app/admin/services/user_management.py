@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -5,8 +7,6 @@ from app.auth.db_models import UserMfaSecret, UserSession
 from app.auth.models import User
 from app.auth.rbac.repositories import role_repository
 from app.auth.security.lockout import is_account_locked, lock_account, unlock_account
-
-from datetime import UTC, datetime
 
 
 async def list_users(
@@ -19,9 +19,9 @@ async def list_users(
     query = select(User)
     if search:
         query = query.where(
-            User.username.contains(search) | User.email.contains(search)  # type: ignore[attr-defined]
+            User.username.contains(search) | User.email.contains(search)  # type: ignore
         )
-    count_result = await session.exec(select(func.count(User.id)))
+    count_result = await session.exec(select(func.count()))
     total = count_result.one() or 0
     query = query.offset((page - 1) * limit).limit(limit)
     result = await session.exec(query)
@@ -35,15 +35,17 @@ async def get_user_detail(session: AsyncSession, user_id: str) -> dict | None:
 
     roles = await role_repository.get_user_roles(session, user_id)
     mfa_result = await session.exec(
-        select(UserMfaSecret).where(UserMfaSecret.user_id == user_id, UserMfaSecret.is_verified == True)  # noqa: E712
+        select(UserMfaSecret).where(
+            UserMfaSecret.user_id == user_id, UserMfaSecret.is_verified
+        )
     )
     mfa_enabled = mfa_result.first() is not None
 
     now = datetime.now(UTC)
     session_result = await session.exec(
-        select(func.count(UserSession.id)).where(
+        select(func.count()).where(
             UserSession.user_id == user_id,
-            UserSession.revoked_at.is_(None),  # type: ignore[attr-defined]
+            UserSession.revoked_at.is_(None),  # type: ignore
             UserSession.expires_at > now,
         )
     )
@@ -73,7 +75,4 @@ async def unlock_user(user_id: str, redis=None) -> None:
 
 async def force_password_reset(session: AsyncSession, user_id: str) -> bool:
     user = await session.get(User, user_id)
-    if user is None:
-        return False
-    # In a full implementation, set a password_reset_required flag or send email
-    return True
+    return user is not None
