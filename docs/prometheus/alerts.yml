@@ -1,0 +1,49 @@
+groups:
+  - name: fastauth_security
+    rules:
+      - alert: HighFailedLoginRate
+        expr: rate(fastauth_auth_login_attempts_total{success="false"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High failed login rate detected"
+          description: "{{ $value }} failed login attempts per second over the last 5 minutes."
+
+      - alert: BruteForceAttackDetected
+        expr: increase(fastauth_auth_brute_force_blocks_total[5m]) > 20
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Brute force attack in progress"
+          description: "{{ $value }} brute-force blocks in the last 5 minutes."
+
+      - alert: HighMFAFailureRate
+        expr: rate(fastauth_auth_mfa_attempts_total{success="false"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High MFA failure rate"
+          description: "{{ $value }} MFA failures per second."
+
+  - name: fastauth_availability
+    rules:
+      - alert: HighErrorRate
+        expr: rate(fastauth_http_requests_total{status_code=~"5.."}[5m]) > 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "{{ $value }} 5xx errors per second."
+
+      - alert: SlowRequestLatency
+        expr: histogram_quantile(0.95, rate(fastauth_http_request_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 request latency above 1 second"
+          description: "95th percentile latency is {{ $value }}s."
