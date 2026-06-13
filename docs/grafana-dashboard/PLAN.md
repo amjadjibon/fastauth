@@ -32,8 +32,8 @@ Build a provisioned Grafana dashboard that gives operators a single-pane view of
 
 **Goal**: Wire up the dashboard auto-loader so any JSON file placed in the dashboards folder is picked up on startup.
 
-- [ ] TASK-001: Create `conf/grafana/provisioning/dashboards/dashboards.yml` with provider config pointing to `/etc/grafana/dashboards` folder, `disableDeletion: false`, `updateIntervalSeconds: 30`.
-- [ ] TASK-002: Update `compose.telemetry.yaml` grafana service: add volume mount `./conf/grafana/provisioning/dashboards:/etc/grafana/dashboards:ro` alongside the existing provisioning mount.
+- [x] TASK-001: Create `conf/grafana/provisioning/dashboards/dashboards.yml` with provider config pointing to `/etc/grafana/dashboards` folder, `disableDeletion: false`, `updateIntervalSeconds: 30`.
+- [x] TASK-002: Update `compose.telemetry.yaml` grafana service: add volume mount `./conf/grafana/provisioning/dashboards:/etc/grafana/dashboards:ro` alongside the existing provisioning mount.
 
 **Completion criteria**: `docker compose -f compose.yaml -f compose.telemetry.yaml up grafana` starts without errors; Grafana UI shows "Dashboards" provisioning source in Configuration → Data sources.
 
