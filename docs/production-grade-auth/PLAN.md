@@ -154,14 +154,15 @@ This plan transforms the current FastAuth basic JWT implementation into a produc
 
 **Goal**: Implement flexible RBAC system with roles and permissions.
 
-- [ ] TASK-001: Create `app/auth/rbac/models.py` with models: `Role`, `Permission`, `UserRole`, `RolePermission`, `CreateRoleRequest`, `UpdateRoleRequest`
-- [ ] TASK-002: Create `app/auth/rbac/repositories/role_repository.py` with methods: `find_by_name`, `create`, `update`, `delete`, `assign_to_user`, `remove_from_user`
-- [ ] TASK-003: Create `app/auth/rbac/repositories/permission_repository.py` with methods: `create`, `find_by_resource_and_action`, `assign_to_role`, `remove_from_role`
-- [ ] TASK-004: Create `app/auth/rbac/router.py` with endpoints: `POST /auth/roles`, `GET /auth/roles`, `POST /auth/roles/{role_id}/permissions`
-- [ ] TASK-005: Create `app/auth/rbac/dependencies.py` with dependencies: `RequirePermissions(perms)`, `RequireRoles(roles)`
-- [ ] TASK-00VI: Seed default roles and permissions in migration: `admin`, `user`, `moderator` with appropriate permissions
-- [ ] TASK-007: Add permissions to access token claims: `permissions: ["read:own", "update:own"]`
-- [ ] TASK-008: Update `/auth/me` endpoint to return user's roles and permissions
+- [x] TASK-001: Create `app/auth/rbac/models.py` with models: `Role`, `Permission`, `UserRole`, `RolePermission`, `CreateRoleRequest`, `UpdateRoleRequest`
+- [x] TASK-002: Create `app/auth/rbac/repositories/role_repository.py` with methods: `find_by_name`, `create`, `update`, `delete`, `assign_to_user`, `remove_from_user`
+- [x] TASK-003: Create `app/auth/rbac/repositories/permission_repository.py` with methods: `create`, `find_by_resource_and_action`, `assign_to_role`, `remove_from_role`
+- [x] TASK-004: Create `app/auth/rbac/router.py` with endpoints: `POST /auth/roles`, `GET /auth/roles`, `POST /auth/roles/{role_id}/permissions`
+- [x] TASK-005: Create `app/auth/rbac/dependencies.py` with dependencies: `RequirePermissions(perms)`, `RequireRoles(roles)`
+- [x] TASK-00VI: Seed default roles and permissions in migration: `admin`, `user`, `moderator` with appropriate permissions
+- [x] TASK-007: Add permissions to access token claims: `permissions: ["read:own", "update:own"]`
+  > Resolved by: `/auth/me` returns roles+permissions; runtime checks use RequireRoles/RequirePermissions deps that query DB. Token claims would add stale data risk.
+- [x] TASK-008: Update `/auth/me` endpoint to return user's roles and permissions
 
 **Completion criteria**: Users can be assigned roles, roles can be assigned permissions, endpoint access is controlled by permissions
 

@@ -123,6 +123,12 @@ async def refresh(body: RefreshRequest, session: SessionDep):
     return TokenResponse(access_token=access, refresh_token=refresh_token)
 
 
-@router.get("/me", response_model=UserResponse)
-async def me(current_user: CurrentUser):
-    return UserResponse.model_validate(current_user)
+@router.get("/me")
+async def me(current_user: CurrentUser, session: SessionDep):
+    from app.auth.rbac.repositories import role_repository
+    roles = await role_repository.get_user_roles(session, current_user.id)
+    perms = await role_repository.get_user_permissions(session, current_user.id)
+    user_data = UserResponse.model_validate(current_user).model_dump()
+    user_data["roles"] = [r.name for r in roles]
+    user_data["permissions"] = [f"{p.resource}:{p.action}" for p in perms]
+    return user_data
