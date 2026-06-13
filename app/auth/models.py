@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 
 from pydantic import ConfigDict, EmailStr, field_validator
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Boolean, Column, DateTime, String
 from sqlmodel import Field, SQLModel
 
 _JWT_EXAMPLE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
@@ -23,6 +23,9 @@ class User(SQLModel, table=True):
     username: str = Field(sa_column=Column(String(32), unique=True, index=True))
     email: str = Field(sa_column=Column(String(254), unique=True))
     hashed_password: str = Field(sa_column=Column(String(60)))
+    email_verified: bool = Field(
+        default=False, sa_column=Column(Boolean(), nullable=False, server_default="0")
+    )
     created_at: datetime = Field(
         default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
     )

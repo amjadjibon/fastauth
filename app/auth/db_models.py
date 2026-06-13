@@ -336,6 +336,28 @@ class PasswordResetToken(SQLModel, table=True):
 
 
 # ---------------------------------------------------------------------------
+# Email verification tokens table
+# ---------------------------------------------------------------------------
+
+
+class EmailVerificationToken(SQLModel, table=True):
+    __tablename__ = "email_verification_tokens"
+
+    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
+    user_id: str = Field(
+        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    )
+    token_hash: str = Field(sa_column=Column(String(64), nullable=False, index=True))
+    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    used_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    created_at: datetime = Field(
+        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
+
+
+# ---------------------------------------------------------------------------
 # API key table
 # ---------------------------------------------------------------------------
 

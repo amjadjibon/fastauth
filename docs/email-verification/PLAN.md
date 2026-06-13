@@ -33,9 +33,9 @@ Registration accepts any email address today. This adds a flag-gated email verif
 
 **Goal**: Add `email_verified` column to `user` table and `email_verification_tokens` table.
 
-- [ ] TASK-001: Add `email_verified: bool` column to `User` in `app/auth/models.py` — `Field(default=False, sa_column=Column(Boolean(), nullable=False, server_default="0"))`.
-- [ ] TASK-002: Add `EmailVerificationToken` model to `app/auth/db_models.py` — fields: `id`, `user_id` (FK → user, CASCADE), `token_hash` (String(64), indexed), `expires_at`, `used_at` (nullable), `created_at`.
-- [ ] TASK-003: Write `migrations/versions/2000000011_add_email_verification.py` — adds `email_verified` column to `user` table and creates `email_verification_tokens` table with index on `token_hash`.
+- [x] TASK-001: Add `email_verified: bool` column to `User` in `app/auth/models.py` — `Field(default=False, sa_column=Column(Boolean(), nullable=False, server_default="0"))`.
+- [x] TASK-002: Add `EmailVerificationToken` model to `app/auth/db_models.py` — fields: `id`, `user_id` (FK → user, CASCADE), `token_hash` (String(64), indexed), `expires_at`, `used_at` (nullable), `created_at`.
+- [x] TASK-003: Write `migrations/versions/2000000011_add_email_verification.py` — adds `email_verified` column to `user` table and creates `email_verification_tokens` table with index on `token_hash`.
 
 **Completion criteria**: `uv run alembic upgrade head` runs without error on a fresh Postgres DB; `email_verified` column and `email_verification_tokens` table exist.
 
