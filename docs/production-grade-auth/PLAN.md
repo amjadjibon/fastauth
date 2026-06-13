@@ -40,13 +40,13 @@ This plan transforms the current FastAuth basic JWT implementation into a produc
 
 **Goal**: Create comprehensive database schema supporting OAuth2, MFA, sessions, and RBAC while maintaining backward compatibility.
 
-- [ ] TASK-001: Create `migrations/versions/XXX_add_oauth_tables.py` with tables: `oauth_clients`, `oauth_authorization_codes`, `oauth_access_tokens`, `oauth_refresh_tokens`
-- [ ] TASK-002: Create `migrations/versions/XXX_add_mfa_tables.py` with tables: `user_mfa_secrets`, `user_mfa_backup_codes`
-- [ ] TASK-003: Create `migrations/versions/XXX_add_sessions_table.py` with table: `user_sessions` (session_id, user_id, refresh_token_jti, device_info, ip_address, expires_at, revoked_at)
-- [ ] TASK-004: Create `migrations/versions/XXX_add_social_accounts_table.py` with table: `user_social_accounts` (provider, provider_user_id, access_token, refresh_token)
-- [ ] TASK-005: Create `migrations/versions/XXX_add_rbac_tables.py` with tables: `roles`, `permissions`, `user_roles`, `role_permissions`
-- [ ] TASK-006: Create `migrations/versions/XXX_add_audit_log_table.py` with table: `audit_logs` (event_type, user_id, ip_address, user_agent, metadata, created_at)
-- [ ] TASK-007: Add indexes on frequently queried columns: `user_sessions.user_id`, `user_sessions.expires_at`, `audit_logs.user_id`, `audit_logs.created_at`
+- [x] TASK-001: Create `migrations/versions/XXX_add_oauth_tables.py` with tables: `oauth_clients`, `oauth_authorization_codes`, `oauth_access_tokens`, `oauth_refresh_tokens`
+- [x] TASK-002: Create `migrations/versions/XXX_add_mfa_tables.py` with tables: `user_mfa_secrets`, `user_mfa_backup_codes`
+- [x] TASK-003: Create `migrations/versions/XXX_add_sessions_table.py` with table: `user_sessions` (session_id, user_id, refresh_token_jti, device_info, ip_address, expires_at, revoked_at)
+- [x] TASK-004: Create `migrations/versions/XXX_add_social_accounts_table.py` with table: `user_social_accounts` (provider, provider_user_id, access_token, refresh_token)
+- [x] TASK-005: Create `migrations/versions/XXX_add_rbac_tables.py` with tables: `roles`, `permissions`, `user_roles`, `role_permissions`
+- [x] TASK-006: Create `migrations/versions/XXX_add_audit_log_table.py` with table: `audit_logs` (event_type, user_id, ip_address, user_agent, metadata, created_at)
+- [x] TASK-007: Add indexes on frequently queried columns: `user_sessions.user_id`, `user_sessions.expires_at`, `audit_logs.user_id`, `audit_logs.created_at`
 
 **Completion criteria**: All migrations run successfully on both SQLite and PostgreSQL, schema validates with `alembic check`
 
