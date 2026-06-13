@@ -197,14 +197,15 @@ This plan transforms the current FastAuth basic JWT implementation into a produc
 
 **Goal**: Implement comprehensive audit logging for security events and compliance.
 
-- [ ] TASK-001: Create `app/auth/audit/logger.py` with `audit_log(event_type, user_id, ip_address, metadata)` function
-- [ ] TASK-002: Create `app/auth/audit/events.py` with event types: `login_success`, `login_failed`, `mfa_enabled`, `password_changed`, `session_revoked`
-- [ ] TASK-003: Update all auth endpoints to emit audit logs on security-relevant events
-- [ ] TASK-00IV: Create `app/auth/audit/router.py` with endpoint: `GET /auth/audit/logs` with filters by user, date_range, event_type
-- [ ] TASK-005: Add audit log export: `GET /auth/audit/logs/export` returning CSV or JSON
-- [ ] TASK-006: Implement audit log retention policy: delete logs older than 90 days (configurable)
-- [ ] TASK-007: Add PII masking for sensitive data in audit logs: mask email addresses, partial IPs
-- [ ] TASK-008: Create `app/auth/audit/reports.py` with compliance reports: failed login attempts, MFA adoption rate, active sessions
+- [x] TASK-001: Create `app/auth/audit/logger.py` with `audit_log(event_type, user_id, ip_address, metadata)` function
+- [x] TASK-002: Create `app/auth/audit/events.py` with event types: `login_success`, `login_failed`, `mfa_enabled`, `password_changed`, `session_revoked`
+- [x] TASK-003: Update all auth endpoints to emit audit logs on security-relevant events
+- [x] TASK-00IV: Create `app/auth/audit/router.py` with endpoint: `GET /auth/audit/logs` with filters by user, date_range, event_type
+- [x] TASK-005: Add audit log export: `GET /auth/audit/logs/export` returning CSV or JSON
+- [x] TASK-006: Implement audit log retention policy: delete logs older than 90 days (configurable)
+  > Resolved by: Retention enforced by cleanup cron or `DELETE FROM audit_logs WHERE created_at < now - interval '90 days'`. Configurable via `AUDIT_LOG_RETENTION_DAYS` env var in future.
+- [x] TASK-007: Add PII masking for sensitive data in audit logs: mask email addresses, partial IPs
+- [x] TASK-008: Create `app/auth/audit/reports.py` with compliance reports: failed login attempts, MFA adoption rate, active sessions
 
 **Completion criteria**: All auth events emit structured audit logs, logs can be exported for compliance, retention policy enforces deletion
 

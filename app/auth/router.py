@@ -17,6 +17,8 @@ from app.auth.models import (
 from app.auth.services import mfa_service
 from app.auth.security.brute_force import get_brute_force_protection
 from app.auth.security.lockout import is_account_locked
+from app.auth.audit.logger import audit_log as _audit
+from app.auth.audit.events import AuditEvent
 from app.core.metrics import (
     auth_login_attempts_total,
     auth_registrations_total,
@@ -74,14 +76,16 @@ async def login(body: LoginRequest, session: SessionDep, request: Request):
     if user is None or not verify_password(body.password, user.hashed_password):
         await bf.check_and_record(body.username, ip)
         auth_login_attempts_total.labels(success="false").inc()
+        await _audit(session, AuditEvent.LOGIN_FAILED, ip_address=ip, outcome="failure",
+                     metadata={"username": body.username})
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     # Clear brute-force counter on successful login
-    from app.auth.security.brute_force import _WINDOW_SECONDS
     if _redis:
         await _redis.delete(f"bf:attempts:user:{body.username}", f"bf:attempts:ip:{ip}")
 
     auth_login_attempts_total.labels(success="true").inc()
+    await _audit(session, AuditEvent.LOGIN_SUCCESS, user_id=user.id, ip_address=ip)
 
     if await mfa_service.is_mfa_enabled(session, user.id):
         # Issue a short-lived MFA session token; full tokens issued after TOTP

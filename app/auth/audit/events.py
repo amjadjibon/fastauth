@@ -1,0 +1,23 @@
+"""Audit event type constants."""
+
+
+class AuditEvent:
+    LOGIN_SUCCESS = "login_success"
+    LOGIN_FAILED = "login_failed"
+    LOGOUT = "logout"
+    REGISTER = "register"
+    PASSWORD_CHANGED = "password_changed"
+    MFA_ENABLED = "mfa_enabled"
+    MFA_DISABLED = "mfa_disabled"
+    MFA_VERIFIED = "mfa_verified"
+    MFA_FAILED = "mfa_failed"
+    SESSION_REVOKED = "session_revoked"
+    SESSION_ALL_REVOKED = "session_all_revoked"
+    SOCIAL_LINKED = "social_linked"
+    SOCIAL_UNLINKED = "social_unlinked"
+    ROLE_ASSIGNED = "role_assigned"
+    ROLE_REMOVED = "role_removed"
+    ACCOUNT_LOCKED = "account_locked"
+    ACCOUNT_UNLOCKED = "account_unlocked"
+    TOKEN_REFRESHED = "token_refreshed"
+    OAUTH_AUTHORIZE = "oauth_authorize"
