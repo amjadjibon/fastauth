@@ -30,6 +30,13 @@ from app.core.security import hash_password
 USER_ROLE_ID = "00000000-0000-0000-0000-000000000002"
 ADMIN_ROLE_ID = "00000000-0000-0000-0000-000000000001"
 
+_SQLITE_MAX_PARAMS = 999
+
+
+def _chunks(lst: list, n: int):
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
+
 
 async def seed(count: int, prefix: str, password: str, output: Path, add_admin: bool) -> None:
     engine = create_async_engine(settings.async_database_url, echo=False)
@@ -68,7 +75,9 @@ async def seed(count: int, prefix: str, password: str, output: Path, add_admin: 
     print(f"Inserting {len(user_rows)} users…")
     async with engine.begin() as conn:
         if is_sqlite:
-            stmt = insert(User).prefix_with("OR IGNORE").values(user_rows)
+            chunk_size = _SQLITE_MAX_PARAMS // len(user_rows[0])
+            for chunk in _chunks(user_rows, chunk_size):
+                await conn.execute(insert(User).prefix_with("OR IGNORE").values(chunk))
         else:
             from sqlalchemy.dialects.postgresql import insert as pg_insert
 
@@ -77,22 +86,25 @@ async def seed(count: int, prefix: str, password: str, output: Path, add_admin: 
                 .values(user_rows)
                 .on_conflict_do_nothing(index_elements=["username"])
             )
-        await conn.execute(stmt)
+            await conn.execute(stmt)
 
         # Resolve which rows actually exist (handles partial re-runs gracefully).
         usernames = [r["username"] for r in user_rows]
         if is_sqlite:
-            placeholders = ", ".join(f":n{i}" for i in range(len(usernames)))
-            result = await conn.execute(
-                text(f'SELECT id, username FROM "user" WHERE username IN ({placeholders})'),
-                {f"n{i}": v for i, v in enumerate(usernames)},
-            )
+            id_map: dict[str, str] = {}
+            for chunk in _chunks(usernames, _SQLITE_MAX_PARAMS):
+                placeholders = ", ".join(f":n{i}" for i in range(len(chunk)))
+                result = await conn.execute(
+                    text(f'SELECT id, username FROM "user" WHERE username IN ({placeholders})'),
+                    {f"n{i}": v for i, v in enumerate(chunk)},
+                )
+                id_map.update({row.username: row.id for row in result})
         else:
             result = await conn.execute(
                 text('SELECT id, username FROM "user" WHERE username = ANY(:names)'),
                 {"names": usernames},
             )
-        id_map = {row.username: row.id for row in result}
+            id_map = {row.username: row.id for row in result}
 
         # Bulk insert user_roles
         role_rows = [
@@ -107,7 +119,9 @@ async def seed(count: int, prefix: str, password: str, output: Path, add_admin: 
         ]
         if role_rows:
             if is_sqlite:
-                role_stmt = insert(UserRole).prefix_with("OR IGNORE").values(role_rows)
+                chunk_size = _SQLITE_MAX_PARAMS // len(role_rows[0])
+                for chunk in _chunks(role_rows, chunk_size):
+                    await conn.execute(insert(UserRole).prefix_with("OR IGNORE").values(chunk))
             else:
                 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
@@ -116,7 +130,7 @@ async def seed(count: int, prefix: str, password: str, output: Path, add_admin: 
                     .values(role_rows)
                     .on_conflict_do_nothing(constraint="uq_user_role")
                 )
-            await conn.execute(role_stmt)
+                await conn.execute(role_stmt)
 
     await engine.dispose()
 
