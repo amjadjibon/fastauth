@@ -29,3 +29,8 @@ async def register_page(request: Request):
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
     return templates.TemplateResponse(request, "dashboard.html")
+
+
+@router.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard_page(request: Request):
+    return templates.TemplateResponse(request, "admin/dashboard.html")

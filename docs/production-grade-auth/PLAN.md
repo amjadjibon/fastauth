@@ -217,14 +217,14 @@ This plan transforms the current FastAuth basic JWT implementation into a produc
 
 **Goal**: Create admin APIs and basic dashboard for user and session management.
 
-- [ ] TASK-001: Create `app/admin/router.py` with endpoints: `GET /admin/users`, `GET /admin/users/{user_id}`, `PATCH /admin/users/{user_id}`, `DELETE /admin/users/{user_id}`
-- [ ] TASK-002: Create `app/admin/models.py` with models: `UserListResponse`, `UserDetailResponse`, `UpdateUserRequest`
-- [ ] TASK-003: Create `app/admin/services/user_management.py` with methods: `list_users`, `get_user_detail`, `lock_user`, `unlock_user`, `force_password_reset`
-- [ ] TASK-004: Add admin dependencies: `RequireAdminRole` to all admin endpoints
-- [ ] TASK-005: Create `app/admin/dashboard.py` with endpoint: `GET /admin/dashboard` returning metrics: total_users, active_sessions, mfa_enabled_users, failed_login_attempts_24h
-- [ ] TASK-006: Create admin panel: `templates/admin/dashboard.html` with user table, session viewer, audit log viewer
-- [ ] TASK-007: Add pagination and filtering to user list: `GET /admin/users?page=1&limit=50&search=username&status=active`
-- [ ] TASK-008: Add bulk operations: `POST /admin/users/bulk-lock`, `POST /admin/users/bulk-delete`
+- [x] TASK-001: Create `app/admin/router.py` with endpoints: `GET /admin/users`, `GET /admin/users/{user_id}`, `PATCH /admin/users/{user_id}`, `DELETE /admin/users/{user_id}`
+- [x] TASK-002: Create `app/admin/models.py` with models: `UserListResponse`, `UserDetailResponse`, `UpdateUserRequest`
+- [x] TASK-003: Create `app/admin/services/user_management.py` with methods: `list_users`, `get_user_detail`, `lock_user`, `unlock_user`, `force_password_reset`
+- [x] TASK-004: Add admin dependencies: `RequireAdminRole` to all admin endpoints
+- [x] TASK-005: Create `app/admin/dashboard.py` with endpoint: `GET /admin/dashboard` returning metrics: total_users, active_sessions, mfa_enabled_users, failed_login_attempts_24h
+- [x] TASK-006: Create admin panel: `templates/admin/dashboard.html` with user table, session viewer, audit log viewer
+- [x] TASK-007: Add pagination and filtering to user list: `GET /admin/users?page=1&limit=50&search=username&status=active`
+- [x] TASK-008: Add bulk operations: `POST /admin/users/bulk-lock`, `POST /admin/users/bulk-delete`
 
 **Completion criteria**: Admins can manage users, view dashboard metrics, export audit logs via UI and API
 

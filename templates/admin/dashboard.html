@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAuth Admin Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+        header { background: #1e293b; padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid #334155; }
+        header h1 { font-size: 1.25rem; font-weight: 700; color: #f1f5f9; }
+        .badge { background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
+        main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .metric-card { background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; padding: 1.5rem; }
+        .metric-card .label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+        .metric-card .value { font-size: 2rem; font-weight: 700; color: #f1f5f9; margin-top: 0.25rem; }
+        .section { background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #f1f5f9; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th { text-align: left; padding: 0.5rem; color: #94a3b8; border-bottom: 1px solid #334155; font-weight: 500; }
+        td { padding: 0.5rem; border-bottom: 1px solid #1e293b; }
+        .status-active { color: #4ade80; }
+        .status-locked { color: #f87171; }
+        .btn { padding: 0.375rem 0.75rem; border-radius: 0.25rem; border: none; cursor: pointer; font-size: 0.75rem; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-primary { background: #3b82f6; color: white; }
+        input[type="text"] { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 0.5rem; border-radius: 0.25rem; width: 100%; max-width: 300px; }
+        .search-row { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; }
+        #loading { display: none; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>FastAuth</h1>
+        <span class="badge">Admin</span>
+    </header>
+    <main>
+        <div class="metrics" id="metrics">
+            <div class="metric-card"><div class="label">Total Users</div><div class="value" id="m-users">—</div></div>
+            <div class="metric-card"><div class="label">Active Sessions</div><div class="value" id="m-sessions">—</div></div>
+            <div class="metric-card"><div class="label">MFA Enabled</div><div class="value" id="m-mfa">—</div></div>
+            <div class="metric-card"><div class="label">Failed Logins (24h)</div><div class="value" id="m-failed">—</div></div>
+        </div>
+
+        <div class="section">
+            <h2>Users</h2>
+            <div class="search-row">
+                <input type="text" id="search" placeholder="Search username or email..." oninput="loadUsers()">
+                <span id="loading">Loading...</span>
+            </div>
+            <table>
+                <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Created</th><th>Actions</th></tr></thead>
+                <tbody id="users-table"></tbody>
+            </table>
+        </div>
+    </main>
+    <script>
+        const token = localStorage.getItem('access_token');
+        const headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+        async function loadMetrics() {
+            try {
+                const r = await fetch('/admin/dashboard', { headers });
+                const d = await r.json();
+                document.getElementById('m-users').textContent = d.total_users;
+                document.getElementById('m-sessions').textContent = d.active_sessions;
+                document.getElementById('m-mfa').textContent = d.mfa_enabled_users;
+                document.getElementById('m-failed').textContent = d.failed_login_attempts_24h;
+            } catch(e) { console.error('Failed to load metrics', e); }
+        }
+
+        async function loadUsers() {
+            const search = document.getElementById('search').value;
+            document.getElementById('loading').style.display = 'inline';
+            try {
+                const url = '/admin/users?limit=50' + (search ? '&search=' + encodeURIComponent(search) : '');
+                const r = await fetch(url, { headers });
+                const d = await r.json();
+                const tbody = document.getElementById('users-table');
+                tbody.innerHTML = d.users.map(u => `
+                    <tr>
+                        <td style="font-family:monospace;font-size:0.75rem">${u.id}</td>
+                        <td>${u.username}</td>
+                        <td>${u.email}</td>
+                        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="lockUser('${u.id}')">Lock</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function lockUser(id) {
+            if (!confirm('Lock this user?')) return;
+            await fetch('/admin/users/' + id + '/lock', { method: 'POST', headers });
+            loadUsers();
+        }
+
+        loadMetrics();
+        loadUsers();
+    </script>
+</body>
+</html>
