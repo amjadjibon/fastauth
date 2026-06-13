@@ -17,6 +17,7 @@ bearer = HTTPBearer()
 
 def make_tokens(user_id: str, amr: list[str] | None = None) -> tuple[str, str]:
     import uuid
+
     jti = str(uuid.uuid4())
     access = create_token(
         {"sub": user_id, "type": "access", "amr": amr or ["pwd"]},
@@ -54,6 +55,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 def RequiredScopes(scopes: list[str]):
     """Dependency factory that validates token carries the required OAuth2 scopes."""
+
     async def _check(credentials: BearerDep) -> None:
         try:
             payload = decode_token(credentials.credentials)
@@ -68,4 +70,5 @@ def RequiredScopes(scopes: list[str]):
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Scope '{required}' required",
                 )
+
     return Depends(_check)

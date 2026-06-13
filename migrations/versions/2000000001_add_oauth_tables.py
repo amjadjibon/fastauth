@@ -37,8 +37,15 @@ def upgrade() -> None:
         "oauth_authorization_codes",
         sa.Column("id", sa.String(36), primary_key=True, nullable=False),
         sa.Column("code", sa.String(128), nullable=False, unique=True),
-        sa.Column("client_id", sa.String(36), sa.ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "client_id",
+            sa.String(36),
+            sa.ForeignKey("oauth_clients.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("redirect_uri", sa.String(2048), nullable=False),
         sa.Column("scopes", sa.Text(), nullable=False),
         sa.Column("code_challenge", sa.String(128), nullable=True),
@@ -50,14 +57,23 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_oauth_authorization_codes_code", "oauth_authorization_codes", ["code"])
-    op.create_index("ix_oauth_authorization_codes_client_id", "oauth_authorization_codes", ["client_id"])
+    op.create_index(
+        "ix_oauth_authorization_codes_client_id", "oauth_authorization_codes", ["client_id"]
+    )
 
     op.create_table(
         "oauth_access_tokens",
         sa.Column("id", sa.String(36), primary_key=True, nullable=False),
         sa.Column("jti", sa.String(128), nullable=False, unique=True),
-        sa.Column("client_id", sa.String(36), sa.ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=True),
+        sa.Column(
+            "client_id",
+            sa.String(36),
+            sa.ForeignKey("oauth_clients.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+        ),
         sa.Column("scopes", sa.Text(), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
@@ -70,9 +86,21 @@ def upgrade() -> None:
         "oauth_refresh_tokens",
         sa.Column("id", sa.String(36), primary_key=True, nullable=False),
         sa.Column("token_hash", sa.String(128), nullable=False, unique=True),
-        sa.Column("client_id", sa.String(36), sa.ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=True),
-        sa.Column("access_token_id", sa.String(36), sa.ForeignKey("oauth_access_tokens.id", ondelete="CASCADE"), nullable=True),
+        sa.Column(
+            "client_id",
+            sa.String(36),
+            sa.ForeignKey("oauth_clients.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+        ),
+        sa.Column(
+            "access_token_id",
+            sa.String(36),
+            sa.ForeignKey("oauth_access_tokens.id", ondelete="CASCADE"),
+            nullable=True,
+        ),
         sa.Column("scopes", sa.Text(), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),

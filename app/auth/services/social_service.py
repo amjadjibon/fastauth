@@ -3,9 +3,9 @@ from datetime import UTC, datetime
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.auth import repositories as repo
 from app.auth.db_models import UserSocialAccount
 from app.auth.models import User
-from app.auth import repositories as repo
 
 
 async def get_oauth_url(provider: str, state: str, redirect_uri: str) -> str:
@@ -15,9 +15,7 @@ async def get_oauth_url(provider: str, state: str, redirect_uri: str) -> str:
     raise NotImplementedError(f"Provider '{provider}' not configured.")
 
 
-async def exchange_code_for_user_info(
-    provider: str, code: str, redirect_uri: str
-) -> dict | None:
+async def exchange_code_for_user_info(provider: str, code: str, redirect_uri: str) -> dict | None:
     """Exchange authorization code for provider user info."""
     raise NotImplementedError(f"Provider '{provider}' not configured.")
 
@@ -88,10 +86,9 @@ async def auto_create_user_on_social_login(
     username: str,
 ) -> User:
     import secrets as _secrets
+
     random_password = _secrets.token_hex(32)
-    user = await repo.user.create(
-        session, username=username, email=email, password=random_password
-    )
+    user = await repo.user.create(session, username=username, email=email, password=random_password)
     await link_social_account(
         session,
         user_id=user.id,

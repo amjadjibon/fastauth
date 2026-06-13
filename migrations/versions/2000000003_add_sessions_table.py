@@ -21,7 +21,9 @@ def upgrade() -> None:
     op.create_table(
         "user_sessions",
         sa.Column("id", sa.String(36), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("refresh_token_jti", sa.String(128), nullable=False, unique=True),
         sa.Column("device_type", sa.String(32), nullable=True),
         sa.Column("device_name", sa.String(128), nullable=True),

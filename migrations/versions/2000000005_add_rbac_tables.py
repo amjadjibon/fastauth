@@ -44,8 +44,12 @@ def upgrade() -> None:
     op.create_table(
         "user_roles",
         sa.Column("id", sa.String(36), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("role_id", sa.String(36), sa.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "role_id", sa.String(36), sa.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("assigned_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("assigned_by", sa.String(36), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -56,8 +60,15 @@ def upgrade() -> None:
     op.create_table(
         "role_permissions",
         sa.Column("id", sa.String(36), nullable=False),
-        sa.Column("role_id", sa.String(36), sa.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("permission_id", sa.String(36), sa.ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "role_id", sa.String(36), sa.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "permission_id",
+            sa.String(36),
+            sa.ForeignKey("permissions.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("assigned_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),
@@ -66,28 +77,40 @@ def upgrade() -> None:
 
     # Seed default roles
     from datetime import UTC, datetime
+
     now = datetime.now(UTC).isoformat()
-    op.execute(f"""
-        INSERT INTO roles (id, name, description, is_system, created_at, updated_at)
-        VALUES
-            ('00000000-0000-0000-0000-000000000001', 'admin', 'Full system access', true, '{now}', '{now}'),
-            ('00000000-0000-0000-0000-000000000002', 'user', 'Standard user access', true, '{now}', '{now}'),
-            ('00000000-0000-0000-0000-000000000003', 'moderator', 'Content moderation access', true, '{now}', '{now}')
-    """)
+    cols = "id, name, description, is_system, created_at, updated_at"
+    role_rows = ", ".join(
+        [
+            f"('00000000-0000-0000-0000-000000000001', 'admin', 'Full system access', true, '{now}', '{now}')",  # noqa: E501
+            f"('00000000-0000-0000-0000-000000000002', 'user', 'Standard user access', true, '{now}', '{now}')",  # noqa: E501
+            f"('00000000-0000-0000-0000-000000000003', 'moderator', 'Moderation access', true, '{now}', '{now}')",  # noqa: E501
+        ]
+    )
+    op.execute(f"INSERT INTO roles ({cols}) VALUES {role_rows}")
 
     # Seed default permissions
     resources_actions = [
-        ("users", "read:own"), ("users", "update:own"), ("users", "delete:own"),
-        ("users", "read:all"), ("users", "update:all"), ("users", "delete:all"),
-        ("sessions", "read:own"), ("sessions", "revoke:own"), ("sessions", "revoke:all"),
-        ("audit_logs", "read:own"), ("audit_logs", "read:all"),
-        ("roles", "read"), ("roles", "manage"),
+        ("users", "read:own"),
+        ("users", "update:own"),
+        ("users", "delete:own"),
+        ("users", "read:all"),
+        ("users", "update:all"),
+        ("users", "delete:all"),
+        ("sessions", "read:own"),
+        ("sessions", "revoke:own"),
+        ("sessions", "revoke:all"),
+        ("audit_logs", "read:own"),
+        ("audit_logs", "read:all"),
+        ("roles", "read"),
+        ("roles", "manage"),
     ]
     perm_values = []
     for i, (resource, action) in enumerate(resources_actions, start=1):
         pid = f"00000000-0000-0000-0001-{i:012d}"
         perm_values.append(f"('{pid}', '{resource}', '{action}', '{now}')")
-    op.execute(f"INSERT INTO permissions (id, resource, action, created_at) VALUES {', '.join(perm_values)}")
+    values_str = ", ".join(perm_values)
+    op.execute(f"INSERT INTO permissions (id, resource, action, created_at) VALUES {values_str}")
 
 
 def downgrade() -> None:

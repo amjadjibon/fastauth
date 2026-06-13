@@ -88,10 +88,16 @@ async def export_audit_logs(
     writer = csv.writer(buf)
     writer.writerow(["id", "event_type", "user_id", "ip_address", "outcome", "created_at"])
     for log in logs:
-        writer.writerow([
-            log.id, log.event_type, log.user_id,
-            log.ip_address, log.outcome, log.created_at.isoformat(),
-        ])
+        writer.writerow(
+            [
+                log.id,
+                log.event_type,
+                log.user_id,
+                log.ip_address,
+                log.outcome,
+                log.created_at.isoformat(),
+            ]
+        )
 
     buf.seek(0)
     return StreamingResponse(

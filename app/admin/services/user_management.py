@@ -35,9 +35,7 @@ async def get_user_detail(session: AsyncSession, user_id: str) -> dict | None:
 
     roles = await role_repository.get_user_roles(session, user_id)
     mfa_result = await session.exec(
-        select(UserMfaSecret).where(
-            UserMfaSecret.user_id == user_id, UserMfaSecret.is_verified
-        )
+        select(UserMfaSecret).where(UserMfaSecret.user_id == user_id, UserMfaSecret.is_verified)
     )
     mfa_enabled = mfa_result.first() is not None
 

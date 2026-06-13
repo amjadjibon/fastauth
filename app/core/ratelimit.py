@@ -25,6 +25,7 @@ class RateLimiter:
             token = auth_header[7:]
             try:
                 from app.core.security import decode_token
+
                 payload = decode_token(token)
                 user_id = payload.get("sub")
                 if user_id:

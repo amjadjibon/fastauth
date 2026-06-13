@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 

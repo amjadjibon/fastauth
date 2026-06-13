@@ -170,11 +170,14 @@ async def _fresh_tokens(client: AsyncClient, username: str, password: str = "Tes
 
 
 async def test_logout_revokes_session(client: AsyncClient):
-    r0 = await client.post("/auth/register", json={
-        "username": "logout_test_user",
-        "email": "logout_test@example.com",
-        "password": "Test1234!",
-    })
+    r0 = await client.post(
+        "/auth/register",
+        json={
+            "username": "logout_test_user",
+            "email": "logout_test@example.com",
+            "password": "Test1234!",
+        },
+    )
     if r0.status_code == 429:
         pytest.skip("registration rate limited")
     tkns = await _fresh_tokens(client, "logout_test_user")
@@ -198,11 +201,14 @@ async def test_logout_revokes_session(client: AsyncClient):
 
 
 async def test_change_password_wrong_current(client: AsyncClient):
-    r0 = await client.post("/auth/register", json={
-        "username": "changepw_test1",
-        "email": "changepw_test1@example.com",
-        "password": "Test1234!",
-    })
+    r0 = await client.post(
+        "/auth/register",
+        json={
+            "username": "changepw_test1",
+            "email": "changepw_test1@example.com",
+            "password": "Test1234!",
+        },
+    )
     if r0.status_code == 429:
         pytest.skip("registration rate limited")
     tkns = await _fresh_tokens(client, "changepw_test1")
@@ -218,11 +224,14 @@ async def test_change_password_wrong_current(client: AsyncClient):
 
 
 async def test_change_password_success(client: AsyncClient):
-    r0 = await client.post("/auth/register", json={
-        "username": "changepw_test2",
-        "email": "changepw_test2@example.com",
-        "password": "Test1234!",
-    })
+    r0 = await client.post(
+        "/auth/register",
+        json={
+            "username": "changepw_test2",
+            "email": "changepw_test2@example.com",
+            "password": "Test1234!",
+        },
+    )
     if r0.status_code == 429:
         pytest.skip("registration rate limited")
     tkns = await _fresh_tokens(client, "changepw_test2")
@@ -236,10 +245,14 @@ async def test_change_password_success(client: AsyncClient):
     )
     assert r.status_code == 200
 
-    r2 = await client.post("/auth/login", json={"username": "changepw_test2", "password": "Test1234!"})
+    r2 = await client.post(
+        "/auth/login", json={"username": "changepw_test2", "password": "Test1234!"}
+    )
     assert r2.status_code == 401
 
-    r3 = await client.post("/auth/login", json={"username": "changepw_test2", "password": "NewPass456!"})
+    r3 = await client.post(
+        "/auth/login", json={"username": "changepw_test2", "password": "NewPass456!"}
+    )
     assert r3.status_code == 200
 
 
@@ -261,6 +274,7 @@ async def test_reset_password_replay_rejected(client: AsyncClient):
     from datetime import UTC, datetime, timedelta
 
     from sqlalchemy import text
+
     from app.core.db import engine
 
     # Use testuser which was already registered by test_register_success
@@ -276,15 +290,28 @@ async def test_reset_password_replay_rejected(client: AsyncClient):
 
     async with engine.begin() as conn:
         expires_at = (datetime.now(UTC) + timedelta(minutes=10)).isoformat()
+        sql = (
+            "INSERT INTO password_reset_tokens"
+            " (id, user_id, token_hash, expires_at, created_at)"
+            " VALUES (:id, :uid, :th, :exp, :ca)"
+        )
         await conn.execute(
-            text("INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at, created_at) "
-                 "VALUES (:id, :uid, :th, :exp, :ca)"),
-            {"id": str(uuid.uuid4()), "uid": user_id, "th": token_hash,
-             "exp": expires_at, "ca": datetime.now(UTC).isoformat()}
+            text(sql),
+            {
+                "id": str(uuid.uuid4()),
+                "uid": user_id,
+                "th": token_hash,
+                "exp": expires_at,
+                "ca": datetime.now(UTC).isoformat(),
+            },
         )
 
-    r1 = await client.post("/auth/reset-password", json={"token": raw_token, "new_password": "Resetpass789!"})
+    r1 = await client.post(
+        "/auth/reset-password", json={"token": raw_token, "new_password": "Resetpass789!"}
+    )
     assert r1.status_code == 200
 
-    r2 = await client.post("/auth/reset-password", json={"token": raw_token, "new_password": "Resetpass789!"})
+    r2 = await client.post(
+        "/auth/reset-password", json={"token": raw_token, "new_password": "Resetpass789!"}
+    )
     assert r2.status_code == 400

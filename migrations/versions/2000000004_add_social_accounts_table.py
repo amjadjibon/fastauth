@@ -21,7 +21,9 @@ def upgrade() -> None:
     op.create_table(
         "user_social_accounts",
         sa.Column("id", sa.String(36), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("provider", sa.String(32), nullable=False),
         sa.Column("provider_user_id", sa.String(255), nullable=False),
         sa.Column("provider_email", sa.String(254), nullable=True),

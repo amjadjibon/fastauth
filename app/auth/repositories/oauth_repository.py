@@ -40,7 +40,9 @@ async def create_authorization_code(
     return auth_code
 
 
-async def consume_authorization_code(session: AsyncSession, code: str) -> OAuthAuthorizationCode | None:
+async def consume_authorization_code(
+    session: AsyncSession, code: str
+) -> OAuthAuthorizationCode | None:
     result = await session.exec(
         select(OAuthAuthorizationCode).where(OAuthAuthorizationCode.code == code)
     )

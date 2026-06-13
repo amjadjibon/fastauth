@@ -7,7 +7,6 @@ from app.admin.models import (
     OAuthClientResponse,
     PaginatedUsersResponse,
     UpdateUserRequest,
-    UserDetailResponse,
     UserListResponse,
 )
 from app.admin.services.user_management import (
@@ -17,10 +16,10 @@ from app.admin.services.user_management import (
     lock_user,
     unlock_user,
 )
-from app.auth.deps import CurrentUser, SessionDep
+from app.auth import repositories as repo
+from app.auth.deps import SessionDep
 from app.auth.models import User
 from app.auth.rbac.dependencies import RequireRoles
-from app.auth import repositories as repo
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -42,7 +41,10 @@ async def list_all_users(
 ):
     users, total = await list_users(session, page=page, limit=limit, search=search, status=status)
     return PaginatedUsersResponse(
-        users=[UserListResponse(id=u.id, username=u.username, email=u.email, created_at=u.created_at) for u in users],
+        users=[
+            UserListResponse(id=u.id, username=u.username, email=u.email, created_at=u.created_at)
+            for u in users
+        ],
         total=total,
         page=page,
         limit=limit,
@@ -70,7 +72,9 @@ async def update_user(user_id: str, body: UpdateUserRequest, session: SessionDep
     return {"message": "User updated"}
 
 
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[_RequireAdmin])
+@router.delete(
+    "/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[_RequireAdmin]
+)
 async def delete_user(user_id: str, session: SessionDep):
     user = await session.get(User, user_id)
     if user is None:
@@ -105,7 +109,9 @@ async def bulk_lock_users(user_ids: list[str]):
     return {"message": f"{len(user_ids)} users locked"}
 
 
-@router.post("/users/bulk-delete", status_code=status.HTTP_204_NO_CONTENT, dependencies=[_RequireAdmin])
+@router.post(
+    "/users/bulk-delete", status_code=status.HTTP_204_NO_CONTENT, dependencies=[_RequireAdmin]
+)
 async def bulk_delete_users(user_ids: list[str], session: SessionDep):
     for uid in user_ids:
         user = await session.get(User, uid)
@@ -117,9 +123,11 @@ async def bulk_delete_users(user_ids: list[str], session: SessionDep):
 # OAuth client management
 # ---------------------------------------------------------------------------
 
+
 @router.post("/oauth/clients", dependencies=[_RequireAdmin])
 async def create_oauth_client(body: OAuthClientCreateRequest, session: SessionDep):
     import secrets
+
     from app.auth.db_models import OAuthClient
     from app.core.security import hash_password as _hash
 
@@ -141,16 +149,21 @@ async def create_oauth_client(body: OAuthClientCreateRequest, session: SessionDe
     return {"client_id": client_id, "client_secret": raw_secret}
 
 
-@router.get("/oauth/clients", response_model=list[OAuthClientResponse], dependencies=[_RequireAdmin])
+@router.get(
+    "/oauth/clients", response_model=list[OAuthClientResponse], dependencies=[_RequireAdmin]
+)
 async def list_oauth_clients(session: SessionDep):
     from sqlmodel import select
+
     from app.auth.db_models import OAuthClient
 
     result = await session.exec(select(OAuthClient))
     return list(result.all())
 
 
-@router.get("/oauth/clients/{client_id}", response_model=OAuthClientResponse, dependencies=[_RequireAdmin])
+@router.get(
+    "/oauth/clients/{client_id}", response_model=OAuthClientResponse, dependencies=[_RequireAdmin]
+)
 async def get_oauth_client(client_id: str, session: SessionDep):
     from app.auth.db_models import OAuthClient
 
@@ -160,7 +173,11 @@ async def get_oauth_client(client_id: str, session: SessionDep):
     return client
 
 
-@router.delete("/oauth/clients/{client_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[_RequireAdmin])
+@router.delete(
+    "/oauth/clients/{client_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[_RequireAdmin],
+)
 async def revoke_oauth_client(client_id: str, session: SessionDep):
     from app.auth.db_models import OAuthClient
 

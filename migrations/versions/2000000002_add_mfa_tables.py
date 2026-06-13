@@ -21,7 +21,13 @@ def upgrade() -> None:
     op.create_table(
         "user_mfa_secrets",
         sa.Column("id", sa.String(36), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False, unique=True),
+        sa.Column(
+            "user_id",
+            sa.String(36),
+            sa.ForeignKey("user.id", ondelete="CASCADE"),
+            nullable=False,
+            unique=True,
+        ),
         sa.Column("secret_encrypted", sa.Text(), nullable=False),
         sa.Column("algorithm", sa.String(10), nullable=False, server_default="SHA1"),
         sa.Column("digits", sa.Integer(), nullable=False, server_default="6"),
@@ -36,7 +42,9 @@ def upgrade() -> None:
     op.create_table(
         "user_mfa_backup_codes",
         sa.Column("id", sa.String(36), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("code_hash", sa.String(128), nullable=False),
         sa.Column("used_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),

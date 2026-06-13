@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import JSONResponse
 
 from app.auth.deps import CurrentUser, SessionDep
-from app.auth.oauth.dependencies import client_authenticated
 from app.auth.oauth.discovery import get_oidc_discovery
 from app.auth.oauth.jwks import get_jwks
 from app.auth.oauth.models import AuthorizationCodeRequest, OAuthTokenResponse, TokenRequest
@@ -34,7 +32,9 @@ async def authorize(
     current_user: CurrentUser,
 ):
     if body.response_type != "code":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only 'code' response_type is supported")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Only 'code' response_type is supported"
+        )
 
     code = await oauth_service.authorize_client(
         session,
@@ -47,7 +47,9 @@ async def authorize(
         nonce=body.nonce,
     )
     if code is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid client or redirect_uri")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid client or redirect_uri"
+        )
 
     return {"code": code, "state": body.state}
 
@@ -62,25 +64,36 @@ async def token(
     session: SessionDep,
 ):
     if body.grant_type != "authorization_code":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported grant_type")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported grant_type"
+        )
     if not body.code or not body.redirect_uri or not body.client_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing required fields")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Missing required fields"
+        )
 
     # If PKCE is used, verify the code challenge before exchanging
-    from app.auth.repositories.oauth_repository import find_client_by_id
     from sqlmodel import select
+
     from app.auth.db_models import OAuthAuthorizationCode
+
     result = await session.exec(
         select(OAuthAuthorizationCode).where(OAuthAuthorizationCode.code == body.code)
     )
     pending_code = result.first()
     if pending_code and pending_code.code_challenge:
         if not body.code_verifier:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="code_verifier required")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="code_verifier required"
+            )
         if not verify_code_challenge(
-            body.code_verifier, pending_code.code_challenge, pending_code.code_challenge_method or "S256"
+            body.code_verifier,
+            pending_code.code_challenge,
+            pending_code.code_challenge_method or "S256",
         ):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid code_verifier")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid code_verifier"
+            )
 
     result = await oauth_service.exchange_code_for_token(
         session,
@@ -90,7 +103,9 @@ async def token(
         code_verifier=body.code_verifier,
     )
     if result is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code"
+        )
 
     return OAuthTokenResponse(**result)
 

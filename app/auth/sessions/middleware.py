@@ -1,14 +1,13 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.auth import repositories as repo
 from app.auth.db_models import UserSession
 from app.auth.deps import SessionDep
-from app.auth import repositories as repo
 from app.core.security import decode_token
-
-from datetime import UTC, datetime
 
 _bearer = HTTPBearer()
 
@@ -21,7 +20,9 @@ async def validate_session(
     try:
         payload = decode_token(credentials.credentials)
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        ) from exc
 
     jti = payload.get("jti")
     if not jti:

@@ -22,14 +22,14 @@ async def client_authenticated(
         )
     client = await repo.oauth.find_client_by_id(session, credentials.username)
     if client is None or not client.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client")
+    if client.is_confidential and (
+        client.client_secret_hash is None
+        or not verify_password(credentials.password, client.client_secret_hash)
+    ):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client secret"
         )
-    if client.is_confidential:
-        if client.client_secret_hash is None or not verify_password(credentials.password, client.client_secret_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client secret"
-            )
     return client
 
 

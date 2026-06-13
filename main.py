@@ -15,16 +15,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlmodel import SQLModel
 
-import app.auth.models as _auth_models  # noqa: F401 — register models for SQLModel.metadata
 import app.auth.db_models as _auth_db_models  # noqa: F401 — register extended models for SQLModel.metadata
-from app.auth.router import router as auth_router
+import app.auth.models as _auth_models  # noqa: F401 — register models for SQLModel.metadata
+from app.admin.router import router as admin_router
+from app.auth.audit.router import router as audit_router
 from app.auth.mfa.router import router as mfa_router
 from app.auth.oauth.router import router as oauth_router
+from app.auth.rbac.router import router as rbac_router
+from app.auth.router import router as auth_router
 from app.auth.sessions.router import router as sessions_router
 from app.auth.social.router import router as social_router
-from app.auth.rbac.router import router as rbac_router
-from app.auth.audit.router import router as audit_router
-from app.admin.router import router as admin_router
 from app.core.config import settings
 from app.core.db import engine as _db_engine
 from app.core.limiter import close_redis, set_redis

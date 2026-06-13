@@ -1,4 +1,5 @@
-from datetime import timedelta
+import uuid
+from datetime import UTC, datetime, timedelta
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -6,9 +7,6 @@ from app.auth import repositories as repo
 from app.auth.db_models import UserSession
 from app.core.config import settings
 from app.core.security import create_token, decode_token
-
-import uuid
-from datetime import UTC, datetime
 
 
 def _make_jti() -> str:

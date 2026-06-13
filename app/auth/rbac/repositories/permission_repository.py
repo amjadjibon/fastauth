@@ -4,7 +4,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.auth.db_models import Permission, RolePermission
 
 
-async def create(session: AsyncSession, resource: str, action: str, description: str | None = None) -> Permission:
+async def create(
+    session: AsyncSession, resource: str, action: str, description: str | None = None
+) -> Permission:
     perm = Permission(resource=resource, action=action, description=description)
     session.add(perm)
     await session.commit()
@@ -12,7 +14,9 @@ async def create(session: AsyncSession, resource: str, action: str, description:
     return perm
 
 
-async def find_by_resource_and_action(session: AsyncSession, resource: str, action: str) -> Permission | None:
+async def find_by_resource_and_action(
+    session: AsyncSession, resource: str, action: str
+) -> Permission | None:
     result = await session.exec(
         select(Permission).where(Permission.resource == resource, Permission.action == action)
     )

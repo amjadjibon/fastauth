@@ -23,12 +23,19 @@ def _rsa_private_key() -> str | None:
 
 def _rsa_public_key() -> str | None:
     if settings.algorithm == "RS256" and settings.rsa_private_key_path:
-        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-        from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-        from cryptography.hazmat.primitives.serialization import load_pem_private_key
+        from cryptography.hazmat.primitives.serialization import (
+            Encoding,
+            PublicFormat,
+            load_pem_private_key,
+        )
+
         with open(settings.rsa_private_key_path, "rb") as f:
             private_key = load_pem_private_key(f.read(), password=None)
-        return private_key.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode()
+        return (
+            private_key.public_key()
+            .public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
+            .decode()
+        )
     return None
 
 

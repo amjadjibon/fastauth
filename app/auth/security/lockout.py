@@ -1,7 +1,6 @@
 """Account lockout management — lock/unlock individual accounts."""
 
 import logging
-from typing import Any
 
 logger = logging.getLogger("fastauth.security.lockout")
 

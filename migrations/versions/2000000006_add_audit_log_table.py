@@ -22,7 +22,9 @@ def upgrade() -> None:
         "audit_logs",
         sa.Column("id", sa.String(36), nullable=False),
         sa.Column("event_type", sa.String(64), nullable=False),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "user_id", sa.String(36), sa.ForeignKey("user.id", ondelete="SET NULL"), nullable=True
+        ),
         sa.Column("ip_address", sa.String(45), nullable=True),
         sa.Column("user_agent", sa.Text(), nullable=True),
         sa.Column("metadata_json", sa.Text(), nullable=True),

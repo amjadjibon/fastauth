@@ -1,9 +1,8 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, status
 
 from app.auth.deps import CurrentUser, SessionDep
-from app.auth.sessions.device_info import parse_user_agent
-from app.auth.sessions.models import SessionResponse, SessionsListResponse
 from app.auth.services import session_service
+from app.auth.sessions.models import SessionResponse, SessionsListResponse
 
 router = APIRouter(prefix="/auth/sessions", tags=["sessions"])
 
@@ -38,4 +37,5 @@ async def revoke_session(session_id: str, current_user: CurrentUser, session: Se
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_all_sessions(current_user: CurrentUser, session: SessionDep):
     from app.auth import repositories as repo
+
     await repo.session.revoke_all_user_sessions(session, current_user.id)

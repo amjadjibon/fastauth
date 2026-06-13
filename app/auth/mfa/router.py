@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
 from app.auth.deps import CurrentUser, SessionDep
 from app.auth.mfa.models import MfaBackupCodesResponse, MfaSetupResponse, MfaVerifyRequest

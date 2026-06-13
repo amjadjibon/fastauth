@@ -15,6 +15,7 @@ _SECURITY_HEADERS = [
 # Security headers
 # ---------------------------------------------------------------------------
 
+
 async def test_security_headers_present(client: AsyncClient):
     r = await client.get("/livez")
     for header in _SECURITY_HEADERS:
@@ -48,6 +49,7 @@ async def test_trace_id_absent_when_otel_disabled(client: AsyncClient, caplog):
 # Token security (no DB interaction needed)
 # ---------------------------------------------------------------------------
 
+
 async def test_missing_token_rejected(client: AsyncClient):
     r = await client.get("/auth/me")
     # FastAPI 0.136+ returns 401 for missing Bearer credentials
@@ -56,15 +58,21 @@ async def test_missing_token_rejected(client: AsyncClient):
 
 async def test_tampered_token_rejected(client: AsyncClient):
     """Modifying the JWT signature causes 401."""
-    r = await client.post("/auth/register", json={
-        "username": "tokentest_tamper",
-        "email": "tokentest_tamper@example.com",
-        "password": "Test1234!",
-    })
-    r2 = await client.post("/auth/login", json={
-        "username": "tokentest_tamper",
-        "password": "Test1234!",
-    })
+    await client.post(
+        "/auth/register",
+        json={
+            "username": "tokentest_tamper",
+            "email": "tokentest_tamper@example.com",
+            "password": "Test1234!",
+        },
+    )
+    r2 = await client.post(
+        "/auth/login",
+        json={
+            "username": "tokentest_tamper",
+            "password": "Test1234!",
+        },
+    )
     if r2.status_code != 200:
         pytest.skip("login unavailable (rate limited)")
     access_token = r2.json()["access_token"]
@@ -78,15 +86,23 @@ async def test_tampered_token_rejected(client: AsyncClient):
 
 async def test_expired_token_signature_check(client: AsyncClient):
     """A well-formed JWT with a bad secret is rejected."""
-    import time
     import base64
     import json
+    import time
 
     header = base64.urlsafe_b64encode(b'{"alg":"HS256","typ":"JWT"}').rstrip(b"=").decode()
-    payload = base64.urlsafe_b64encode(json.dumps({
-        "sub": "99999",
-        "exp": int(time.time()) + 3600,
-    }).encode()).rstrip(b"=").decode()
+    payload = (
+        base64.urlsafe_b64encode(
+            json.dumps(
+                {
+                    "sub": "99999",
+                    "exp": int(time.time()) + 3600,
+                }
+            ).encode()
+        )
+        .rstrip(b"=")
+        .decode()
+    )
     fake_sig = base64.urlsafe_b64encode(b"fakesig").rstrip(b"=").decode()
     forged = f"{header}.{payload}.{fake_sig}"
 
@@ -98,17 +114,24 @@ async def test_expired_token_signature_check(client: AsyncClient):
 # Session management & revocation
 # ---------------------------------------------------------------------------
 
+
 async def _register_login(client: AsyncClient, username: str) -> dict | None:
     """Register + login; return tokens dict or None if rate-limited."""
-    await client.post("/auth/register", json={
-        "username": username,
-        "email": f"{username}@example.com",
-        "password": "Test1234!",
-    })
-    r = await client.post("/auth/login", json={
-        "username": username,
-        "password": "Test1234!",
-    })
+    await client.post(
+        "/auth/register",
+        json={
+            "username": username,
+            "email": f"{username}@example.com",
+            "password": "Test1234!",
+        },
+    )
+    r = await client.post(
+        "/auth/login",
+        json={
+            "username": username,
+            "password": "Test1234!",
+        },
+    )
     if r.status_code != 200:
         return None
     return r.json()
@@ -177,6 +200,7 @@ async def test_revoke_all_sessions(client: AsyncClient):
 # OAuth state CSRF (TEST-005)
 # ---------------------------------------------------------------------------
 
+
 async def test_oauth_state_replay(client: AsyncClient):
     """Callback with fabricated state returns 400."""
     r = await client.get("/auth/social/github/callback?code=fakecode&state=forged_state_xyz")
@@ -187,16 +211,22 @@ async def test_oauth_state_replay(client: AsyncClient):
 # Password history reuse (TEST-006)
 # ---------------------------------------------------------------------------
 
+
 async def test_password_history_reuse(client: AsyncClient):
     """Changing password back to original should return 400."""
-    r0 = await client.post("/auth/register", json={
-        "username": "histtest_user",
-        "email": "histtest_user@example.com",
-        "password": "OrigPass1!",
-    })
+    r0 = await client.post(
+        "/auth/register",
+        json={
+            "username": "histtest_user",
+            "email": "histtest_user@example.com",
+            "password": "OrigPass1!",
+        },
+    )
     if r0.status_code == 429:
         pytest.skip("registration rate limited")
-    r = await client.post("/auth/login", json={"username": "histtest_user", "password": "OrigPass1!"})
+    r = await client.post(
+        "/auth/login", json={"username": "histtest_user", "password": "OrigPass1!"}
+    )
     if r.status_code != 200:
         pytest.skip("login unavailable (rate limited)")
 
@@ -210,7 +240,9 @@ async def test_password_history_reuse(client: AsyncClient):
     )
     assert r2.status_code == 200
 
-    r3 = await client.post("/auth/login", json={"username": "histtest_user", "password": "NewPass2!2"})
+    r3 = await client.post(
+        "/auth/login", json={"username": "histtest_user", "password": "NewPass2!2"}
+    )
     if r3.status_code != 200:
         pytest.skip("login unavailable (rate limited)")
 
@@ -227,12 +259,16 @@ async def test_password_history_reuse(client: AsyncClient):
 # Brute-force protection (runs last — pollutes IP-based counter)
 # ---------------------------------------------------------------------------
 
+
 async def _register_user(client: AsyncClient, username: str) -> None:
-    await client.post("/auth/register", json={
-        "username": username,
-        "email": f"{username}@example.com",
-        "password": "Test1234!",
-    })
+    await client.post(
+        "/auth/register",
+        json={
+            "username": username,
+            "email": f"{username}@example.com",
+            "password": "Test1234!",
+        },
+    )
 
 
 async def test_brute_force_triggers_lockout(client: AsyncClient):

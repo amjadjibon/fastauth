@@ -17,7 +17,12 @@ from app.auth.rbac.repositories import permission_repository, role_repository
 router = APIRouter(prefix="/auth/roles", tags=["rbac"])
 
 
-@router.post("", response_model=RoleResponse, status_code=status.HTTP_201_CREATED, dependencies=[RequireRoles(["admin"])])
+@router.post(
+    "",
+    response_model=RoleResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[RequireRoles(["admin"])],
+)
 async def create_role(body: CreateRoleRequest, session: SessionDep):
     existing = await role_repository.find_by_name(session, body.name)
     if existing:
@@ -37,7 +42,9 @@ async def update_role(role_id: str, body: UpdateRoleRequest, session: SessionDep
     if role is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found")
     if role.is_system:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot modify system roles")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot modify system roles"
+        )
     if body.name is not None:
         role.name = body.name
     if body.description is not None:
@@ -45,18 +52,24 @@ async def update_role(role_id: str, body: UpdateRoleRequest, session: SessionDep
     return await role_repository.update(session, role)
 
 
-@router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[RequireRoles(["admin"])])
+@router.delete(
+    "/{role_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[RequireRoles(["admin"])]
+)
 async def delete_role(role_id: str, session: SessionDep):
     role = await session.get(Role, role_id)
     if role is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found")
     if role.is_system:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete system roles")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete system roles"
+        )
     await role_repository.delete(session, role)
 
 
 @router.post("/{role_id}/permissions", dependencies=[RequireRoles(["admin"])])
-async def assign_permission_to_role(role_id: str, body: AssignPermissionRequest, session: SessionDep):
+async def assign_permission_to_role(
+    role_id: str, body: AssignPermissionRequest, session: SessionDep
+):
     role = await session.get(Role, role_id)
     if role is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found")
@@ -76,15 +89,23 @@ async def list_permissions(session: SessionDep):
 
 
 @router.post("/users/{user_id}/assign", dependencies=[RequireRoles(["admin"])])
-async def assign_role_to_user(user_id: str, body: AssignRoleRequest, session: SessionDep, current_user: CurrentUser):
+async def assign_role_to_user(
+    user_id: str, body: AssignRoleRequest, session: SessionDep, current_user: CurrentUser
+):
     try:
-        await role_repository.assign_to_user(session, user_id, body.role_id, assigned_by=current_user.id)
+        await role_repository.assign_to_user(
+            session, user_id, body.role_id, assigned_by=current_user.id
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return {"message": "Role assigned"}
 
 
-@router.delete("/users/{user_id}/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[RequireRoles(["admin"])])
+@router.delete(
+    "/users/{user_id}/roles/{role_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[RequireRoles(["admin"])],
+)
 async def remove_role_from_user(user_id: str, role_id: str, session: SessionDep):
     removed = await role_repository.remove_from_user(session, user_id, role_id)
     if not removed:

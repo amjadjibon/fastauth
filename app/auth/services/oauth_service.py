@@ -1,14 +1,12 @@
+import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import repositories as repo
-from app.auth.db_models import OAuthAccessToken, OAuthClient, OAuthRefreshToken
 from app.auth.repositories.oauth_repository import consume_authorization_code
 from app.core.security import create_token, decode_token
-
-import hashlib
 
 
 def _hash_token(token: str) -> str:

@@ -35,6 +35,7 @@ async def readiness():
 
     # Redis check
     from app.core.limiter import _redis
+
     if _redis:
         try:
             await _redis.ping()

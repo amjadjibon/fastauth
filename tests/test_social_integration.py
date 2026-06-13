@@ -1,11 +1,11 @@
 """Integration tests for social login (OAuth2 provider flows)."""
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
 
-from app.auth.oauth.pkce import generate_code_verifier, generate_code_challenge
-from app.auth.social.config import get_provider_config, SocialProviderConfig
+from app.auth.social.config import SocialProviderConfig, get_provider_config
 
 
 def test_provider_config_returns_dataclass_fields():
@@ -66,11 +66,14 @@ async def test_social_authorize_missing_provider(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_social_link_requires_auth(client: AsyncClient):
     """Linking a social account requires a valid Bearer token."""
-    r = await client.post("/auth/social/link", json={
-        "provider": "google",
-        "code": "fake_code",
-        "redirect_uri": "http://localhost/callback",
-    })
+    r = await client.post(
+        "/auth/social/link",
+        json={
+            "provider": "google",
+            "code": "fake_code",
+            "redirect_uri": "http://localhost/callback",
+        },
+    )
     assert r.status_code in (401, 403)
 
 
