@@ -78,13 +78,13 @@ fastauth currently only authenticates human users via JWT. Service-to-service ca
 
 **Goal**: Add an `X-API-Key` FastAPI dependency that resolves an `APIKeyPrincipal` from the header.
 
-- [ ] TASK-006: Create `app/auth/api_keys/deps.py` with `APIKeyDep = Annotated[APIKeyPrincipal, Depends(get_api_key_principal)]`. The dependency:
+- [x] TASK-006: Create `app/auth/api_keys/deps.py` with `APIKeyDep = Annotated[APIKeyPrincipal, Depends(get_api_key_principal)]`. The dependency:
   1. Reads `X-API-Key` header (returns 401 if missing for key-required routes, or `None` for optional).
   2. Hashes it, calls `find_by_hash`.
   3. Checks `revoked_at is None` and `expires_at > now` (or `None`).
   4. Updates `last_used_at` (fire-and-forget, no await needed — use `asyncio.ensure_future`).
   5. Returns an `APIKeyPrincipal(key_id, owner_user_id, scopes: list[str])` dataclass.
-- [ ] TASK-007: Create `app/auth/api_keys/models.py` with `APIKeyPrincipal` dataclass and request/response Pydantic models (`CreateAPIKeyRequest`, `CreateAPIKeyResponse`, `APIKeyResponse`).
+- [x] TASK-007: Create `app/auth/api_keys/models.py` with `APIKeyPrincipal` dataclass and request/response Pydantic models (`CreateAPIKeyRequest`, `CreateAPIKeyResponse`, `APIKeyResponse`).
 
 **Completion criteria**: `from app.auth.api_keys.deps import APIKeyDep` imports without error.
 
