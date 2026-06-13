@@ -90,6 +90,18 @@ class ChangePasswordRequest(SQLModel):
         return v
 
 
+class VerifyEmailRequest(SQLModel):
+    model_config = ConfigDict(json_schema_extra={"example": {"token": "verify-token-example"}})
+
+    token: str = Field(min_length=1)
+
+
+class ResendVerificationRequest(SQLModel):
+    model_config = ConfigDict(json_schema_extra={"example": {"email": "alice@example.com"}})
+
+    email: EmailStr
+
+
 class ForgotPasswordRequest(SQLModel):
     model_config = ConfigDict(json_schema_extra={"example": {"email": "alice@example.com"}})
 
@@ -134,6 +146,7 @@ class UserResponse(SQLModel):
         "id": "00000000-0000-0000-0000-000000000001",
         "username": "alice",
         "email": "alice@example.com",
+        "email_verified": True,
         "created_at": "2024-01-01T00:00:00Z",
         "updated_at": "2024-01-01T00:00:00Z",
     }})
@@ -141,5 +154,6 @@ class UserResponse(SQLModel):
     id: str
     username: str
     email: str
+    email_verified: bool = False
     created_at: datetime
     updated_at: datetime

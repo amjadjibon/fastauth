@@ -17,9 +17,11 @@ from app.auth.models import (
     RefreshRequest,
     RegisterRequest,
     RegisterResponse,
+    ResendVerificationRequest,
     ResetPasswordRequest,
     TokenResponse,
     UserResponse,
+    VerifyEmailRequest,
 )
 from app.auth.security.brute_force import get_brute_force_protection
 from app.auth.security.lockout import is_account_locked
@@ -375,3 +377,53 @@ async def reset_password(body: ResetPasswordRequest, session: SessionDep, reques
     ip = request.client.host if request.client else "unknown"
     await _audit(session, AuditEvent.PASSWORD_RESET, user_id=user.id, ip_address=ip)
     return {"ok": True}
+
+
+@router.post("/verify-email", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
+async def verify_email(body: VerifyEmailRequest, session: SessionDep, request: Request):
+    import hashlib
+
+    from sqlmodel import select
+
+    from app.auth.db_models import EmailVerificationToken
+
+    token_hash = hashlib.sha256(body.token.encode()).hexdigest()
+    now = datetime.now(UTC)
+
+    result = await session.exec(
+        select(EmailVerificationToken).where(
+            EmailVerificationToken.token_hash == token_hash,
+            EmailVerificationToken.used_at.is_(None),  # type: ignore
+            EmailVerificationToken.expires_at > now,
+        )
+    )
+    vtoken = result.first()
+    if vtoken is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+
+    user = await store.get_by_id(session, vtoken.user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+
+    vtoken.used_at = now
+    user.email_verified = True
+    session.add(vtoken)
+    session.add(user)
+    await session.commit()
+
+    ip = request.client.host if request.client else "unknown"
+    await _audit(session, AuditEvent.EMAIL_VERIFIED, user_id=user.id, ip_address=ip)
+    return {"ok": True}
+
+
+@router.post("/resend-verification", dependencies=[Depends(RateLimiter(times=3, seconds=60))])
+async def resend_verification(body: ResendVerificationRequest, session: SessionDep):
+    _neutral = {"message": "If that email exists and is unverified, a new link was sent"}
+
+    user = await store.get_by_email(session, str(body.email))
+    if user is None or user.email_verified:
+        return _neutral
+
+    await _issue_verification_token(session, user)
+    await _audit(session, AuditEvent.EMAIL_VERIFICATION_SENT, user_id=user.id)
+    return _neutral

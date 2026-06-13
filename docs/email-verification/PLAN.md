@@ -75,21 +75,21 @@ Registration accepts any email address today. This adds a flag-gated email verif
 
 **Goal**: Add `POST /auth/verify-email` and `POST /auth/resend-verification`.
 
-- [ ] TASK-010: Add `VerifyEmailRequest(token: str)` and `ResendVerificationRequest(email: EmailStr)` to `app/auth/models.py`.
-- [ ] TASK-011: Add `POST /auth/verify-email` to `app/auth/router.py`:
+- [x] TASK-010: Add `VerifyEmailRequest(token: str)` and `ResendVerificationRequest(email: EmailStr)` to `app/auth/models.py`.
+- [x] TASK-011: Add `POST /auth/verify-email` to `app/auth/router.py`:
   1. SHA-256 hash the incoming token.
   2. Query `EmailVerificationToken` where `token_hash=hash`, `used_at IS NULL`, `expires_at > now`.
   3. If not found → 400 "Invalid or expired token".
   4. Set `used_at = now`, set `user.email_verified = True`, commit.
   5. Audit `EMAIL_VERIFIED`.
   6. Return `{"ok": True}`.
-- [ ] TASK-012: Add `POST /auth/resend-verification` to `app/auth/router.py`:
-  1. Look up user by email; if not found → return `{"message": "If that email exists, a new link was sent"}` (don't leak existence).
+- [x] TASK-012: Add `POST /auth/resend-verification` to `app/auth/router.py`:
+  1. Look up user by email; if not found → return neutral message (don't leak existence).
   2. If already verified → return same neutral message.
   3. Call `_issue_verification_token(session, user)`.
   4. Audit `EMAIL_VERIFICATION_SENT`.
   5. Return the neutral message.
-- [ ] TASK-013: Add `email_verified: bool` field to `UserResponse` in `app/auth/models.py`.
+- [x] TASK-013: Add `email_verified: bool` field to `UserResponse` in `app/auth/models.py`.
 
 **Completion criteria**: `POST /auth/verify-email` with a valid token returns `{"ok": true}`; user `email_verified` is `true` in DB; calling again returns 400.
 
