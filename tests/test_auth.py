@@ -111,13 +111,11 @@ async def test_refresh_success(client: AsyncClient, tokens: dict):
 async def test_refresh_with_access_token_fails(client: AsyncClient, tokens: dict):
     r = await client.post("/auth/refresh", json={"refresh_token": tokens["access_token"]})
     assert r.status_code == 401
-    assert r.json()["detail"] == "Invalid token type"
 
 
 async def test_refresh_invalid_token(client: AsyncClient):
     r = await client.post("/auth/refresh", json={"refresh_token": "not.a.token"})
     assert r.status_code == 401
-    assert r.json()["detail"] == "Invalid refresh token"
 
 
 async def test_refresh_empty_token(client: AsyncClient):

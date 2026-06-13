@@ -3,7 +3,7 @@ from jose import JWTError
 from pydantic import BaseModel
 
 from app.auth import store
-from app.auth.deps import CurrentUser, SessionDep, make_tokens
+from app.auth.deps import CurrentUser, SessionDep
 from app.auth.mfa.models import MfaLoginRequest
 from app.auth.mfa.totp import verify_totp as _verify_totp
 from app.auth.models import (
@@ -60,6 +60,8 @@ async def register(body: RegisterRequest, session: SessionDep):
 async def login(body: LoginRequest, session: SessionDep, request: Request):
     from datetime import timedelta
     from app.core.limiter import _redis  # use the shared redis instance if available
+    from app.auth.services import session_service as svc
+    from app.auth.sessions.device_info import parse_user_agent
 
     ip = request.client.host if request.client else "unknown"
     bf = get_brute_force_protection(redis=_redis)
@@ -95,7 +97,18 @@ async def login(body: LoginRequest, session: SessionDep, request: Request):
         )
         return LoginResponse(mfa_required=True, mfa_session_token=mfa_token)
 
-    access, refresh = make_tokens(user.id)
+    ua = request.headers.get("user-agent", "")
+    device = parse_user_agent(request)
+    access, refresh, _ = await svc.create_session(
+        session,
+        user_id=user.id,
+        ip_address=ip,
+        user_agent=ua,
+        device_type=device.get("device_type"),
+        device_name=device.get("device_name"),
+        browser=device.get("browser"),
+        os=device.get("os"),
+    )
     return LoginResponse(access_token=access, refresh_token=refresh)
 
 
@@ -130,7 +143,8 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
     if not ok:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
 
-    access, refresh = make_tokens(user.id, amr=["pwd", "mfa"])
+    from app.auth.services import session_service as svc
+    access, refresh, _ = await svc.create_session(session, user_id=user.id)
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 

@@ -74,7 +74,10 @@ async def refresh_session(
     db_session = await repo.session.find_by_refresh_token_jti(session, jti)
     if db_session is None or db_session.revoked_at is not None:
         return None
-    if db_session.expires_at < datetime.now(UTC):
+    expires_at = db_session.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=UTC)
+    if expires_at < datetime.now(UTC):
         return None
 
     # Rotate: revoke old session, create new one

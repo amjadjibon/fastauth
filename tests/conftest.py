@@ -8,6 +8,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlmodel import SQLModel
 
 import app.auth.models as _models  # noqa: F401 — registers metadata before create_all
+import app.auth.db_models as _db_models  # noqa: F401 — registers extended models
 from app.core.db import engine
 from main import app as fastapi_app
 

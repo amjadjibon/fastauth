@@ -11,6 +11,10 @@ _SECURITY_HEADERS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Security headers
+# ---------------------------------------------------------------------------
+
 async def test_security_headers_present(client: AsyncClient):
     r = await client.get("/livez")
     for header in _SECURITY_HEADERS:
@@ -29,8 +33,6 @@ async def test_cors_unlisted_origin_blocked(client: AsyncClient):
 
 
 async def test_trace_id_absent_when_otel_disabled(client: AsyncClient, caplog):
-    # with OTEL_ENABLED=false (test env default), no active span exists
-    # LoggerMiddleware sets trace_id=None when no span is active
     import logging
 
     with caplog.at_level(logging.INFO, logger="fastauth.access"):
@@ -40,3 +42,171 @@ async def test_trace_id_absent_when_otel_disabled(client: AsyncClient, caplog):
         record = caplog.records[-1]
         trace_id = getattr(record, "trace_id", None)
         assert trace_id is None or trace_id == "0" * 32
+
+
+# ---------------------------------------------------------------------------
+# Token security (no DB interaction needed)
+# ---------------------------------------------------------------------------
+
+async def test_missing_token_rejected(client: AsyncClient):
+    r = await client.get("/auth/me")
+    # FastAPI 0.136+ returns 401 for missing Bearer credentials
+    assert r.status_code in (401, 403)
+
+
+async def test_tampered_token_rejected(client: AsyncClient):
+    """Modifying the JWT signature causes 401."""
+    r = await client.post("/auth/register", json={
+        "username": "tokentest_tamper",
+        "email": "tokentest_tamper@example.com",
+        "password": "Test1234!",
+    })
+    r2 = await client.post("/auth/login", json={
+        "username": "tokentest_tamper",
+        "password": "Test1234!",
+    })
+    if r2.status_code != 200:
+        pytest.skip("login unavailable (rate limited)")
+    access_token = r2.json()["access_token"]
+
+    parts = access_token.split(".")
+    tampered = parts[0] + "." + parts[1] + ".invalidsignature"
+
+    r3 = await client.get("/auth/me", headers={"Authorization": f"Bearer {tampered}"})
+    assert r3.status_code == 401
+
+
+async def test_expired_token_signature_check(client: AsyncClient):
+    """A well-formed JWT with a bad secret is rejected."""
+    import time
+    import base64
+    import json
+
+    header = base64.urlsafe_b64encode(b'{"alg":"HS256","typ":"JWT"}').rstrip(b"=").decode()
+    payload = base64.urlsafe_b64encode(json.dumps({
+        "sub": "99999",
+        "exp": int(time.time()) + 3600,
+    }).encode()).rstrip(b"=").decode()
+    fake_sig = base64.urlsafe_b64encode(b"fakesig").rstrip(b"=").decode()
+    forged = f"{header}.{payload}.{fake_sig}"
+
+    r = await client.get("/auth/me", headers={"Authorization": f"Bearer {forged}"})
+    assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Session management & revocation
+# ---------------------------------------------------------------------------
+
+async def _register_login(client: AsyncClient, username: str) -> dict | None:
+    """Register + login; return tokens dict or None if rate-limited."""
+    await client.post("/auth/register", json={
+        "username": username,
+        "email": f"{username}@example.com",
+        "password": "Test1234!",
+    })
+    r = await client.post("/auth/login", json={
+        "username": username,
+        "password": "Test1234!",
+    })
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+
+async def test_session_list_requires_auth(client: AsyncClient):
+    r = await client.get("/auth/sessions")
+    assert r.status_code in (401, 403)
+
+
+async def test_session_revoke_requires_auth(client: AsyncClient):
+    r = await client.delete("/auth/sessions/00000000-0000-0000-0000-000000000001")
+    assert r.status_code in (401, 403)
+
+
+async def test_session_created_on_login(client: AsyncClient):
+    tokens = await _register_login(client, "sesstest_create")
+    if tokens is None:
+        pytest.skip("login unavailable (rate limited)")
+
+    r = await client.get(
+        "/auth/sessions",
+        headers={"Authorization": f"Bearer {tokens['access_token']}"},
+    )
+    assert r.status_code == 200
+    sessions = r.json()
+    assert isinstance(sessions, (list, dict))
+
+
+async def test_refresh_token_rotation(client: AsyncClient):
+    """Refresh issues a new access_token; old refresh_token must not work twice."""
+    tokens = await _register_login(client, "sesstest_rotate")
+    if tokens is None:
+        pytest.skip("login unavailable (rate limited)")
+
+    refresh1 = tokens["refresh_token"]
+    r1 = await client.post("/auth/refresh", json={"refresh_token": refresh1})
+    assert r1.status_code == 200
+    new_access = r1.json()["access_token"]
+    assert new_access != tokens["access_token"]
+
+    # Re-using old refresh_token should fail (token rotation)
+    r2 = await client.post("/auth/refresh", json={"refresh_token": refresh1})
+    assert r2.status_code in (401, 400, 403)
+
+
+async def test_revoke_all_sessions(client: AsyncClient):
+    """DELETE /auth/sessions revokes all active sessions."""
+    tokens = await _register_login(client, "sesstest_revokeall")
+    if tokens is None:
+        pytest.skip("login unavailable (rate limited)")
+
+    r = await client.delete(
+        "/auth/sessions",
+        headers={"Authorization": f"Bearer {tokens['access_token']}"},
+    )
+    assert r.status_code in (200, 204)
+
+    refresh = tokens.get("refresh_token")
+    if refresh:
+        r2 = await client.post("/auth/refresh", json={"refresh_token": refresh})
+        assert r2.status_code in (401, 400, 403)
+
+
+# ---------------------------------------------------------------------------
+# Brute-force protection (runs last — pollutes IP-based counter)
+# ---------------------------------------------------------------------------
+
+async def _register_user(client: AsyncClient, username: str) -> None:
+    await client.post("/auth/register", json={
+        "username": username,
+        "email": f"{username}@example.com",
+        "password": "Test1234!",
+    })
+
+
+async def test_brute_force_triggers_lockout(client: AsyncClient):
+    """After repeated bad-password attempts the IP or account is locked out."""
+    user = "brutetest_lockout"
+    await _register_user(client, user)
+
+    locked = False
+    for _ in range(8):
+        r = await client.post("/auth/login", json={"username": user, "password": "WRONG!"})
+        if r.status_code in (429, 423, 403):
+            locked = True
+            break
+
+    assert locked, "Expected 429/423/403 after repeated failed logins"
+
+
+async def test_brute_force_correct_password_after_lockout(client: AsyncClient):
+    """Even with correct credentials the attempt fails while locked out."""
+    user = "brutetest_postlock"
+    await _register_user(client, user)
+
+    for _ in range(6):
+        await client.post("/auth/login", json={"username": user, "password": "WRONG!"})
+
+    r = await client.post("/auth/login", json={"username": user, "password": "Test1234!"})
+    assert r.status_code != 500

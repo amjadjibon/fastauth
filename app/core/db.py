@@ -19,5 +19,5 @@ engine = create_async_engine(settings.async_database_url, **_kwargs)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession]:
-    async with AsyncSession(engine) as session:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
