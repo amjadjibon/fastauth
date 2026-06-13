@@ -10,12 +10,26 @@ on:
 jobs:
   load-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install uv
+        run: pip install uv
+
       - name: Start stack
         run: docker compose --env-file .env.ci up -d --build --wait
+
+      - name: Seed load-test users
+        env:
+          DATABASE_URL: postgresql://fastauth:fastauth@localhost:5432/fastauth
+          SECRET_KEY: ci-load-test-secret
+        run: uv run python scripts/seed_db.py --count 500 --output tests/load/users.json
 
       - name: Run k6
         run: docker compose -f compose.yaml -f compose.load.yaml run --rm k6

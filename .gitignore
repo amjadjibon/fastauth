@@ -173,3 +173,6 @@ pyrightconfig.json
 # Environment
 .env
 *.db
+
+# Load test generated files
+tests/load/users.json
