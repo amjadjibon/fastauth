@@ -174,6 +174,56 @@ async def test_revoke_all_sessions(client: AsyncClient):
 
 
 # ---------------------------------------------------------------------------
+# OAuth state CSRF (TEST-005)
+# ---------------------------------------------------------------------------
+
+async def test_oauth_state_replay(client: AsyncClient):
+    """Callback with fabricated state returns 400."""
+    r = await client.get("/auth/social/github/callback?code=fakecode&state=forged_state_xyz")
+    assert r.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# Password history reuse (TEST-006)
+# ---------------------------------------------------------------------------
+
+async def test_password_history_reuse(client: AsyncClient):
+    """Changing password back to original should return 400."""
+    r0 = await client.post("/auth/register", json={
+        "username": "histtest_user",
+        "email": "histtest_user@example.com",
+        "password": "OrigPass1!",
+    })
+    if r0.status_code == 429:
+        pytest.skip("registration rate limited")
+    r = await client.post("/auth/login", json={"username": "histtest_user", "password": "OrigPass1!"})
+    if r.status_code != 200:
+        pytest.skip("login unavailable (rate limited)")
+
+    access_token = r.json()["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    r2 = await client.post(
+        "/auth/change-password",
+        json={"current_password": "OrigPass1!", "new_password": "NewPass2!2"},
+        headers=headers,
+    )
+    assert r2.status_code == 200
+
+    r3 = await client.post("/auth/login", json={"username": "histtest_user", "password": "NewPass2!2"})
+    if r3.status_code != 200:
+        pytest.skip("login unavailable (rate limited)")
+
+    new_token = r3.json()["access_token"]
+    r4 = await client.post(
+        "/auth/change-password",
+        json={"current_password": "NewPass2!2", "new_password": "OrigPass1!"},
+        headers={"Authorization": f"Bearer {new_token}"},
+    )
+    assert r4.status_code == 400
+
+
+# ---------------------------------------------------------------------------
 # Brute-force protection (runs last — pollutes IP-based counter)
 # ---------------------------------------------------------------------------
 

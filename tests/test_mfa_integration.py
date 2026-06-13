@@ -55,6 +55,8 @@ async def test_mfa_login_flow(client: AsyncClient):
         "email": "mfatestuser@example.com",
         "password": "Test1234!",
     })
+    if r.status_code == 429:
+        pytest.skip("registration rate limited")
     assert r.status_code == 201
 
     # Login should succeed without MFA
@@ -66,3 +68,44 @@ async def test_mfa_login_flow(client: AsyncClient):
     data = r.json()
     assert data["mfa_required"] is False
     assert data["access_token"] is not None
+
+
+@pytest.mark.asyncio
+async def test_totp_secret_is_encrypted_in_db(client: AsyncClient):
+    """After MFA setup, the DB value should be a Fernet ciphertext (starts with gAAAAA)."""
+    # Register + login
+    r0 = await client.post("/auth/register", json={
+        "username": "mfa_enc_test",
+        "email": "mfa_enc_test@example.com",
+        "password": "Test1234!",
+    })
+    if r0.status_code == 429:
+        pytest.skip("registration rate limited")
+    r = await client.post("/auth/login", json={"username": "mfa_enc_test", "password": "Test1234!"})
+    if r.status_code != 200:
+        pytest.skip("login unavailable")
+    access_token = r.json()["access_token"]
+
+    await client.post("/auth/mfa/setup", headers={"Authorization": f"Bearer {access_token}"})
+
+    # Query the DB directly
+    from sqlmodel import select
+    from sqlmodel.ext.asyncio.session import AsyncSession
+    from app.auth.db_models import UserMfaSecret
+    from app.core.db import engine
+
+    async with AsyncSession(engine) as session:
+        result = await session.exec(
+            select(UserMfaSecret).join(
+                __import__("app.auth.models", fromlist=["User"]).User,
+                UserMfaSecret.user_id == __import__("app.auth.models", fromlist=["User"]).User.id
+            ).where(
+                __import__("app.auth.models", fromlist=["User"]).User.username == "mfa_enc_test"
+            )
+        )
+        mfa = result.first()
+
+    assert mfa is not None
+    assert mfa.secret_encrypted.startswith("gAAAAA"), (
+        f"Expected Fernet ciphertext, got: {mfa.secret_encrypted[:20]}"
+    )

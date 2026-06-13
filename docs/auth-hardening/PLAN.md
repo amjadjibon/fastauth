@@ -3,13 +3,13 @@ goal: Close security and feature gaps in the production auth system
 version: 1.0
 date_created: 2026-06-13
 last_updated: 2026-06-13owner: fastauth-team
-status: 'In progress'
+status: 'Completed'
 tags: [feature, security, refactor]
 ---
 
 # Auth Hardening & Missing Features
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 Ten gaps were identified after the initial production-grade auth implementation. This plan closes them in priority order: critical auth endpoints first, then encryption at rest, then the reset flow, OAuth client management, security fixes, and finally RS256/Pydantic migrations. Each phase is independently deployable.
 
@@ -173,14 +173,14 @@ Ten gaps were identified after the initial production-grade auth implementation.
 
 ## 6. Testing
 
-- [ ] TEST-001: `tests/test_auth.py` — add `test_logout_revokes_session`: login → logout → refresh should return 401
-- [ ] TEST-002: `tests/test_auth.py` — add `test_change_password_wrong_current`: POST change-password with bad current_password → 401
-- [ ] TEST-003: `tests/test_auth.py` — add `test_change_password_success`: POST change-password → 200; login with old password → 401; login with new password → 200
-- [ ] TEST-004: `tests/test_auth.py` — add `test_forgot_reset_flow`: POST forgot-password → 200; extract token from debug log or DB; POST reset-password → 200; replay same token → 400
-- [ ] TEST-005: `tests/test_security.py` — add `test_oauth_state_replay`: attempt callback with fabricated state → 400
-- [ ] TEST-006: `tests/test_security.py` — add `test_password_history_reuse`: change password → change back to original → 400
-- [ ] TEST-007: `tests/test_mfa_integration.py` — add `test_totp_secret_is_encrypted_in_db`: after MFA setup, query DB directly and assert value starts with `gAAAAA` (Fernet prefix)
-- [ ] TEST-008: `uv run pytest tests/ --ignore=tests/load -W error::DeprecationWarning` — zero Pydantic warnings
+- [x] TEST-001: `tests/test_auth.py` — add `test_logout_revokes_session`: login → logout → refresh should return 401
+- [x] TEST-002: `tests/test_auth.py` — add `test_change_password_wrong_current`: POST change-password with bad current_password → 401
+- [x] TEST-003: `tests/test_auth.py` — add `test_change_password_success`: POST change-password → 200; login with old password → 401; login with new password → 200
+- [x] TEST-004: `tests/test_auth.py` — add `test_forgot_reset_flow`: POST forgot-password → 200; extract token from debug log or DB; POST reset-password → 200; replay same token → 400
+- [x] TEST-005: `tests/test_security.py` — add `test_oauth_state_replay`: attempt callback with fabricated state → 400
+- [x] TEST-006: `tests/test_security.py` — add `test_password_history_reuse`: change password → change back to original → 400
+- [x] TEST-007: `tests/test_mfa_integration.py` — add `test_totp_secret_is_encrypted_in_db`: after MFA setup, query DB directly and assert value starts with `gAAAAA` (Fernet prefix)
+- [x] TEST-008: `uv run pytest tests/ --ignore=tests/load -W error::DeprecationWarning` — zero Pydantic warnings
 
 ## 7. Risks & Assumptions
 
