@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-12
 last_updated: 2026-06-12
 owner: amjadjibon
-status: 'In progress'
+status: 'Completed'
 tags: [architecture, feature, chore]
 ---
 
 # Production Hardening Plan
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 fastauth already has structured logging, OpenTelemetry tracing, Prometheus metrics, rate limiting, and a passing test suite. This plan closes the remaining gaps — security headers, CI/CD pipeline, trace-log correlation, alerting, and operational resilience — required before running in production.
 
@@ -37,10 +37,10 @@ fastauth already has structured logging, OpenTelemetry tracing, Prometheus metri
 
 **Goal**: Harden every HTTP response and lock down cross-origin access before any other work ships.
 
-- [ ] TASK-001: Add `SecurityHeadersMiddleware` to `app/core/middleware.py`. On every response set: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: geolocation=(), microphone=()`. For HTTPS only, also set `Strict-Transport-Security: max-age=63072000; includeSubDomains`.
-- [ ] TASK-002: Add `CORSMiddleware` from `fastapi.middleware.cors` in `main.py`. Read allowed origins from a new `cors_origins: list[str]` setting in `app/core/config.py`; default to `[]` (deny all cross-origin). Register it before `RequestIDMiddleware`.
-- [ ] TASK-003: Add `CORS_ORIGINS` to the app's `environment` block in `compose.yaml` with value `""` (empty, restrictive default).
-- [ ] TASK-004: Write two tests in `tests/test_security.py`: (a) any response has all four security headers; (b) a cross-origin request from an unlisted origin receives no `Access-Control-Allow-Origin` header.
+- [x] TASK-001: Add `SecurityHeadersMiddleware` to `app/core/middleware.py`. On every response set: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: geolocation=(), microphone=()`. For HTTPS only, also set `Strict-Transport-Security: max-age=63072000; includeSubDomains`.
+- [x] TASK-002: Add `CORSMiddleware` from `fastapi.middleware.cors` in `main.py`. Read allowed origins from a new `cors_origins: list[str]` setting in `app/core/config.py`; default to `[]` (deny all cross-origin). Register it before `RequestIDMiddleware`.
+- [x] TASK-003: Add `CORS_ORIGINS` to the app's `environment` block in `compose.yaml` with value `""` (empty, restrictive default).
+- [x] TASK-004: Write two tests in `tests/test_security.py`: (a) any response has all four security headers; (b) a cross-origin request from an unlisted origin receives no `Access-Control-Allow-Origin` header.
 
 **Completion criteria**: `pytest tests/test_security.py` passes; `curl -I http://localhost:8000/livez` shows all four headers.
 
@@ -52,9 +52,9 @@ fastauth already has structured logging, OpenTelemetry tracing, Prometheus metri
 
 **Goal**: Every log line emitted during a request includes the active OTel trace ID so logs and Jaeger traces can be joined without manual effort.
 
-- [ ] TASK-005: In `app/core/middleware.py`, after `call_next` returns in `LoggerMiddleware`, read the current span via `trace.get_current_span()` and extract `trace_id = format(span.get_span_context().trace_id, "032x")` (returns `"0" * 32` when no span is active — treat that as `None`). Add `trace_id` to the `extra` dict passed to the logger.
-- [ ] TASK-006: Add `%(trace_id)s` to the `fmt` string in `conf/log.yaml` so it appears in every JSON access log line.
-- [ ] TASK-007: Add one test in `tests/test_security.py`: with `OTEL_ENABLED=false`, `trace_id` is absent or `None` in the log record; presence check when enabled is covered by integration.
+- [x] TASK-005: In `app/core/middleware.py`, after `call_next` returns in `LoggerMiddleware`, read the current span via `trace.get_current_span()` and extract `trace_id = format(span.get_span_context().trace_id, "032x")` (returns `"0" * 32` when no span is active — treat that as `None`). Add `trace_id` to the `extra` dict passed to the logger.
+- [x] TASK-006: Add `%(trace_id)s` to the `fmt` string in `conf/log.yaml` so it appears in every JSON access log line.
+- [x] TASK-007: Add one test in `tests/test_security.py`: with `OTEL_ENABLED=false`, `trace_id` is absent or `None` in the log record; presence check when enabled is covered by integration.
 
 **Completion criteria**: A request with OTel enabled produces a log line with a 32-char hex `trace_id` field matching the span visible in Jaeger.
 
@@ -66,9 +66,9 @@ fastauth already has structured logging, OpenTelemetry tracing, Prometheus metri
 
 **Goal**: Prevent the app from crash-looping when the database is momentarily unavailable at startup.
 
-- [ ] TASK-008: In `main.py`, wrap the `_migrate()` call inside `lifespan` with a retry loop: attempt up to 10 times with 2-second backoff, catching `sqlalchemy.exc.OperationalError`. Log each retry at `WARNING` level with attempt number. Raise after the final attempt so the container still exits non-zero on genuine failure.
-- [ ] TASK-009: In `app/core/db.py`, set explicit pool parameters on `create_async_engine`: `pool_size=5, max_overflow=10, pool_timeout=30, pool_recycle=1800`. Add a comment explaining `pool_recycle` prevents stale connections from PgBouncer or load-balancer idle timeouts.
-- [ ] TASK-010: In `compose.yaml`, add `restart: on-failure` (already set) and tune the `app` service healthcheck: `test: ["CMD", "curl", "-f", "http://localhost:8000/livez"]`, `interval: 10s`, `timeout: 5s`, `retries: 3`, `start_period: 15s`.
+- [x] TASK-008: In `main.py`, wrap the `_migrate()` call inside `lifespan` with a retry loop: attempt up to 10 times with 2-second backoff, catching `sqlalchemy.exc.OperationalError`. Log each retry at `WARNING` level with attempt number. Raise after the final attempt so the container still exits non-zero on genuine failure.
+- [x] TASK-009: In `app/core/db.py`, set explicit pool parameters on `create_async_engine`: `pool_size=5, max_overflow=10, pool_timeout=30, pool_recycle=1800`. Add a comment explaining `pool_recycle` prevents stale connections from PgBouncer or load-balancer idle timeouts.
+- [x] TASK-010: In `compose.yaml`, add `restart: on-failure` (already set) and tune the `app` service healthcheck: `test: ["CMD", "curl", "-f", "http://localhost:8000/livez"]`, `interval: 10s`, `timeout: 5s`, `retries: 3`, `start_period: 15s`.
 
 **Completion criteria**: Starting `docker compose up` with the DB container stopped causes the app to log retry warnings and eventually fail cleanly, not crash immediately with an unhandled exception. Once DB starts, app recovers.
 
@@ -80,10 +80,10 @@ fastauth already has structured logging, OpenTelemetry tracing, Prometheus metri
 
 **Goal**: Prometheus fires an alert when the 5xx error rate exceeds 1% over 5 minutes, or p99 latency exceeds 2 seconds.
 
-- [ ] TASK-011: Create `conf/prometheus/alerts.yml` with two rules:
+- [x] TASK-011: Create `conf/prometheus/alerts.yml` with two rules:
   - `FastauthHighErrorRate`: fires when `rate(fastauth_http_requests_total{status_code=~"5.."}[5m]) / rate(fastauth_http_requests_total[5m]) > 0.01` for 5 minutes. Severity: `critical`.
   - `FastauthHighLatency`: fires when `histogram_quantile(0.99, rate(fastauth_http_request_duration_seconds_bucket[5m])) > 2` for 5 minutes. Severity: `warning`.
-- [ ] TASK-012: Update `conf/prometheus.yml` to reference the rules file: add `rule_files: ["alerts.yml"]` and update the Prometheus `command` in `compose.yaml` to mount `./conf/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro`. Move `prometheus.yml` to `conf/prometheus/prometheus.yml` and update the mount path accordingly.
+- [x] TASK-012: Update `conf/prometheus.yml` to reference the rules file: add `rule_files: ["alerts.yml"]` and update the Prometheus `command` in `compose.yaml` to mount `./conf/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro`. Move `prometheus.yml` to `conf/prometheus/prometheus.yml` and update the mount path accordingly.
 
 **Completion criteria**: `docker compose exec prometheus promtool check rules /etc/prometheus/alerts.yml` exits 0.
 
@@ -95,9 +95,9 @@ fastauth already has structured logging, OpenTelemetry tracing, Prometheus metri
 
 **Goal**: Every push and pull request runs lint, type-check, and tests automatically; a failed check blocks merge.
 
-- [ ] TASK-013: Create `.github/workflows/ci.yml` with a single job `test` running on `ubuntu-latest`, triggered on `push` and `pull_request` to `main`. Steps: checkout → install uv → `uv sync --frozen` → `uv run ruff check .` → `uv run ty check` → `uv run pytest tests/ -q`.
-- [ ] TASK-014: Add a second job `build` (depends on `test`) that runs `docker build .` to verify the image builds. No push — image publishing is a separate concern.
-- [ ] TASK-015: Add `.github/workflows/deps.yml`: a weekly Dependabot-style workflow using `uv lock --upgrade` + `git commit + push` on a branch, or alternatively add a `dependabot.yml` config for the `pip` ecosystem targeting `pyproject.toml`.
+- [x] TASK-013: Create `.github/workflows/ci.yml` with a single job `test` running on `ubuntu-latest`, triggered on `push` and `pull_request` to `main`. Steps: checkout → install uv → `uv sync --frozen` → `uv run ruff check .` → `uv run ty check` → `uv run pytest tests/ -q`.
+- [x] TASK-014: Add a second job `build` (depends on `test`) that runs `docker build .` to verify the image builds. No push — image publishing is a separate concern.
+- [x] TASK-015: Add `.github/workflows/deps.yml`: a weekly Dependabot-style workflow using `uv lock --upgrade` + `git commit + push` on a branch, or alternatively add a `dependabot.yml` config for the `pip` ecosystem targeting `pyproject.toml`.
 
 **Completion criteria**: Opening a PR with a deliberate `ruff` violation causes the CI job to fail with a non-zero exit. A clean PR shows all green checks.
 
@@ -135,9 +135,9 @@ fastauth already has structured logging, OpenTelemetry tracing, Prometheus metri
 
 ## 6. Testing
 
-- [ ] TEST-001: `tests/test_security.py` — assert all four security headers present on `GET /livez`
-- [ ] TEST-002: `tests/test_security.py` — assert no `Access-Control-Allow-Origin` for unlisted origin
-- [ ] TEST-003: `tests/test_security.py` — assert `trace_id` key absent (or `None`) in log record when OTel disabled
+- [x] TEST-001: `tests/test_security.py` — assert all four security headers present on `GET /livez`
+- [x] TEST-002: `tests/test_security.py` — assert no `Access-Control-Allow-Origin` for unlisted origin
+- [x] TEST-003: `tests/test_security.py` — assert `trace_id` key absent (or `None`) in log record when OTel disabled
 - [ ] TEST-004: Manual — `docker compose exec prometheus promtool check rules /etc/prometheus/alerts.yml`
 - [ ] TEST-005: Manual — open a PR with a ruff error, confirm CI fails
 
