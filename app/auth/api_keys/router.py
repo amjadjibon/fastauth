@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from app.auth.api_keys import repository as repo
+from app.auth.api_keys.deps import APIKeyDep
 from app.auth.api_keys.models import APIKeyResponse, CreateAPIKeyRequest, CreateAPIKeyResponse
 from app.auth.deps import CurrentUser, SessionDep
 
@@ -34,6 +35,16 @@ async def list_api_keys(current_user: CurrentUser, session: SessionDep):
         )
         for k in keys
     ]
+
+
+@router.get("/whoami")
+async def whoami(principal: APIKeyDep):
+    """Return the authenticated API key principal — use to verify a key is valid."""
+    return {
+        "key_id": principal.key_id,
+        "owner_user_id": principal.owner_user_id,
+        "scopes": principal.scopes,
+    }
 
 
 @router.delete("/{key_id}", status_code=status.HTTP_204_NO_CONTENT)

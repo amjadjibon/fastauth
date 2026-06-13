@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from datetime import UTC, datetime
 from typing import Annotated
@@ -39,16 +38,13 @@ async def get_api_key_principal(
     if api_key.expires_at is not None and api_key.expires_at.replace(tzinfo=UTC) < now:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key expired")
 
-    # Fire-and-forget last_used_at update — non-critical metadata.
-    async def _update_last_used() -> None:
-        try:
-            api_key.last_used_at = now
-            session.add(api_key)
-            await session.commit()
-        except Exception:
-            logger.warning("api_key: failed to update last_used_at for key %s", api_key.id)
-
-    asyncio.ensure_future(_update_last_used())
+    # Update last_used_at — non-critical; swallow errors so auth never fails due to this.
+    try:
+        api_key.last_used_at = now
+        session.add(api_key)
+        await session.commit()
+    except Exception:
+        logger.warning("api_key: failed to update last_used_at for key %s", api_key.id)
 
     return APIKeyPrincipal(
         key_id=api_key.id,
