@@ -18,13 +18,14 @@ bearer = HTTPBearer()
 def make_tokens(user_id: str, amr: list[str] | None = None) -> tuple[str, str]:
     import uuid
 
-    jti = str(uuid.uuid4())
+    access_jti = str(uuid.uuid4())
+    refresh_jti = str(uuid.uuid4())
     access = create_token(
-        {"sub": user_id, "type": "access", "amr": amr or ["pwd"]},
+        {"sub": user_id, "type": "access", "jti": access_jti, "amr": amr or ["pwd"]},
         timedelta(seconds=settings.access_token_expire_seconds),
     )
     refresh = create_token(
-        {"sub": user_id, "type": "refresh", "jti": jti},
+        {"sub": user_id, "type": "refresh", "jti": refresh_jti},
         timedelta(seconds=settings.refresh_token_expire_seconds),
     )
     return access, refresh

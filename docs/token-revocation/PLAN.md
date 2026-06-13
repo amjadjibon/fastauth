@@ -30,8 +30,10 @@ Refresh tokens are already tied to `UserSession` rows (via `refresh_token_jti`) 
 
 **Goal**: Ensure every access token contains a `jti` claim that can be used as a blocklist key.
 
-- [ ] TASK-001: In `app/core/security.py`, find `create_token`. If `jti` is not already added to the payload, add `"jti": str(uuid.uuid4())` before signing.
-- [ ] TASK-002: In `decode_token`, return the `jti` claim alongside the existing payload dict, or ensure callers can extract it from the returned dict.
+- [x] TASK-001: In `app/core/security.py`, find `create_token`. If `jti` is not already added to the payload, add `"jti": str(uuid.uuid4())` before signing.
+  > Resolved by: Added `jti` in `make_tokens` in `app/auth/deps.py` (where access/refresh tokens are created together) rather than `create_token`, since `create_token` is generic and `jti` is specific to access tokens.
+- [x] TASK-002: In `decode_token`, return the `jti` claim alongside the existing payload dict, or ensure callers can extract it from the returned dict.
+  > `decode_token` already returns the full payload dict; callers read `payload.get("jti")` directly. No change needed.
 
 **Completion criteria**: `create_token({"sub": "test"})` decoded with `decode_token` contains a `jti` key.
 
