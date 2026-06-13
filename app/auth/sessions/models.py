@@ -1,9 +1,11 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class SessionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     device_type: str | None
     device_name: str | None
@@ -14,9 +16,6 @@ class SessionResponse(BaseModel):
     created_at: datetime
     expires_at: datetime
     is_current: bool = False
-
-    class Config:
-        from_attributes = True
 
 
 class SessionsListResponse(BaseModel):

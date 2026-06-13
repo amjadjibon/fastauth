@@ -122,12 +122,12 @@ Ten gaps were identified after the initial production-grade auth implementation.
 
 **Goal**: Make JWKS serve a real public key when RS256 is enabled, and eliminate all Pydantic v2 deprecation warnings.
 
-- [ ] TASK-026: Update `app/core/config.py` — add `algorithm: str = "HS256"` (already exists) and `rsa_private_key_path: str | None = None`. If `algorithm == "RS256"` and `rsa_private_key_path` is set, load the PEM key at startup.
-- [ ] TASK-027: Update `app/core/security.py` `create_token`/`decode_token` to use the RSA private/public key when `settings.algorithm == "RS256"`. Use `python-jose`'s RSA support (`algorithms=["RS256"]`).
-- [ ] TASK-028: Update `app/auth/oauth/jwks.py` `get_jwks()` — if `settings.algorithm == "RS256"`, extract the public key's `n`, `e`, `kid` and return a proper JWK object. If HS256 (default), keep returning `{"keys": []}`.
-- [ ] TASK-029: Fix Pydantic v2 deprecation in `app/auth/sessions/models.py` `SessionResponse` — replace `class Config: orm_mode = True` with `model_config = ConfigDict(from_attributes=True)`.
-- [ ] TASK-030: Same fix for `app/auth/rbac/models.py` `RoleResponse` and `PermissionResponse`.
-- [ ] TASK-031: Same fix for `app/admin/models.py` `UserListResponse`, `UserDetailResponse`, and any other affected models. Run `uv run pytest` and confirm zero Pydantic deprecation warnings remain.
+- [x] TASK-026: Update `app/core/config.py` — add `algorithm: str = "HS256"` (already exists) and `rsa_private_key_path: str | None = None`. If `algorithm == "RS256"` and `rsa_private_key_path` is set, load the PEM key at startup.
+- [x] TASK-027: Update `app/core/security.py` `create_token`/`decode_token` to use the RSA private/public key when `settings.algorithm == "RS256"`. Use `python-jose`'s RSA support (`algorithms=["RS256"]`).
+- [x] TASK-028: Update `app/auth/oauth/jwks.py` `get_jwks()` — if `settings.algorithm == "RS256"`, extract the public key's `n`, `e`, `kid` and return a proper JWK object. If HS256 (default), keep returning `{"keys": []}`.
+- [x] TASK-029: Fix Pydantic v2 deprecation in `app/auth/sessions/models.py` `SessionResponse` — replace `class Config: orm_mode = True` with `model_config = ConfigDict(from_attributes=True)`.
+- [x] TASK-030: Same fix for `app/auth/rbac/models.py` `RoleResponse` and `PermissionResponse`.
+- [x] TASK-031: Same fix for `app/admin/models.py` `UserListResponse`, `UserDetailResponse`, and any other affected models. Run `uv run pytest` and confirm zero Pydantic deprecation warnings remain.
 
 **Completion criteria**: `uv run pytest` passes with 0 `PydanticDeprecatedSince20` warnings. With `ALGORITHM=RS256` and a valid RSA key path, `GET /.well-known/jwks.json` returns a JWK with `kty=RSA`. HS256 mode is unchanged.
 

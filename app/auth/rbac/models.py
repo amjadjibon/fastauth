@@ -1,27 +1,25 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class RoleResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     description: str | None
     is_system: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class PermissionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     resource: str
     action: str
     description: str | None
-
-    class Config:
-        from_attributes = True
 
 
 class CreateRoleRequest(BaseModel):

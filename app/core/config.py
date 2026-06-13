@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     gitlab_client_id: str | None = None
     gitlab_client_secret: str | None = None
 
+    # RSA key for RS256 (optional — HS256 is the default)
+    rsa_private_key_path: str | None = None
+
     # Load testing
     load_test: bool = False
 
