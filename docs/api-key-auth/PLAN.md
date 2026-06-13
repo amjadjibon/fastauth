@@ -96,11 +96,11 @@ fastauth currently only authenticates human users via JWT. Service-to-service ca
 
 **Goal**: Expose CRUD endpoints for key management.
 
-- [ ] TASK-008: Create `app/auth/api_keys/router.py` with prefix `/auth/api-keys`:
+- [x] TASK-008: Create `app/auth/api_keys/router.py` with prefix `/auth/api-keys`:
   - `POST /` — creates a key for the current user; returns `CreateAPIKeyResponse` with the raw key (once only).
   - `GET /` — lists all keys for the current user (hashes omitted, `raw_key` never returned again).
   - `DELETE /{key_id}` — revokes a key owned by the current user; 404 if not found or not owned.
-- [ ] TASK-009: Register `api_keys_router` in `main.py` alongside the other routers.
+- [x] TASK-009: Register `api_keys_router` in `main.py` alongside the other routers.
 
 **Completion criteria**: `POST /auth/api-keys` with a valid Bearer token returns `{"key": "fak_..."}` and the key hash is stored in the DB.
 

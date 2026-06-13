@@ -18,6 +18,7 @@ from sqlmodel import SQLModel
 import app.auth.db_models as _auth_db_models  # noqa: F401 — register extended models for SQLModel.metadata
 import app.auth.models as _auth_models  # noqa: F401 — register models for SQLModel.metadata
 from app.admin.router import router as admin_router
+from app.auth.api_keys.router import router as api_keys_router
 from app.auth.audit.router import router as audit_router
 from app.auth.mfa.router import router as mfa_router
 from app.auth.oauth.router import router as oauth_router
@@ -141,4 +142,5 @@ app.include_router(rbac_router)
 app.include_router(audit_router)
 app.include_router(admin_router)
 app.include_router(oauth_router)
+app.include_router(api_keys_router)
 app.include_router(health_router)
