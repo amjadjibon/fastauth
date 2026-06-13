@@ -84,11 +84,14 @@ async def auto_create_user_on_social_login(
     provider_user_id: str,
     email: str,
     username: str,
+    email_verified: bool = True,
 ) -> User:
     import secrets as _secrets
 
     random_password = _secrets.token_hex(32)
-    user = await repo.user.create(session, username=username, email=email, password=random_password)
+    # Social-login users are created with email_verified=True by default because
+    # the OAuth provider has already vouched for the address.
+    user = await repo.user.create(session, username=username, email=email, password=random_password, email_verified=email_verified)
     await link_social_account(
         session,
         user_id=user.id,

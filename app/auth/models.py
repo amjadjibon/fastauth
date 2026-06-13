@@ -93,7 +93,7 @@ class ChangePasswordRequest(SQLModel):
 class VerifyEmailRequest(SQLModel):
     model_config = ConfigDict(json_schema_extra={"example": {"token": "verify-token-example"}})
 
-    token: str = Field(min_length=1)
+    token: str = Field(min_length=1, max_length=128)
 
 
 class ResendVerificationRequest(SQLModel):

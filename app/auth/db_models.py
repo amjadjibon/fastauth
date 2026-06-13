@@ -347,7 +347,7 @@ class EmailVerificationToken(SQLModel, table=True):
     user_id: str = Field(
         sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     )
-    token_hash: str = Field(sa_column=Column(String(64), nullable=False, index=True))
+    token_hash: str = Field(sa_column=Column(String(64), nullable=False, unique=True, index=True))
     expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     used_at: datetime | None = Field(
         default=None, sa_column=Column(DateTime(timezone=True), nullable=True)

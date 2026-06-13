@@ -5,9 +5,13 @@ from app.auth.models import User
 from app.core.security import hash_password
 
 
-async def create_user(session: AsyncSession, username: str, email: str, password: str) -> User:
-    user = User(username=username, email=email, hashed_password=hash_password(password))
+async def create_user(session: AsyncSession, username: str, email: str, password: str, email_verified: bool = False) -> User:
+    user = User(username=username, email=email, hashed_password=hash_password(password), email_verified=email_verified)
     session.add(user)
+    return user
+
+
+async def commit_user(session: AsyncSession, user: User) -> User:
     await session.commit()
     await session.refresh(user)
     return user

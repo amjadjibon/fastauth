@@ -13,6 +13,7 @@ from app.auth.social.config import get_provider_config
 from app.auth.social.providers.github import GitHubProvider
 from app.auth.social.providers.gitlab import GitLabProvider
 from app.auth.social.providers.google import GoogleProvider
+from app.core.config import settings
 from app.core.encryption import encrypt as _encrypt
 
 logger = logging.getLogger("fastauth.social")
@@ -137,6 +138,9 @@ async def social_callback(
         access_token_encrypted=_encrypt(access_token),
         refresh_token_encrypted=_encrypt(refresh_tok) if refresh_tok else None,
     )
+
+    if settings.require_email_verification and not user.email_verified:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified")
 
     atk, rtk, _ = await create_session(
         session, user_id=user.id, ip_address=request.client.host if request.client else None

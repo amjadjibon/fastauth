@@ -19,11 +19,18 @@ async def find_by_email(session: AsyncSession, email: str) -> User | None:
     return result.first()
 
 
-async def create(session: AsyncSession, username: str, email: str, password: str) -> User:
-    user = User(username=username, email=email, hashed_password=hash_password(password))
+async def create(session: AsyncSession, username: str, email: str, password: str, email_verified: bool = False) -> User:
+    user = User(username=username, email=email, hashed_password=hash_password(password), email_verified=email_verified)
     session.add(user)
     await session.commit()
     await session.refresh(user)
+    return user
+
+
+async def create_no_commit(session: AsyncSession, username: str, email: str, password: str, email_verified: bool = False) -> User:
+    """Stage a new user without committing — caller is responsible for commit."""
+    user = User(username=username, email=email, hashed_password=hash_password(password), email_verified=email_verified)
+    session.add(user)
     return user
 
 

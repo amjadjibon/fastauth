@@ -1,4 +1,6 @@
-from datetime import UTC, datetime
+import hashlib
+import secrets
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError
@@ -40,20 +42,35 @@ from app.core.token_blocklist import block_token
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-async def _issue_verification_token(session, user) -> str:
-    import hashlib
-    import secrets
-    from datetime import timedelta
+async def _issue_verification_token(session, user, *, commit: bool = True) -> str:
+    """Stage a new verification token. Invalidates existing unused tokens first.
+
+    When commit=False, the caller is responsible for committing (used during registration
+    to combine user + token into a single transaction).
+    """
+    from sqlmodel import select, update
 
     from app.auth.db_models import EmailVerificationToken
+
+    # Invalidate any outstanding unused tokens for this user (MED-002).
+    await session.exec(
+        update(EmailVerificationToken)
+        .where(
+            EmailVerificationToken.user_id == user.id,
+            EmailVerificationToken.used_at.is_(None),  # type: ignore
+        )
+        .values(used_at=datetime.now(UTC))
+    )
 
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
     expires_at = datetime.now(UTC) + timedelta(hours=24)
-    vtoken = EmailVerificationToken(user_id=user.id, token_hash=token_hash, expires_at=expires_at)
-    session.add(vtoken)
-    await session.commit()
-    await send_verification_email(user.id, user.email, raw_token)
+    session.add(EmailVerificationToken(user_id=user.id, token_hash=token_hash, expires_at=expires_at))
+
+    if commit:
+        await session.commit()
+        await send_verification_email(user.id, user.email, raw_token)
+
     return raw_token
 
 
@@ -79,9 +96,17 @@ class LoginResponse(BaseModel):
 async def register(body: RegisterRequest, session: SessionDep):
     if await store.username_exists(session, body.username):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
+
+    # Stage user + verification token in the same unit of work (HIGH-003).
     user = await store.create_user(session, body.username, body.email, body.password)
+    raw_token = await _issue_verification_token(session, user, commit=False)
+    await session.commit()
+    await session.refresh(user)
+
     auth_registrations_total.inc()
-    await _issue_verification_token(session, user)
+    # Send email outside the transaction — if this fails the token is still in DB
+    # and the user can trigger a resend via /auth/resend-verification.
+    await send_verification_email(user.id, user.email, raw_token)
     await _audit(session, AuditEvent.EMAIL_VERIFICATION_SENT, user_id=user.id)
     return RegisterResponse(user_id=user.id)
 
@@ -129,12 +154,12 @@ async def login(body: LoginRequest, session: SessionDep, request: Request):
         )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    # Clear brute-force counter on successful login
-    if _redis:
-        await _redis.delete(f"bf:attempts:user:{body.username}", f"bf:attempts:ip:{ip}")
-
     if settings.require_email_verification and not user.email_verified:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified")
+
+    # Clear brute-force counter only after full authentication succeeds (LOW-003).
+    if _redis:
+        await _redis.delete(f"bf:attempts:user:{body.username}", f"bf:attempts:ip:{ip}")
 
     auth_login_attempts_total.labels(success="true").inc()
     await _audit(session, AuditEvent.LOGIN_SUCCESS, user_id=user.id, ip_address=ip)
@@ -391,11 +416,13 @@ async def verify_email(body: VerifyEmailRequest, session: SessionDep, request: R
     now = datetime.now(UTC)
 
     result = await session.exec(
-        select(EmailVerificationToken).where(
+        select(EmailVerificationToken)
+        .where(
             EmailVerificationToken.token_hash == token_hash,
             EmailVerificationToken.used_at.is_(None),  # type: ignore
             EmailVerificationToken.expires_at > now,
         )
+        .with_for_update()
     )
     vtoken = result.first()
     if vtoken is None:

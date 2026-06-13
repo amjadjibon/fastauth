@@ -120,12 +120,13 @@ Registration accepts any email address today. This adds a flag-gated email verif
 
 **Goal**: Address 3 High and 3 Medium findings from the code review.
 
-- [ ] TASK-015: [HIGH-001] Remove raw token from `app/core/email.py` log — log only `user_id`, not the token value.
-- [ ] TASK-016: [HIGH-002] In `app/auth/services/social_service.py`, pass `email_verified=True` when the OAuth provider returns a verified email; add the `require_email_verification` gate to the social callback handler in `app/auth/social/router.py`.
-- [ ] TASK-017: [HIGH-003] Merge user creation and token creation into a single transaction in `app/auth/router.py` — refactor `store.create_user` to not commit, then commit both user and token together; call `send_verification_email` after the commit (outside the transaction).
-- [ ] TASK-018: [MED-001] Add `.with_for_update()` to the `EmailVerificationToken` SELECT in `verify_email` to prevent TOCTOU double-verification.
-- [ ] TASK-019: [MED-002] In `_issue_verification_token`, invalidate existing unused tokens for the same user before inserting a new one.
-- [ ] TASK-020: [MED-004] Add `unique=True` to `EmailVerificationToken.token_hash` in `app/auth/db_models.py` and add a `op.create_unique_constraint` to migration `2000000011`.
+- [x] TASK-015: [HIGH-001] Remove raw token from `app/core/email.py` log — log only `user_id`, not the token value.
+- [x] TASK-016: [HIGH-002] In `app/auth/services/social_service.py`, pass `email_verified=True` when the OAuth provider returns a verified email; add the `require_email_verification` gate to the social callback handler in `app/auth/social/router.py`.
+- [x] TASK-017: [HIGH-003] Merge user creation and token creation into a single transaction in `app/auth/router.py` — refactored `store.create_user` to stage without committing, commit both user and token together; `send_verification_email` called after the commit.
+- [x] TASK-018: [MED-001] Add `.with_for_update()` to the `EmailVerificationToken` SELECT in `verify_email` to prevent TOCTOU double-verification.
+- [x] TASK-019: [MED-002] In `_issue_verification_token`, invalidate existing unused tokens for the same user before inserting a new one.
+- [x] TASK-020: [MED-004] Add `unique=True` to `EmailVerificationToken.token_hash` in `app/auth/db_models.py` and add a `op.create_unique_constraint` to migration `2000000011`.
+  > Also fixed LOW-002 (max_length on VerifyEmailRequest.token) and LOW-003 (brute-force counter moved after email-verification check).
 
 **Completion criteria**: `uv run pytest tests/test_email_verification.py -v` — all 7 pass after fixes.
 

@@ -33,9 +33,11 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
     op.create_index("ix_email_verification_tokens_token_hash", "email_verification_tokens", ["token_hash"])
+    op.create_unique_constraint("uq_email_verification_tokens_token_hash", "email_verification_tokens", ["token_hash"])
 
 
 def downgrade() -> None:
+    op.drop_constraint("uq_email_verification_tokens_token_hash", "email_verification_tokens", type_="unique")
     op.drop_index("ix_email_verification_tokens_token_hash", table_name="email_verification_tokens")
     op.drop_table("email_verification_tokens")
     op.drop_column("user", "email_verified")
