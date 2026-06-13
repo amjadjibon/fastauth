@@ -4,9 +4,21 @@ services:
       OTEL_ENABLED: "true"
       OTEL_EXPORTER: otlp
       OTEL_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+      REDIS_URL: redis://redis:6379
     depends_on:
       jaeger:
         condition: service_started
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   jaeger:
     image: jaegertracing/all-in-one:latest

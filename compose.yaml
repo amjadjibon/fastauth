@@ -22,10 +22,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    env_file: .env
     environment:
-      DATABASE_URL: postgresql://fastauth:fastauth@db:5432/fastauth
-      CORS_ORIGINS: "[]"
+      DATABASE_URL: ${DATABASE_URL:-postgresql://fastauth:fastauth@db:5432/fastauth}
+      SECRET_KEY: ${SECRET_KEY:-change-me-use-a-long-random-string}
+      CORS_ORIGINS: ${CORS_ORIGINS:-[]}
     ports:
       - "8000:8000"
     healthcheck:
