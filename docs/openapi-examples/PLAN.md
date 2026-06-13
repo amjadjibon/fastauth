@@ -30,13 +30,14 @@ The FastAPI-generated `/docs` and `/redoc` endpoints show schemas but no example
 
 **Goal**: Add examples to register, login, refresh, and token response models in `app/auth/models.py`.
 
-- [ ] TASK-001: Add `model_config = ConfigDict(json_schema_extra={"example": {...}})` to `RegisterRequest` with `username: "alice"`, `email: "alice@example.com"`, `password: "MyP@ssw0rd!"`.
-- [ ] TASK-002: Add example to `LoginRequest`: `username: "alice"`, `password: "MyP@ssw0rd!"`.
-- [ ] TASK-003: Add example to `TokenResponse`: `access_token: "<jwt>"`, `refresh_token: "<jwt>"`, `token_type: "bearer"`.
-- [ ] TASK-004: Add example to `RefreshRequest`: `refresh_token: "<jwt>"`.
-- [ ] TASK-005: Add example to `RegisterResponse`: `user_id: "00000000-0000-0000-0000-000000000001"`.
-- [ ] TASK-006: Add example to `UserResponse`: all fields populated with realistic values including `roles: ["user"]`, `permissions: ["read:profile"]`.
-- [ ] TASK-007: Add example to `ChangePasswordRequest`, `ForgotPasswordRequest`, `ResetPasswordRequest`.
+- [x] TASK-001: Add `model_config = ConfigDict(json_schema_extra={"example": {...}})` to `RegisterRequest` with `username: "alice"`, `email: "alice@example.com"`, `password: "MyP@ssw0rd!"`.
+- [x] TASK-002: Add example to `LoginRequest`: `username: "alice"`, `password: "MyP@ssw0rd!"`.
+- [x] TASK-003: Add example to `TokenResponse`: `access_token: "<jwt>"`, `refresh_token: "<jwt>"`, `token_type: "bearer"`.
+- [x] TASK-004: Add example to `RefreshRequest`: `refresh_token: "<jwt>"`.
+- [x] TASK-005: Add example to `RegisterResponse`: `user_id: "00000000-0000-0000-0000-000000000001"`.
+- [x] TASK-006: Add example to `UserResponse`: all fields populated with realistic values including `roles: ["user"]`, `permissions: ["read:profile"]`.
+  > Note: `UserResponse` in `app/auth/models.py` does not have `roles` or `permissions` fields; omitted those from the example.
+- [x] TASK-007: Add example to `ChangePasswordRequest`, `ForgotPasswordRequest`, `ResetPasswordRequest`.
 
 **Completion criteria**: `GET /openapi.json` — `RegisterRequest` schema contains an `example` key. Visually verify in `GET /docs` that the "Try it out" form pre-populates with the example values.
 
