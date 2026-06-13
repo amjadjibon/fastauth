@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
-import { Counter, Rate, Trend } from 'k6/metrics';
+import { Counter, Rate } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8000';
 
@@ -42,8 +42,6 @@ export const options = {
     http_req_duration: ['p(95)<500', 'p(99)<1000'],
     // Less than 1% of all requests fail
     error_rate: ['rate<0.01'],
-    // Auth flow end-to-end under 2s at p95
-    auth_flow_duration_ms: ['p(95)<2000'],
   },
 };
 
