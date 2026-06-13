@@ -114,29 +114,13 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
     dependencies=[Depends(RateLimiter(times=20, seconds=60))],
 )
 async def refresh(body: RefreshRequest, session: SessionDep):
-    try:
-        payload = decode_token(body.refresh_token)
-    except JWTError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-        ) from exc
-
-    if payload.get("type") != "refresh":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
-
-    user_id: str | None = payload.get("sub")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-        )
-
-    user = await store.get_by_id(session, user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-
-    access, new_refresh = make_tokens(user.id)
+    from app.auth.services import session_service as svc
+    result = await svc.refresh_session(session, body.refresh_token)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or revoked refresh token")
+    access, refresh_token, _ = result
     auth_token_refreshes_total.inc()
-    return TokenResponse(access_token=access, refresh_token=new_refresh)
+    return TokenResponse(access_token=access, refresh_token=refresh_token)
 
 
 @router.get("/me", response_model=UserResponse)

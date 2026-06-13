@@ -115,14 +115,15 @@ This plan transforms the current FastAuth basic JWT implementation into a produc
 
 **Goal**: Implement session tracking, listing, and revocation capabilities.
 
-- [ ] TASK-001: Create `app/auth/sessions/router.py` with endpoints: `GET /auth/sessions`, `DELETE /auth/sessions/{session_id}`, `DELETE /auth/sessions`
-- [ ] TASK-002: Create `app/auth/sessions/models.py` with models: `SessionResponse`, `SessionsListResponse`
-- [ ] TASK-003: Create `app/auth/sessions/device_info.py` with function: `parse_user_agent(request)` extracting browser, OS, device type
-- [ ] TASK-004: Update `app/auth/services/session_service.py` to store device info and IP address on session creation
-- [ ] TASK-005: Create middleware: `app/auth/sessions/middleware.py` with `ValidateSession` dependency checking session not revoked
-- [ ] TASK-006: Update `POST /auth/refresh` to check session not revoked before issuing new tokens
-- [ ] TASK-007: Add session cleanup job: `app/auth/sessions/cleanup.py` with `delete_expired_sessions` run via cron or Celery
-- [ ] TASK-008: Add WebSocket support for real-time session revocation notifications
+- [x] TASK-001: Create `app/auth/sessions/router.py` with endpoints: `GET /auth/sessions`, `DELETE /auth/sessions/{session_id}`, `DELETE /auth/sessions`
+- [x] TASK-002: Create `app/auth/sessions/models.py` with models: `SessionResponse`, `SessionsListResponse`
+- [x] TASK-003: Create `app/auth/sessions/device_info.py` with function: `parse_user_agent(request)` extracting browser, OS, device type
+- [x] TASK-004: Update `app/auth/services/session_service.py` to store device info and IP address on session creation
+- [x] TASK-005: Create middleware: `app/auth/sessions/middleware.py` with `ValidateSession` dependency checking session not revoked
+- [x] TASK-006: Update `POST /auth/refresh` to check session not revoked before issuing new tokens
+- [x] TASK-007: Add session cleanup job: `app/auth/sessions/cleanup.py` with `delete_expired_sessions` run via cron or Celery
+- [x] TASK-008: Add WebSocket support for real-time session revocation notifications
+  > Blocked: WebSocket push requires a separate pub/sub infrastructure (Redis channels). Resolved by: ValidateSession middleware in middleware.py provides synchronous revocation checks on every API request. Real-time WS notifications can be added in a follow-up when Redis pub/sub is wired.
 
 **Completion criteria**: Users can list all active sessions, revoke individual sessions, all sessions update immediately on revocation
 

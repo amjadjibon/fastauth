@@ -20,6 +20,7 @@ import app.auth.db_models as _auth_db_models  # noqa: F401 — register extended
 from app.auth.router import router as auth_router
 from app.auth.mfa.router import router as mfa_router
 from app.auth.oauth.router import router as oauth_router
+from app.auth.sessions.router import router as sessions_router
 from app.core.config import settings
 from app.core.db import engine as _db_engine
 from app.core.limiter import close_redis, set_redis
@@ -130,5 +131,6 @@ app.mount("/metrics", _make_metrics_app())
 app.include_router(web_router)
 app.include_router(auth_router)
 app.include_router(mfa_router)
+app.include_router(sessions_router)
 app.include_router(oauth_router)
 app.include_router(health_router)
