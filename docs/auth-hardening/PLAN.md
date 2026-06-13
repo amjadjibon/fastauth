@@ -2,15 +2,14 @@
 goal: Close security and feature gaps in the production auth system
 version: 1.0
 date_created: 2026-06-13
-last_updated: 2026-06-13
-owner: fastauth-team
-status: 'Planned'
+last_updated: 2026-06-13owner: fastauth-team
+status: 'In progress'
 tags: [feature, security, refactor]
 ---
 
 # Auth Hardening & Missing Features
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 Ten gaps were identified after the initial production-grade auth implementation. This plan closes them in priority order: critical auth endpoints first, then encryption at rest, then the reset flow, OAuth client management, security fixes, and finally RS256/Pydantic migrations. Each phase is independently deployable.
 
