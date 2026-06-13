@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-12
 last_updated: 2026-06-12
 owner: amjadjibon
-status: 'Planned'
+status: 'In progress'
 tags: [architecture, feature, chore]
 ---
 
 # Production Hardening Plan
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 fastauth already has structured logging, OpenTelemetry tracing, Prometheus metrics, rate limiting, and a passing test suite. This plan closes the remaining gaps — security headers, CI/CD pipeline, trace-log correlation, alerting, and operational resilience — required before running in production.
 
