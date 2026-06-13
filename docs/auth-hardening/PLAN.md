@@ -58,11 +58,11 @@ Ten gaps were identified after the initial production-grade auth implementation.
 
 **Goal**: Actually encrypt the values stored in `secret_encrypted` (MFA) and `access_token_encrypted` / `refresh_token_encrypted` (social accounts) — currently stored as plaintext despite the column name.
 
-- [ ] TASK-006: Add `app/core/encryption.py` with `encrypt(plaintext: str) -> str` and `decrypt(ciphertext: str) -> str` using `cryptography.fernet.Fernet`. Derive a 32-byte Fernet key from `settings.secret_key` via `base64.urlsafe_b64encode(hashlib.sha256(settings.secret_key.encode()).digest())`.
-- [ ] TASK-007: Update `app/auth/mfa/router.py` `POST /auth/mfa/setup`: call `encrypt(secret)` before passing `encrypted_secret=` to `mfa_service.enable_mfa`. Update `verify_totp` call sites to `decrypt(mfa.secret_encrypted)` before passing to pyotp.
-- [ ] TASK-008: Update `app/auth/sessions/device_info.py` and `app/auth/social/router.py` social callback: call `encrypt(access_token)` / `encrypt(refresh_token)` before storing in `UserSocialAccount`. Update any read path that decrypts them.
-- [ ] TASK-009: Add `cryptography` to `pyproject.toml` dependencies (`uv add cryptography`).
-- [ ] TASK-010: Write a one-time migration helper comment in `app/core/encryption.py` explaining how to re-encrypt existing rows if deploying to a DB that already has plaintext values.
+- [x] TASK-006: Add `app/core/encryption.py` with `encrypt(plaintext: str) -> str` and `decrypt(ciphertext: str) -> str` using `cryptography.fernet.Fernet`. Derive a 32-byte Fernet key from `settings.secret_key` via `base64.urlsafe_b64encode(hashlib.sha256(settings.secret_key.encode()).digest())`.
+- [x] TASK-007: Update `app/auth/mfa/router.py` `POST /auth/mfa/setup`: call `encrypt(secret)` before passing `encrypted_secret=` to `mfa_service.enable_mfa`. Update `verify_totp` call sites to `decrypt(mfa.secret_encrypted)` before passing to pyotp.
+- [x] TASK-008: Update `app/auth/sessions/device_info.py` and `app/auth/social/router.py` social callback: call `encrypt(access_token)` / `encrypt(refresh_token)` before storing in `UserSocialAccount`. Update any read path that decrypts them.
+- [x] TASK-009: Add `cryptography` to `pyproject.toml` dependencies (`uv add cryptography`).
+- [x] TASK-010: Write a one-time migration helper comment in `app/core/encryption.py` explaining how to re-encrypt existing rows if deploying to a DB that already has plaintext values.
 
 **Completion criteria**: After setup, `SELECT secret_encrypted FROM user_mfa_secrets` returns a Fernet ciphertext (`gAAAAA...`) not a base32 secret. TOTP verification still works (encrypt/decrypt round-trip is correct).
 

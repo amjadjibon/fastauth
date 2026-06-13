@@ -3,6 +3,8 @@ import secrets
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 
+from app.core.encryption import encrypt as _encrypt
+
 from app.auth.deps import CurrentUser, SessionDep
 from app.auth.services import social_service
 from app.auth.services.session_service import create_session
@@ -76,9 +78,12 @@ async def social_callback(provider: str, code: str, request: Request, session: S
             session, provider, provider_user_id, email, username
         )
 
+    refresh_tok = tokens.get("refresh_token")
     await social_service.link_social_account(
         session, user.id, provider, provider_user_id,
         provider_email=email, provider_username=username,
+        access_token_encrypted=_encrypt(access_token),
+        refresh_token_encrypted=_encrypt(refresh_tok) if refresh_tok else None,
     )
 
     atk, rtk, _ = await create_session(session, user_id=user.id, ip_address=request.client.host if request.client else None)
@@ -94,6 +99,7 @@ async def link_account(provider: str, code: str, request: Request, current_user:
     if not access_token:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No access token")
     user_info = await p.get_user_info(access_token)
+    refresh_tok = tokens.get("refresh_token")
     await social_service.link_social_account(
         session,
         current_user.id,
@@ -101,6 +107,8 @@ async def link_account(provider: str, code: str, request: Request, current_user:
         user_info["id"],
         provider_email=user_info.get("email"),
         provider_username=user_info.get("username"),
+        access_token_encrypted=_encrypt(access_token),
+        refresh_token_encrypted=_encrypt(refresh_tok) if refresh_tok else None,
     )
     return {"message": f"{provider} account linked"}
 

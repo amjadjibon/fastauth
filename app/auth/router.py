@@ -143,7 +143,8 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
     if body.is_backup_code:
         ok = await mfa_service.verify_backup_code(session, user.id, body.code)
     else:
-        ok = _verify_totp(mfa.secret_encrypted, body.code)
+        from app.core.encryption import decrypt as _decrypt
+        ok = _verify_totp(_decrypt(mfa.secret_encrypted), body.code)
 
     if not ok:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
