@@ -51,10 +51,11 @@ The FastAPI-generated `/docs` and `/redoc` endpoints show schemas but no example
 
 **Depends on**: Phase 1 complete (pattern established)
 
-- [ ] TASK-008: Add example to `MfaLoginRequest` in `app/auth/mfa/models.py`: `mfa_session_token: "<token>"`, `totp_code: "123456"`.
-- [ ] TASK-009: Add example to MFA setup response model (whatever `POST /auth/mfa/setup` returns) with `secret: "BASE32SECRET"`, `qr_code_url: "otpauth://..."`.
-- [ ] TASK-010: Add example to `SessionResponse` in `app/auth/sessions/models.py`: all device fields populated.
-- [ ] TASK-011: Add example to `SessionsListResponse`.
+- [x] TASK-008: Add example to `MfaLoginRequest` in `app/auth/mfa/models.py`: `mfa_session_token: "<token>"`, `totp_code: "123456"`.
+- [x] TASK-009: Add example to MFA setup response model (whatever `POST /auth/mfa/setup` returns) with `secret: "BASE32SECRET"`, `qr_code_url: "otpauth://..."`.
+  > Also added examples to `MfaVerifyRequest` and `MfaBackupCodesResponse`.
+- [x] TASK-010: Add example to `SessionResponse` in `app/auth/sessions/models.py`: all device fields populated.
+- [x] TASK-011: Add example to `SessionsListResponse`.
 
 **Completion criteria**: MFA and session models show examples in `/docs`.
 
