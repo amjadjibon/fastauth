@@ -1,6 +1,8 @@
 name: Load Test
 
 on:
+  push:
+    branches: ["*-loadtest"]
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * *'  # daily at 2am UTC
