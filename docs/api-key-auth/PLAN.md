@@ -31,7 +31,7 @@ fastauth currently only authenticates human users via JWT. Service-to-service ca
 
 **Goal**: Create the `api_key` table and Alembic migration.
 
-- [ ] TASK-001: Add `APIKey` model to `app/auth/db_models.py`:
+- [x] TASK-001: Add `APIKey` model to `app/auth/db_models.py`:
   ```python
   class APIKey(SQLModel, table=True):
       __tablename__ = "api_key"
@@ -45,7 +45,8 @@ fastauth currently only authenticates human users via JWT. Service-to-service ca
       revoked_at: datetime | None = Field(default=None)
       last_used_at: datetime | None = Field(default=None)
   ```
-- [ ] TASK-002: Generate Alembic migration: `uv run alembic revision --autogenerate -m "add api_key table"`. Review the generated file — confirm it creates `api_key` with a unique index on `key_hash`.
+- [x] TASK-002: Generate Alembic migration: `uv run alembic revision --autogenerate -m "add api_key table"`. Review the generated file — confirm it creates `api_key` with a unique index on `key_hash`.
+  > Written manually as `migrations/versions/2000000010_add_api_key_table.py` matching repo style. SQLite path (used in tests) uses `create_all` and was verified directly.
 
 **Completion criteria**: `uv run alembic upgrade head` on a fresh DB completes without error; `api_key` table exists.
 

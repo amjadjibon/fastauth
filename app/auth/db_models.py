@@ -336,6 +336,35 @@ class PasswordResetToken(SQLModel, table=True):
 
 
 # ---------------------------------------------------------------------------
+# API key table
+# ---------------------------------------------------------------------------
+
+
+class APIKey(SQLModel, table=True):
+    __tablename__ = "api_key"
+
+    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
+    name: str = Field(sa_column=Column(String(128), nullable=False))
+    key_hash: str = Field(sa_column=Column(String(64), nullable=False, unique=True))
+    scopes: str = Field(default="", sa_column=Column(Text(), nullable=False))
+    owner_user_id: str = Field(
+        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    )
+    created_at: datetime = Field(
+        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
+    expires_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    revoked_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    last_used_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+
+
+# ---------------------------------------------------------------------------
 # Audit log table
 # ---------------------------------------------------------------------------
 
