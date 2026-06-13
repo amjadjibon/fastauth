@@ -22,3 +22,5 @@ class AuditEvent:
     TOKEN_REFRESHED = "token_refreshed"
     OAUTH_AUTHORIZE = "oauth_authorize"
     PASSWORD_RESET = "password_reset"
+    EMAIL_VERIFIED = "email_verified"
+    EMAIL_VERIFICATION_SENT = "email_verification_sent"

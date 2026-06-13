@@ -60,10 +60,10 @@ Registration accepts any email address today. This adds a flag-gated email verif
 
 **Goal**: Wire verification into the register and login flows.
 
-- [ ] TASK-006: In `app/auth/router.py`, update `register`: after creating the user, call `_issue_verification_token(session, user)` (a local helper defined in the same file) that creates an `EmailVerificationToken` row and calls `send_verification_email`. The `register` response is unchanged (still returns `user_id`).
-- [ ] TASK-007: Add `_issue_verification_token(session, user) -> str` helper in `app/auth/router.py` — generates `secrets.token_urlsafe(32)`, hashes it, inserts `EmailVerificationToken(user_id, token_hash, expires_at=now+24h)`, calls `await send_verification_email(user.id, user.email, raw_token)`, returns the raw token.
-- [ ] TASK-008: In `login` handler, after the user is found and password verified, add: `if settings.require_email_verification and not user.email_verified: raise HTTPException(403, "Email not verified")`.
-- [ ] TASK-009: Add `EMAIL_VERIFIED = "email_verified"` and `EMAIL_VERIFICATION_SENT = "email_verification_sent"` to `app/auth/audit/events.py`.
+- [x] TASK-006: In `app/auth/router.py`, update `register`: after creating the user, call `_issue_verification_token(session, user)` (a local helper defined in the same file) that creates an `EmailVerificationToken` row and calls `send_verification_email`. The `register` response is unchanged (still returns `user_id`).
+- [x] TASK-007: Add `_issue_verification_token(session, user) -> str` helper in `app/auth/router.py` — generates `secrets.token_urlsafe(32)`, hashes it, inserts `EmailVerificationToken(user_id, token_hash, expires_at=now+24h)`, calls `await send_verification_email(user.id, user.email, raw_token)`, returns the raw token.
+- [x] TASK-008: In `login` handler, after the user is found and password verified, add: `if settings.require_email_verification and not user.email_verified: raise HTTPException(403, "Email not verified")`.
+- [x] TASK-009: Add `EMAIL_VERIFIED = "email_verified"` and `EMAIL_VERIFICATION_SENT = "email_verification_sent"` to `app/auth/audit/events.py`.
 
 **Completion criteria**: `POST /auth/register` with `REQUIRE_EMAIL_VERIFICATION=false` still returns 201; with `REQUIRE_EMAIL_VERIFICATION=true`, subsequent `POST /auth/login` with the new user returns 403 until verified.
 
