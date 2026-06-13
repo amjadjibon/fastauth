@@ -9,11 +9,11 @@ status: running
 
 | Iteration | Verdict | Critical | High | Medium | Low | Action taken |
 |-----------|---------|----------|------|--------|-----|--------------|
-| 1         | —       | —        | —    | —      | —   | starting     |
+| 1         | Request Changes | 0 | 3 | 4 | 5 | Phase 6 added to plan; direct fixes for MED-001/002/004 |
 
 ## Log
 
 ### Iteration 1
-- [ ] implement-plan
-- [ ] code-review
+- [x] implement-plan
+- [x] code-review
 - [ ] fix / approve
