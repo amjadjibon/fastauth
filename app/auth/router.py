@@ -24,6 +24,7 @@ from app.auth.models import (
 from app.auth.security.brute_force import get_brute_force_protection
 from app.auth.security.lockout import is_account_locked
 from app.auth.services import mfa_service
+from app.core.config import settings
 from app.core.metrics import (
     auth_login_attempts_total,
     auth_registrations_total,
@@ -31,6 +32,7 @@ from app.core.metrics import (
 )
 from app.core.ratelimit import RateLimiter
 from app.core.security import create_token, decode_token, hash_password, verify_password
+from app.core.token_blocklist import block_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -210,8 +212,18 @@ async def logout(
 
     jti = payload.get("jti")
     ip = request.client.host if request.client else "unknown"
+
     if jti:
+        # Revoke the DB session (create_session uses the same JTI for access + refresh tokens).
         await svc.revoke_session_by_jti(session, jti, current_user.id)
+
+        # Also block the access token in Redis so it's rejected for its remaining lifetime.
+        exp = payload.get("exp")
+        if exp:
+            ttl = max(0, int(exp - datetime.now(UTC).timestamp()))
+        else:
+            ttl = settings.access_token_expire_seconds
+        await block_token(jti, ttl)
 
     await _audit(session, AuditEvent.LOGOUT, user_id=current_user.id, ip_address=ip)
     return {"ok": True}

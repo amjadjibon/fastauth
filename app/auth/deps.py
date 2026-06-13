@@ -11,6 +11,7 @@ from app.auth.models import User
 from app.core.config import settings
 from app.core.db import get_session
 from app.core.security import create_token, decode_token
+from app.core.token_blocklist import is_blocked
 
 bearer = HTTPBearer()
 
@@ -18,14 +19,14 @@ bearer = HTTPBearer()
 def make_tokens(user_id: str, amr: list[str] | None = None) -> tuple[str, str]:
     import uuid
 
-    access_jti = str(uuid.uuid4())
-    refresh_jti = str(uuid.uuid4())
+    # Same JTI shared by access + refresh token so logout can find the session by access JTI.
+    jti = str(uuid.uuid4())
     access = create_token(
-        {"sub": user_id, "type": "access", "jti": access_jti, "amr": amr or ["pwd"]},
+        {"sub": user_id, "type": "access", "jti": jti, "amr": amr or ["pwd"]},
         timedelta(seconds=settings.access_token_expire_seconds),
     )
     refresh = create_token(
-        {"sub": user_id, "type": "refresh", "jti": refresh_jti},
+        {"sub": user_id, "type": "refresh", "jti": jti},
         timedelta(seconds=settings.refresh_token_expire_seconds),
     )
     return access, refresh
@@ -42,7 +43,13 @@ async def get_current_user(credentials: BearerDep, session: SessionDep) -> User:
     if payload.get("type") != "access":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
-    user = await store.get_by_id(session, payload["sub"])
+    jti = payload.get("jti")
+    if jti and await is_blocked(jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked"
+        )
+
+    user = await store.get_by_id(session, payload["sub"])  # type: ignore
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 

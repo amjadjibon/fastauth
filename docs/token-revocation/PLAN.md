@@ -61,8 +61,8 @@ Refresh tokens are already tied to `UserSession` rows (via `refresh_token_jti`) 
 
 **Goal**: Block on logout; check on every authenticated request.
 
-- [ ] TASK-005: In `app/auth/router.py` `logout` handler, after revoking the session, extract the `jti` from the current access token and call `block_token(jti, remaining_ttl)` where `remaining_ttl = max(0, token_exp - now)`.
-- [ ] TASK-006: In `app/auth/deps.py`, in the dependency that validates the Bearer token, after `decode_token` succeeds, call `await is_blocked(payload["jti"])`; if `True`, raise `HTTPException(401, "Token has been revoked")`.
+- [x] TASK-005: In `app/auth/router.py` `logout` handler, after revoking the session, extract the `jti` from the current access token and call `block_token(jti, remaining_ttl)` where `remaining_ttl = max(0, token_exp - now)`.
+- [x] TASK-006: In `app/auth/deps.py`, in the dependency that validates the Bearer token, after `decode_token` succeeds, call `await is_blocked(payload["jti"])`; if `True`, raise `HTTPException(401, "Token has been revoked")`.
 
 **Completion criteria**: Integration test — login → logout → `GET /auth/me` with the old access token returns 401.
 
