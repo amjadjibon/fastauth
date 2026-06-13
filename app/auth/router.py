@@ -50,6 +50,11 @@ class LoginResponse(BaseModel):
     response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(RateLimiter(times=10, seconds=60))],
+    responses={
+        409: {"description": "Username or email already taken", "content": {"application/json": {"example": {"detail": "Username already taken"}}}},
+        422: {"description": "Validation error (weak password, invalid email, etc.)"},
+        429: {"description": "Rate limited"},
+    },
 )
 async def register(body: RegisterRequest, session: SessionDep):
     if await store.username_exists(session, body.username):
@@ -63,6 +68,10 @@ async def register(body: RegisterRequest, session: SessionDep):
     "/login",
     response_model=LoginResponse,
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+    responses={
+        401: {"description": "Invalid credentials", "content": {"application/json": {"example": {"detail": "Invalid credentials"}}}},
+        429: {"description": "Rate limited or brute-force protection triggered", "content": {"application/json": {"example": {"detail": "Too many failed attempts. Try again later."}}}},
+    },
 )
 async def login(body: LoginRequest, session: SessionDep, request: Request):
     from datetime import timedelta
@@ -173,6 +182,9 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
     "/refresh",
     response_model=TokenResponse,
     dependencies=[Depends(RateLimiter(times=20, seconds=60))],
+    responses={
+        401: {"description": "Invalid or revoked refresh token", "content": {"application/json": {"example": {"detail": "Invalid or expired refresh token"}}}},
+    },
 )
 async def refresh(body: RefreshRequest, session: SessionDep):
     from app.auth.services import session_service as svc

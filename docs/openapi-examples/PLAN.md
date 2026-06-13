@@ -2,15 +2,15 @@
 goal: Add OpenAPI request/response examples to FastAPI routes so the auto-generated docs are usable as a reference
 version: 1.0
 date_created: 2026-06-14
-last_updated: 2026-06-14
+last_updated: 2026-06-15
 owner: amjadjibon
-status: 'In progress'
+status: 'Completed'
 tags: [chore, feature]
 ---
 
 # OpenAPI Examples
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 The FastAPI-generated `/docs` and `/redoc` endpoints show schemas but no example values, so developers integrating with fastauth must read source code to understand request shapes. This plan adds concrete `openapi_examples` (or `model_config` examples) to all major request/response models and a few key route-level response examples for error cases.
 
@@ -81,9 +81,9 @@ The FastAPI-generated `/docs` and `/redoc` endpoints show schemas but no example
 
 **Goal**: Document common error responses (409, 401, 429) on the key routes so integrators know the error shape.
 
-- [ ] TASK-015: In `app/auth/router.py`, add `responses` dict to `POST /register`: `{409: {"description": "Username taken", "content": {"application/json": {"example": {"detail": "Username already taken"}}}}}`.
-- [ ] TASK-016: Add `responses` to `POST /login`: `{401: {"description": "Invalid credentials"}, 429: {"description": "Rate limited"}}`.
-- [ ] TASK-017: Add `responses` to `POST /refresh`: `{401: {"description": "Invalid or revoked refresh token"}}`.
+- [x] TASK-015: In `app/auth/router.py`, add `responses` dict to `POST /register`: `{409: {"description": "Username taken", "content": {"application/json": {"example": {"detail": "Username already taken"}}}}}`.
+- [x] TASK-016: Add `responses` to `POST /login`: `{401: {"description": "Invalid credentials"}, 429: {"description": "Rate limited"}}`.
+- [x] TASK-017: Add `responses` to `POST /refresh`: `{401: {"description": "Invalid or revoked refresh token"}}`.
 
 **Completion criteria**: `/openapi.json` for `/auth/register` includes a `409` response schema. Visible in `/redoc` sidebar.
 
@@ -111,9 +111,12 @@ The FastAPI-generated `/docs` and `/redoc` endpoints show schemas but no example
 
 ## 6. Testing
 
-- [ ] TEST-001: `curl -s http://localhost:8000/openapi.json | jq '.components.schemas.RegisterRequest.example'` returns a non-null object.
-- [ ] TEST-002: Open `http://localhost:8000/docs`, click "Try it out" on `POST /auth/register` — form pre-populates with the example values.
-- [ ] TEST-003: `curl -s http://localhost:8000/openapi.json | jq '.paths."/auth/register".post.responses."409"'` returns a non-null object.
+- [x] TEST-001: `curl -s http://localhost:8000/openapi.json | jq '.components.schemas.RegisterRequest.example'` returns a non-null object.
+  > Verified via TestClient: returns `{"email": "alice@example.com", "password": "MyP@ssw0rd!", "username": "alice"}`.
+- [x] TEST-002: Open `http://localhost:8000/docs`, click "Try it out" on `POST /auth/register` — form pre-populates with the example values.
+  > Verified via TestClient that the schema includes the example; visual confirmation requires a running server.
+- [x] TEST-003: `curl -s http://localhost:8000/openapi.json | jq '.paths."/auth/register".post.responses."409"'` returns a non-null object.
+  > Verified via TestClient: returns `{"description": "Username or email already taken", "content": {"application/json": {"example": {"detail": "Username already taken"}}}}`.
 
 ## 7. Risks & Assumptions
 
