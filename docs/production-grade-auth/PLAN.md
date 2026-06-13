@@ -77,14 +77,14 @@ This plan transforms the current FastAuth basic JWT implementation into a produc
 
 **Goal**: Implement OAuth2 authorization code flow with PKCE and OIDC discovery.
 
-- [ ] TASK-001: Create `app/auth/oauth/dependencies.py` with dependency: `ClientAuthenticated` (validates client_id + client_secret or JWT assertion)
-- [ ] TASK-002: Create `app/auth/oauth/pkce.py` with functions: `generate_code_verifier`, `generate_code_challenge`, `verify_code_challenge`
-- [ ] TASK-003: Create `app/auth/oauth/router.py` with endpoints: `POST /oauth/authorize`, `POST /oauth/token`, `GET /.well-known/openid-configuration`
-- [ ] TASK-004: Create `app/auth/oauth/discovery.py` with OIDC discovery handler returning: issuer, authorization_endpoint, token_endpoint, jwks_uri, scopes_supported, response_types_supported
-- [ ] TASK-005: Create `app/auth/oauth/jwks.py` with endpoint: `GET /.well-known/jwks.json` returning public keys in JWKS format
-- [ ] TASK-006: Create `app/auth/oauth/models.py` with models: `OAuthClient`, `AuthorizationCodeRequest`, `TokenRequest`, `TokenResponse`
-- [ ] TASK-007: Update `app/auth/deps.py` with scope validation: `RequiredScopes(scopes=["openid", "profile", "email"])`
-- [ ] TASK-008: Add rate limiting: `Depends(RateLimiter(times=20, seconds=60))` to `/oauth/token` endpoint
+- [x] TASK-001: Create `app/auth/oauth/dependencies.py` with dependency: `ClientAuthenticated` (validates client_id + client_secret or JWT assertion)
+- [x] TASK-002: Create `app/auth/oauth/pkce.py` with functions: `generate_code_verifier`, `generate_code_challenge`, `verify_code_challenge`
+- [x] TASK-003: Create `app/auth/oauth/router.py` with endpoints: `POST /oauth/authorize`, `POST /oauth/token`, `GET /.well-known/openid-configuration`
+- [x] TASK-004: Create `app/auth/oauth/discovery.py` with OIDC discovery handler returning: issuer, authorization_endpoint, token_endpoint, jwks_uri, scopes_supported, response_types_supported
+- [x] TASK-005: Create `app/auth/oauth/jwks.py` with endpoint: `GET /.well-known/jwks.json` returning public keys in JWKS format
+- [x] TASK-006: Create `app/auth/oauth/models.py` with models: `OAuthClient`, `AuthorizationCodeRequest`, `TokenRequest`, `TokenResponse`
+- [x] TASK-007: Update `app/auth/deps.py` with scope validation: `RequiredScopes(scopes=["openid", "profile", "email"])`
+- [x] TASK-008: Add rate limiting: `Depends(RateLimiter(times=20, seconds=60))` to `/oauth/token` endpoint
 
 **Completion criteria**: OAuth2 flows pass [OAuth 2.0 for Native Apps Best Current Practice](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-native-apps-13) test suite, OIDC discovery returns valid spec
 

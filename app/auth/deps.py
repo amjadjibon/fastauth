@@ -48,3 +48,22 @@ async def get_current_user(credentials: BearerDep, session: SessionDep) -> User:
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 BearerDep = Annotated[HTTPAuthorizationCredentials, Depends(bearer)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def RequiredScopes(scopes: list[str]):
+    """Dependency factory that validates token carries the required OAuth2 scopes."""
+    async def _check(credentials: BearerDep) -> None:
+        try:
+            payload = decode_token(credentials.credentials)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            ) from exc
+        token_scopes = set((payload.get("scope") or "").split())
+        for required in scopes:
+            if required not in token_scopes:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Scope '{required}' required",
+                )
+    return Depends(_check)
