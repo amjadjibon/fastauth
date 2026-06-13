@@ -47,8 +47,8 @@ Registration accepts any email address today. This adds a flag-gated email verif
 
 **Goal**: Add the enforcement flag to settings and create the email-sending stub.
 
-- [ ] TASK-004: Add `require_email_verification: bool = False` to `Settings` in `app/core/config.py`.
-- [ ] TASK-005: Create `app/core/email.py` with `async def send_verification_email(user_id: str, email: str, token: str) -> None` — logs the token at DEBUG level with `logger.debug("Email verification token for user %s: %s", user_id, token)`. No SMTP. Returns immediately.
+- [x] TASK-004: Add `require_email_verification: bool = False` to `Settings` in `app/core/config.py`.
+- [x] TASK-005: Create `app/core/email.py` with `async def send_verification_email(user_id: str, email: str, token: str) -> None` — logs the token at DEBUG level with `logger.debug("Email verification token for user %s: %s", user_id, token)`. No SMTP. Returns immediately.
 
 **Completion criteria**: `from app.core.email import send_verification_email` imports without error.
 

@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     # RSA key for RS256 (optional — HS256 is the default)
     rsa_private_key_path: str | None = None
 
+    # Email verification
+    require_email_verification: bool = False
+
     # Load testing
     load_test: bool = False
 
