@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: amjadjibon
-status: 'Planned'
+status: 'In progress'
 tags: [feature, architecture]
 ---
 
 # API Key Authentication
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 fastauth currently only authenticates human users via JWT. Service-to-service calls (cron jobs, internal microservices, CI pipelines) need a stable credential that doesn't expire every 60 seconds. This plan adds API key authentication: `X-API-Key` header, scoped permissions, hashed storage, and management endpoints for key creation and revocation.
 
