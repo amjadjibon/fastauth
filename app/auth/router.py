@@ -202,10 +202,16 @@ async def logout(current_user: CurrentUser, credentials: BearerDep, session: Ses
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )
 async def change_password(body: ChangePasswordRequest, current_user: CurrentUser, session: SessionDep, request: Request):
+    from app.auth.security.password_history import add_password_to_history, check_password_not_reused
+
     if not verify_password(body.current_password, current_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Current password is incorrect")
 
+    if not await check_password_not_reused(session, current_user.id, body.new_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password was recently used")
+
     new_hashed = hash_password(body.new_password)
+    await add_password_to_history(session, current_user.id, current_user.hashed_password)
     current_user.hashed_password = new_hashed
     session.add(current_user)
     await session.commit()
@@ -266,6 +272,12 @@ async def reset_password(body: ResetPasswordRequest, session: SessionDep, reques
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
 
+    from app.auth.security.password_history import add_password_to_history, check_password_not_reused
+
+    if not await check_password_not_reused(session, user.id, body.new_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password was recently used")
+
+    await add_password_to_history(session, user.id, user.hashed_password)
     user.hashed_password = hash_password(body.new_password)
     reset_token.used_at = now
     session.add(user)

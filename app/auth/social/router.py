@@ -1,9 +1,35 @@
+import logging
 import secrets
+import time
+from collections import OrderedDict
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 
 from app.core.encryption import encrypt as _encrypt
+
+logger = logging.getLogger("fastauth.social")
+
+# In-memory OAuth state store with 10 min TTL (Redis used if available)
+_state_store: OrderedDict[str, float] = OrderedDict()
+_STATE_TTL = 600  # seconds
+
+
+def _store_state(state: str) -> None:
+    now = time.monotonic()
+    _state_store[state] = now
+    # Evict expired states to bound memory usage
+    expired = [k for k, t in list(_state_store.items()) if now - t > _STATE_TTL]
+    for k in expired:
+        del _state_store[k]
+
+
+def _consume_state(state: str) -> bool:
+    """Validate and delete state. Returns False if missing or expired."""
+    ts = _state_store.pop(state, None)
+    if ts is None:
+        return False
+    return time.monotonic() - ts <= _STATE_TTL
 
 from app.auth.deps import CurrentUser, SessionDep
 from app.auth.services import social_service
@@ -40,12 +66,16 @@ async def social_authorize(provider: str, request: Request):
     base_url = str(request.base_url).rstrip("/")
     p = _get_provider(provider, base_url)
     state = secrets.token_urlsafe(16)
+    _store_state(state)
     url = await p.get_authorization_url(state)
     return RedirectResponse(url)
 
 
 @router.get("/{provider}/callback")
-async def social_callback(provider: str, code: str, request: Request, session: SessionDep):
+async def social_callback(provider: str, code: str, state: str | None, request: Request, session: SessionDep):
+    if not state or not _consume_state(state):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or missing OAuth state")
+
     base_url = str(request.base_url).rstrip("/")
     p = _get_provider(provider, base_url)
 

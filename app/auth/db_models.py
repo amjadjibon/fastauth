@@ -199,6 +199,20 @@ class RolePermission(SQLModel, table=True):
 
 
 # ---------------------------------------------------------------------------
+# Password history table
+# ---------------------------------------------------------------------------
+
+
+class PasswordHistory(SQLModel, table=True):
+    __tablename__ = "password_history"
+
+    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
+    user_id: str = Field(sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False))
+    hashed_password: str = Field(sa_column=Column(String(128), nullable=False))
+    created_at: datetime = Field(default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False))
+
+
+# ---------------------------------------------------------------------------
 # Password reset tokens table
 # ---------------------------------------------------------------------------
 

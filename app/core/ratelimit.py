@@ -19,3 +19,20 @@ class RateLimiter:
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many requests",
             )
+        # Additional per-user rate limiting when bearer token is present
+        auth_header = request.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+            try:
+                from app.core.security import decode_token
+                payload = decode_token(token)
+                user_id = payload.get("sub")
+                if user_id:
+                    user_key = f"rl:{request.method}:{request.url.path}:user:{user_id}"
+                    if await is_rate_limited(user_key, self.times, self.seconds):
+                        raise HTTPException(
+                            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                            detail="Too many requests",
+                        )
+            except Exception:
+                pass

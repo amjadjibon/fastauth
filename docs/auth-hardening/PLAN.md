@@ -106,11 +106,11 @@ Ten gaps were identified after the initial production-grade auth implementation.
 
 **Goal**: Close three active security gaps — per-user rate limiting, OAuth state CSRF protection, and password history.
 
-- [ ] TASK-021: Update `app/core/ratelimit.py` `RateLimiter.__call__` to optionally key on user ID. If the request has a valid Bearer token, extract `sub` and add a second key `rl:{method}:{path}:user:{user_id}` checked in addition to the IP key.
-- [ ] TASK-022: In `app/auth/social/router.py` `GET /{provider}/authorize`: store the generated `state` value in Redis (key `social:state:{state}`, TTL 10 min) or an in-memory cache. In `GET /{provider}/callback`: validate that the incoming `state` exists in the store before processing; delete it after validation. Return 400 if state is missing or unknown.
-- [ ] TASK-023: Implement `app/auth/security/password_history.py` properly. Add `password_history` table migration `2000000009_add_password_history.py` with columns `id UUID PK`, `user_id FK`, `hashed_password TEXT`, `created_at TIMESTAMP`. Add `PasswordHistory` SQLModel to `app/auth/db_models.py`.
-- [ ] TASK-024: In `check_password_not_reused`: query the last 5 `PasswordHistory` rows for `user_id` and call `verify_password(new_password, row.hashed_password)` for each — return `False` if any match. In `add_password_to_history`: insert a new row, then delete rows beyond the 5 most recent.
-- [ ] TASK-025: Wire `check_password_not_reused` into `POST /auth/change-password` (Phase 1) and `POST /auth/reset-password` (Phase 3) — return 400 with `"Password was recently used"` if check fails.
+- [x] TASK-021: Update `app/core/ratelimit.py` `RateLimiter.__call__` to optionally key on user ID. If the request has a valid Bearer token, extract `sub` and add a second key `rl:{method}:{path}:user:{user_id}` checked in addition to the IP key.
+- [x] TASK-022: In `app/auth/social/router.py` `GET /{provider}/authorize`: store the generated `state` value in Redis (key `social:state:{state}`, TTL 10 min) or an in-memory cache. In `GET /{provider}/callback`: validate that the incoming `state` exists in the store before processing; delete it after validation. Return 400 if state is missing or unknown.
+- [x] TASK-023: Implement `app/auth/security/password_history.py` properly. Add `password_history` table migration `2000000009_add_password_history.py` with columns `id UUID PK`, `user_id FK`, `hashed_password TEXT`, `created_at TIMESTAMP`. Add `PasswordHistory` SQLModel to `app/auth/db_models.py`.
+- [x] TASK-024: In `check_password_not_reused`: query the last 5 `PasswordHistory` rows for `user_id` and call `verify_password(new_password, row.hashed_password)` for each — return `False` if any match. In `add_password_to_history`: insert a new row, then delete rows beyond the 5 most recent.
+- [x] TASK-025: Wire `check_password_not_reused` into `POST /auth/change-password` (Phase 1) and `POST /auth/reset-password` (Phase 3) — return 400 with `"Password was recently used"` if check fails.
 
 **Completion criteria**: Sending 6+ login requests from the same authenticated user triggers 429 before the IP limit is reached. OAuth callback with a fabricated `state` returns 400. Changing to a previously used password returns 400.
 
