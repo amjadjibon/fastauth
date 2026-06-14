@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: Amjad Hossain
-status: 'In progress'
+status: 'Completed'
 tags: [bug]
 ---
 
 # Fix React Frontend Review Findings
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 The code review of PR #9 (`react-frontend`) identified one high-severity bug that breaks the MFA login flow entirely, two medium bugs (missing backend endpoint, blank error card on MFA setup failure, unbounded search requests), and three low-priority cleanups. This plan fixes all findings in severity order so the highest-impact issue ships first.
 
@@ -129,7 +129,7 @@ The code review of PR #9 (`react-frontend`) identified one high-severity bug tha
 - [ ] TEST-002: Manual — `curl -H "Authorization: Bearer <token>" http://localhost:8000/auth/mfa/status` returns `{"enabled": true}` after MFA setup.
 - [ ] TEST-003: Manual — navigate to `/dashboard/mfa` with the backend down; verify an error message and "Try again" button appear instead of a blank card.
 - [ ] TEST-004: Manual — type rapidly in the admin search box while watching the Network tab; verify no burst of sequential requests fires on every keystroke.
-- [ ] TEST-005: Run `cd frontend && npm run build` — exits 0, no TypeScript errors, no `as never` cast remaining.
+- [x] TEST-005: Run `cd frontend && npm run build` — exits 0, no TypeScript errors, no `as never` cast remaining.
 
 ## 9. Related Specs & Further Reading
 
