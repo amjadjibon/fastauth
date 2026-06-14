@@ -1,10 +1,12 @@
-"""SQLModel table definitions for OAuth2, MFA, sessions, RBAC, and audit logging."""
+"""SQLAlchemy ORM table definitions for OAuth2, MFA, sessions, RBAC, and audit logging."""
 
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlmodel import Field, SQLModel
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.shared.database import Base
 
 
 def _now() -> datetime:
@@ -20,104 +22,63 @@ def _uuid() -> str:
 # ---------------------------------------------------------------------------
 
 
-class OAuthClient(SQLModel, table=True):
+class OAuthClient(Base):
     __tablename__ = "oauth_clients"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    name: str = Field(sa_column=Column(String(255), nullable=False))
-    client_secret_hash: str | None = Field(sa_column=Column(String(128), nullable=True))
-    redirect_uris: str = Field(sa_column=Column(Text(), nullable=False))
-    scopes: str = Field(default="openid profile email", sa_column=Column(Text(), nullable=False))
-    grant_types: str = Field(default="authorization_code", sa_column=Column(Text(), nullable=False))
-    is_confidential: bool = Field(default=True, sa_column=Column(Boolean(), nullable=False))
-    is_active: bool = Field(default=True, sa_column=Column(Boolean(), nullable=False))
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
-    updated_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    client_secret_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    redirect_uris: Mapped[str] = mapped_column(Text(), nullable=False)
+    scopes: Mapped[str] = mapped_column(Text(), nullable=False, default="openid profile email")
+    grant_types: Mapped[str] = mapped_column(Text(), nullable=False, default="authorization_code")
+    is_confidential: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
-class OAuthAuthorizationCode(SQLModel, table=True):
+class OAuthAuthorizationCode(Base):
     __tablename__ = "oauth_authorization_codes"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    code: str = Field(sa_column=Column(String(128), nullable=False, unique=True))
-    client_id: str = Field(
-        sa_column=Column(
-            String(36), ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False
-        )
-    )
-    user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    redirect_uri: str = Field(sa_column=Column(String(2048), nullable=False))
-    scopes: str = Field(sa_column=Column(Text(), nullable=False))
-    code_challenge: str | None = Field(sa_column=Column(String(128), nullable=True))
-    code_challenge_method: str | None = Field(sa_column=Column(String(10), nullable=True))
-    nonce: str | None = Field(sa_column=Column(String(128), nullable=True))
-    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    used_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    code: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    client_id: Mapped[str] = mapped_column(String(36), ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    redirect_uri: Mapped[str] = mapped_column(String(2048), nullable=False)
+    scopes: Mapped[str] = mapped_column(Text(), nullable=False)
+    code_challenge: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    code_challenge_method: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    nonce: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
-class OAuthAccessToken(SQLModel, table=True):
+class OAuthAccessToken(Base):
     __tablename__ = "oauth_access_tokens"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    jti: str = Field(sa_column=Column(String(128), nullable=False, unique=True))
-    client_id: str = Field(
-        sa_column=Column(
-            String(36), ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False
-        )
-    )
-    user_id: str | None = Field(
-        default=None,
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=True),
-    )
-    scopes: str = Field(sa_column=Column(Text(), nullable=False))
-    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    revoked_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    jti: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    client_id: Mapped[str] = mapped_column(String(36), ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=True, default=None)
+    scopes: Mapped[str] = mapped_column(Text(), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
-class OAuthRefreshToken(SQLModel, table=True):
+class OAuthRefreshToken(Base):
     __tablename__ = "oauth_refresh_tokens"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    token_hash: str = Field(sa_column=Column(String(128), nullable=False, unique=True))
-    client_id: str = Field(
-        sa_column=Column(
-            String(36), ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False
-        )
-    )
-    user_id: str | None = Field(
-        default=None,
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=True),
-    )
-    access_token_id: str | None = Field(
-        default=None,
-        sa_column=Column(
-            String(36), ForeignKey("oauth_access_tokens.id", ondelete="CASCADE"), nullable=True
-        ),
-    )
-    scopes: str = Field(sa_column=Column(Text(), nullable=False))
-    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    revoked_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    token_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    client_id: Mapped[str] = mapped_column(String(36), ForeignKey("oauth_clients.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=True, default=None)
+    access_token_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("oauth_access_tokens.id", ondelete="CASCADE"), nullable=True, default=None)
+    scopes: Mapped[str] = mapped_column(Text(), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 # ---------------------------------------------------------------------------
@@ -125,42 +86,28 @@ class OAuthRefreshToken(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class UserMfaSecret(SQLModel, table=True):
+class UserMfaSecret(Base):
     __tablename__ = "user_mfa_secrets"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    user_id: str = Field(
-        sa_column=Column(
-            String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False, unique=True
-        )
-    )
-    secret_encrypted: str = Field(sa_column=Column(Text(), nullable=False))
-    algorithm: str = Field(default="SHA1", sa_column=Column(String(10), nullable=False))
-    digits: int = Field(default=6, sa_column=Column(Integer(), nullable=False))
-    period: int = Field(default=30, sa_column=Column(Integer(), nullable=False))
-    is_verified: bool = Field(default=False, sa_column=Column(Boolean(), nullable=False))
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
-    verified_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False, unique=True)
+    secret_encrypted: Mapped[str] = mapped_column(Text(), nullable=False)
+    algorithm: Mapped[str] = mapped_column(String(10), nullable=False, default="SHA1")
+    digits: Mapped[int] = mapped_column(Integer(), nullable=False, default=6)
+    period: Mapped[int] = mapped_column(Integer(), nullable=False, default=30)
+    is_verified: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
 
 
-class UserMfaBackupCode(SQLModel, table=True):
+class UserMfaBackupCode(Base):
     __tablename__ = "user_mfa_backup_codes"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    code_hash: str = Field(sa_column=Column(String(128), nullable=False))
-    used_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    code_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 # ---------------------------------------------------------------------------
@@ -168,30 +115,22 @@ class UserMfaBackupCode(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class UserSession(SQLModel, table=True):
+class UserSession(Base):
     __tablename__ = "user_sessions"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    refresh_token_jti: str = Field(sa_column=Column(String(128), nullable=False, unique=True))
-    device_type: str | None = Field(default=None, sa_column=Column(String(32), nullable=True))
-    device_name: str | None = Field(default=None, sa_column=Column(String(128), nullable=True))
-    browser: str | None = Field(default=None, sa_column=Column(String(128), nullable=True))
-    os: str | None = Field(default=None, sa_column=Column(String(128), nullable=True))
-    ip_address: str | None = Field(default=None, sa_column=Column(String(45), nullable=True))
-    user_agent: str | None = Field(default=None, sa_column=Column(Text(), nullable=True))
-    last_active_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    revoked_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    refresh_token_jti: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    device_type: Mapped[str | None] = mapped_column(String(32), nullable=True, default=None)
+    device_name: Mapped[str | None] = mapped_column(String(128), nullable=True, default=None)
+    browser: Mapped[str | None] = mapped_column(String(128), nullable=True, default=None)
+    os: Mapped[str | None] = mapped_column(String(128), nullable=True, default=None)
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True, default=None)
+    user_agent: Mapped[str | None] = mapped_column(Text(), nullable=True, default=None)
+    last_active_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 # ---------------------------------------------------------------------------
@@ -199,35 +138,21 @@ class UserSession(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class UserSocialAccount(SQLModel, table=True):
+class UserSocialAccount(Base):
     __tablename__ = "user_social_accounts"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    provider: str = Field(sa_column=Column(String(32), nullable=False))
-    provider_user_id: str = Field(sa_column=Column(String(255), nullable=False))
-    provider_email: str | None = Field(default=None, sa_column=Column(String(254), nullable=True))
-    provider_username: str | None = Field(
-        default=None, sa_column=Column(String(255), nullable=True)
-    )
-    access_token_encrypted: str | None = Field(
-        default=None, sa_column=Column(Text(), nullable=True)
-    )
-    refresh_token_encrypted: str | None = Field(
-        default=None, sa_column=Column(Text(), nullable=True)
-    )
-    token_expires_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    raw_data: str | None = Field(default=None, sa_column=Column(Text(), nullable=True))
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
-    updated_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider_user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    provider_email: Mapped[str | None] = mapped_column(String(254), nullable=True, default=None)
+    provider_username: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
+    access_token_encrypted: Mapped[str | None] = mapped_column(Text(), nullable=True, default=None)
+    refresh_token_encrypted: Mapped[str | None] = mapped_column(Text(), nullable=True, default=None)
+    token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    raw_data: Mapped[str | None] = mapped_column(Text(), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 # ---------------------------------------------------------------------------
@@ -235,64 +160,46 @@ class UserSocialAccount(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class Role(SQLModel, table=True):
+class Role(Base):
     __tablename__ = "roles"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    name: str = Field(sa_column=Column(String(64), nullable=False, unique=True))
-    description: str | None = Field(default=None, sa_column=Column(Text(), nullable=True))
-    is_system: bool = Field(default=False, sa_column=Column(Boolean(), nullable=False))
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
-    updated_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    description: Mapped[str | None] = mapped_column(Text(), nullable=True, default=None)
+    is_system: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
-class Permission(SQLModel, table=True):
+class Permission(Base):
     __tablename__ = "permissions"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    resource: str = Field(sa_column=Column(String(64), nullable=False))
-    action: str = Field(sa_column=Column(String(64), nullable=False))
-    description: str | None = Field(default=None, sa_column=Column(Text(), nullable=True))
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    resource: Mapped[str] = mapped_column(String(64), nullable=False)
+    action: Mapped[str] = mapped_column(String(64), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text(), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
-class UserRole(SQLModel, table=True):
+class UserRole(Base):
     __tablename__ = "user_roles"
+    __table_args__ = (UniqueConstraint("user_id", "role_id", name="uq_user_role"),)
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    role_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
-    )
-    assigned_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
-    assigned_by: str | None = Field(default=None, sa_column=Column(String(36), nullable=True))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    role_id: Mapped[str] = mapped_column(String(36), ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    assigned_by: Mapped[str | None] = mapped_column(String(36), nullable=True, default=None)
 
 
-class RolePermission(SQLModel, table=True):
+class RolePermission(Base):
     __tablename__ = "role_permissions"
+    __table_args__ = (UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),)
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    role_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
-    )
-    permission_id: str = Field(
-        sa_column=Column(
-            String(36), ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False
-        )
-    )
-    assigned_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    role_id: Mapped[str] = mapped_column(String(36), ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
+    permission_id: Mapped[str] = mapped_column(String(36), ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 # ---------------------------------------------------------------------------
@@ -300,17 +207,13 @@ class RolePermission(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class PasswordHistory(SQLModel, table=True):
+class PasswordHistory(Base):
     __tablename__ = "password_history"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    hashed_password: str = Field(sa_column=Column(String(128), nullable=False))
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 # ---------------------------------------------------------------------------
@@ -318,21 +221,15 @@ class PasswordHistory(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class PasswordResetToken(SQLModel, table=True):
+class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    token_hash: str = Field(sa_column=Column(String(64), nullable=False, index=True))
-    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    used_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 # ---------------------------------------------------------------------------
@@ -340,21 +237,15 @@ class PasswordResetToken(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class EmailVerificationToken(SQLModel, table=True):
+class EmailVerificationToken(Base):
     __tablename__ = "email_verification_tokens"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    token_hash: str = Field(sa_column=Column(String(64), nullable=False, unique=True, index=True))
-    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    used_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
 
 
 # ---------------------------------------------------------------------------
@@ -362,28 +253,18 @@ class EmailVerificationToken(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class APIKey(SQLModel, table=True):
+class APIKey(Base):
     __tablename__ = "api_key"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    name: str = Field(sa_column=Column(String(128), nullable=False))
-    key_hash: str = Field(sa_column=Column(String(64), nullable=False, unique=True))
-    scopes: str = Field(default="", sa_column=Column(Text(), nullable=False))
-    owner_user_id: str = Field(
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
-    expires_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    revoked_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    last_used_at: datetime | None = Field(
-        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    key_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    scopes: Mapped[str] = mapped_column(Text(), nullable=False, default="")
+    owner_user_id: Mapped[str] = mapped_column(String(36), ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
 
 
 # ---------------------------------------------------------------------------
@@ -391,19 +272,14 @@ class APIKey(SQLModel, table=True):
 # ---------------------------------------------------------------------------
 
 
-class AuditLog(SQLModel, table=True):
+class AuditLog(Base):
     __tablename__ = "audit_logs"
 
-    id: str = Field(default_factory=_uuid, sa_column=Column(String(36), primary_key=True))
-    event_type: str = Field(sa_column=Column(String(64), nullable=False))
-    user_id: str | None = Field(
-        default=None,
-        sa_column=Column(String(36), ForeignKey("user.id", ondelete="SET NULL"), nullable=True),
-    )
-    ip_address: str | None = Field(default=None, sa_column=Column(String(45), nullable=True))
-    user_agent: str | None = Field(default=None, sa_column=Column(Text(), nullable=True))
-    metadata_json: str | None = Field(default=None, sa_column=Column(Text(), nullable=True))
-    outcome: str = Field(default="success", sa_column=Column(String(16), nullable=False))
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("user.id", ondelete="SET NULL"), nullable=True, default=None)
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True, default=None)
+    user_agent: Mapped[str | None] = mapped_column(Text(), nullable=True, default=None)
+    metadata_json: Mapped[str | None] = mapped_column(Text(), nullable=True, default=None)
+    outcome: Mapped[str] = mapped_column(String(16), nullable=False, default="success")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)

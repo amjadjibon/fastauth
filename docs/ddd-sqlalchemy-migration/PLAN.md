@@ -50,52 +50,32 @@ SQLModel collapses ORM models and API schemas into a single class, blurring the 
 
 ---
 
-### Phase 2: Identity domain — ORM entities
+### Phase 2: Convert ORM models in-place (identity + all db_models)
 
-**Goal**: Convert the four identity-related ORM models to SQLAlchemy `Mapped` style and move them into `app/domain/identity/entities.py`.
+**Goal**: Replace all `SQLModel(table=True)` classes with pure SQLAlchemy `Base`-derived `Mapped[]` models **in their current files** (`app/auth/models.py` and `app/auth/db_models.py`). No import paths change — this avoids duplicate table registration in the shared metadata.
+> Deviation from v1.0: Creating new entity files while the SQLModel ones still exist would cause `InvalidRequestError: Table 'X' is already defined` because `Base.metadata = SQLModel.metadata`. In-place conversion avoids this entirely; domain reorganisation can follow in Phase 7.
 
-- [ ] TASK-007: Create `app/domain/__init__.py` and `app/domain/identity/__init__.py` (both empty).
-- [ ] TASK-008: Create `app/domain/identity/entities.py` — rewrite `User`, `PasswordResetToken`, `EmailVerificationToken`, and `PasswordHistory` as `Base`-derived SQLAlchemy models. Use `Mapped[T]` annotations and `mapped_column(...)` (no `sa_column=Column(...)` wrapper). Preserve all column names, types, constraints, indexes, and foreign keys exactly as in the current `app/auth/models.py` and `app/auth/db_models.py`.
-- [ ] TASK-009: Update `app/auth/models.py` — replace the `SQLModel`-based `User` with a re-export: `from app.domain.identity.entities import User`. Keep the file so existing callers (`deps.py`, `admin/router.py`, etc.) are unaffected.
-- [ ] TASK-010: Update `main.py` — replace `import app.auth.db_models` and `import app.auth.models` metadata registration imports with `import app.domain.identity.entities as _identity_entities  # noqa: F401`.
-- [ ] TASK-011: Update `tests/conftest.py` — replace `import app.auth.db_models as _db_models` and `import app.auth.models as _models` with `import app.domain.identity.entities as _identity  # noqa: F401` (or import all domain entity modules as they are created in later phases).
+- [x] TASK-007: Rewrite `app/auth/models.py` — replace `class User(SQLModel, table=True)` with `class User(Base)` using `Mapped[T]` / `mapped_column()`. Remove all `sa_column=Column(...)` wrappers. Keep `__tablename__` implicit (SQLAlchemy uses the class name lowercased) or set `__tablename__ = "user"` explicitly to match.
+- [x] TASK-008: Rewrite `app/auth/db_models.py` — replace all 15 `SQLModel(table=True)` classes (`OAuthClient`, `OAuthAuthorizationCode`, `OAuthAccessToken`, `OAuthRefreshToken`, `UserMfaSecret`, `UserMfaBackupCode`, `UserSession`, `UserSocialAccount`, `Role`, `Permission`, `UserRole`, `RolePermission`, `PasswordHistory`, `PasswordResetToken`, `EmailVerificationToken`, `APIKey`, `AuditLog`) with `Base`-derived `Mapped[]` models. Preserve all `__tablename__`, column types, constraints, indexes, and foreign keys exactly.
+- [x] TASK-009: Remove `sqlmodel` imports from `app/auth/models.py` and `app/auth/db_models.py`; replace with `from sqlalchemy import ...` and `from sqlalchemy.orm import Mapped, mapped_column`.
 
-**Completion criteria**: `uv run pytest tests/ -v` passes. The `user` table and token tables are created from `app.domain.identity.entities` via `Base.metadata`.
+**Completion criteria**: `uv run pytest tests/ -v` passes. `grep -rn "SQLModel" app/auth/models.py app/auth/db_models.py` returns zero results.
 
-**git commit**: `git add -u app/domain/identity/entities.py app/domain/__init__.py app/domain/identity/__init__.py && git commit -m "refactor: migrate identity ORM models to SQLAlchemy DeclarativeBase"`
-
----
-
-### Phase 3: Session, MFA, RBAC, Social domain entities
-
-**Goal**: Convert the remaining ORM models group by group into domain entity files.
-
-- [ ] TASK-012: Create `app/domain/session/__init__.py` and `app/domain/session/entities.py` — rewrite `UserSession` from `app/auth/db_models.py`.
-- [ ] TASK-013: Create `app/domain/mfa/__init__.py` and `app/domain/mfa/entities.py` — rewrite `UserMfaSecret`, `UserMfaBackupCode`.
-- [ ] TASK-014: Create `app/domain/rbac/__init__.py` and `app/domain/rbac/entities.py` — rewrite `Role`, `Permission`, `UserRole`, `RolePermission`.
-- [ ] TASK-015: Create `app/domain/social/__init__.py` and `app/domain/social/entities.py` — rewrite `UserSocialAccount`.
-- [ ] TASK-016: Update `main.py` — add noqa metadata-registration imports for each new domain entity module.
-
-**Completion criteria**: `uv run pytest tests/ -v` passes. All four new entity tables appear in `Base.metadata`.
-
-**git commit**: `git add -u && git commit -m "refactor: migrate session, mfa, rbac, social ORM models to domain entities"`
+**git commit**: `git add -u && git commit -m "refactor: convert all ORM models from SQLModel to SQLAlchemy Mapped in-place"`
 
 ---
 
-### Phase 4: OAuth, ApiKey, Audit domain entities
+### Phase 3: (Merged into Phase 2 — in-place conversion covers all models)
 
-**Goal**: Migrate the remaining ORM models and delete `app/auth/db_models.py` once all models have moved.
+*Phases 3 and 4 from v1.0 are absorbed into Phase 2's in-place approach. No new files needed.*
 
-- [ ] TASK-017: Create `app/domain/oauth/__init__.py` and `app/domain/oauth/entities.py` — rewrite `OAuthClient`, `OAuthAuthorizationCode`, `OAuthAccessToken`, `OAuthRefreshToken`.
-- [ ] TASK-018: Create `app/domain/api_key/__init__.py` and `app/domain/api_key/entities.py` — rewrite `APIKey`.
-- [ ] TASK-019: Create `app/domain/audit/__init__.py` and `app/domain/audit/entities.py` — rewrite `AuditLog`.
-- [ ] TASK-020: Update `main.py` — add noqa imports for oauth/api_key/audit entity modules; remove the old `import app.auth.db_models` and `import app.auth.models` registration imports.
-- [ ] TASK-021: Delete `app/auth/db_models.py` — all 17 models have moved; fix any remaining imports that still pointed to it (grep for `from app.auth.db_models import`).
-- [ ] TASK-022: Delete `app/auth/models.py` — `User` now lives in `app.domain.identity.entities`; update all callers (`deps.py`, `admin/router.py`, `admin/services/user_management.py`, `scripts/seed_db.py`, `app/auth/repositories/user_repository.py`, `app/auth/services/auth_service.py`, `app/auth/services/social_service.py`) to import `User` from `app.domain.identity.entities`.
+- [x] TASK-010: Verify `grep -rn "SQLModel" app/auth/ --include="*.py"` shows only `schemas.py` and sub-module schema files.
 
-**Completion criteria**: `uv run pytest tests/ -v` passes. No file imports from `app.auth.db_models` or `app.auth.models`. `sqlmodel.Field` and `sqlmodel.SQLModel` are used only in `app/auth/schemas.py` and sub-module schema files.
+**git commit**: included in Phase 2 commit.
 
-**git commit**: `git add -u && git commit -m "refactor: migrate oauth, api_key, audit ORM models; delete old db_models and models modules"`
+---
+
+### Phase 4: (Merged into Phase 2 — see above)
 
 ---
 

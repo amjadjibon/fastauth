@@ -2,7 +2,6 @@ from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
-from sqlmodel import SQLModel
 
 from app.core.config import settings
 
@@ -19,9 +18,7 @@ engine = create_async_engine(settings.async_database_url, **_kwargs)
 
 
 class Base(DeclarativeBase):
-    # Share SQLModel's metadata so existing SQLModel table=True models
-    # are visible to Base.metadata.create_all during the migration.
-    metadata = SQLModel.metadata
+    pass
 
 
 async def get_session() -> AsyncGenerator[AsyncSession]:

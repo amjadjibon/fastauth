@@ -1,28 +1,23 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, Column, DateTime, String
-from sqlmodel import Field, SQLModel
+from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.shared.database import Base
 
 
 def _now() -> datetime:
     return datetime.now(UTC)
 
 
-class User(SQLModel, table=True):
-    id: str = Field(
-        default_factory=lambda: str(uuid.uuid4()),
-        sa_column=Column(String(36), primary_key=True),
-    )
-    username: str = Field(sa_column=Column(String(32), unique=True, index=True))
-    email: str = Field(sa_column=Column(String(254), unique=True))
-    hashed_password: str = Field(sa_column=Column(String(60)))
-    email_verified: bool = Field(
-        default=False, sa_column=Column(Boolean(), nullable=False, server_default="0")
-    )
-    created_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
-    updated_at: datetime = Field(
-        default_factory=_now, sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
+class User(Base):
+    __tablename__ = "user"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    username: Mapped[str] = mapped_column(String(32), unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(254), unique=True)
+    hashed_password: Mapped[str] = mapped_column(String(60))
+    email_verified: Mapped[bool] = mapped_column(Boolean(), nullable=False, server_default="0", default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
