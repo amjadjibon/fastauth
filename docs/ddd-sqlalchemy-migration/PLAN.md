@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: amjadjibon
-status: 'Planned'
+status: 'In progress'
 tags: [refactor, architecture]
 ---
 
 # DDD Refactor: SQLAlchemy 2.x + Pydantic v2
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 SQLModel collapses ORM models and API schemas into a single class, blurring the domain/infrastructure/presentation boundary. This refactor replaces SQLModel with pure SQLAlchemy 2.x ORM (for persistence) and Pydantic v2 `BaseModel` (for I/O schemas), then reorganises the code into DDD bounded contexts under `app/domain/`.
 
