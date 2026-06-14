@@ -33,10 +33,7 @@ function LoginPage() {
     try {
       const result = await login(data.username, data.password)
       if (result.mfa_required) {
-        navigate({
-          to: '/login/mfa',
-          state: { mfaSessionToken: result.mfa_session_token },
-        } as never)
+        navigate({ to: '/login/mfa', search: { mfaToken: result.mfa_session_token ?? '' } })
       } else {
         navigate({ to: '/dashboard' })
       }

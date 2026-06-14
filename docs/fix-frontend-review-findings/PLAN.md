@@ -34,9 +34,9 @@ The code review of PR #9 (`react-frontend`) identified one high-severity bug tha
 
 **Goal**: Pass `mfa_session_token` from `/login` to `/login/mfa` via typed URL search params so the MFA submission can include it.
 
-- [ ] TASK-001: In `frontend/src/routes/login.mfa.tsx`, add `validateSearch: (s: Record<string, unknown>) => ({ mfaToken: (s.mfaToken as string) ?? '' })` to the `createFileRoute('/login/mfa')` options, and replace the `history.state` read with `const { mfaToken } = Route.useSearch()`. Update all references from `state.mfaSessionToken` → `mfaToken`.
-- [ ] TASK-002: In `frontend/src/routes/login.tsx`, replace the `navigate({ to: '/login/mfa', state: { mfaSessionToken: ... } } as never)` call with `navigate({ to: '/login/mfa', search: { mfaToken: result.mfa_session_token ?? '' } })` — remove the `as never` cast entirely.
-- [ ] TASK-003: Rebuild the frontend (`cd frontend && npm run build`) to confirm no TypeScript errors remain after removing the `as never` cast.
+- [x] TASK-001: In `frontend/src/routes/login.mfa.tsx`, add `validateSearch: (s: Record<string, unknown>) => ({ mfaToken: (s.mfaToken as string) ?? '' })` to the `createFileRoute('/login/mfa')` options, and replace the `history.state` read with `const { mfaToken } = Route.useSearch()`. Update all references from `state.mfaSessionToken` → `mfaToken`.
+- [x] TASK-002: In `frontend/src/routes/login.tsx`, replace the `navigate({ to: '/login/mfa', state: { mfaSessionToken: ... } } as never)` call with `navigate({ to: '/login/mfa', search: { mfaToken: result.mfa_session_token ?? '' } })` — remove the `as never` cast entirely.
+- [x] TASK-003: Rebuild the frontend (`cd frontend && npm run build`) to confirm no TypeScript errors remain after removing the `as never` cast.
 
 **Completion criteria**: `npm run build` exits 0 with no TypeScript errors; the `as never` cast is gone from `login.tsx`.
 
