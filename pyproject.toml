@@ -24,7 +24,7 @@ dependencies = [
     "opentelemetry-instrumentation-redis>=0.63b1",
     "opentelemetry-instrumentation-logging>=0.63b1",
     "prometheus-client>=0.25.0",
-    "pyotp>=2.9.0",
+    "pyotp>=2.10.0",
     "qrcode>=8.2",
     "pillow>=12.2.0",
 ]
