@@ -118,10 +118,10 @@ Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. Th
 
 **Goal**: Admin-only area for user management and system metrics.
 
-- [ ] TASK-032: Create `frontend/src/routes/admin.tsx` — wrap with `AdminRoute`; fetch `GET /admin/dashboard` via TanStack Query; display 4 metric tiles: total users, active sessions, MFA-enabled users, failed logins 24h.
-- [ ] TASK-033: Add paginated user table to admin page — fetch `GET /admin/users?page=N&limit=50&search=...`; columns: username, email, created, locked status; row actions: Lock, Unlock, Delete (with confirm dialog).
-- [ ] TASK-034: Add OAuth client management section — list `GET /admin/oauth/clients`; "Create client" form with `name`, `redirect_uris`, `scopes`, `is_confidential`; revoke button.
-- [ ] TASK-035: Create `frontend/src/components/ConfirmDialog.tsx` — reusable modal for destructive actions (Delete, Bulk delete).
+- [x] TASK-032: Create `frontend/src/routes/admin.tsx` — wrap with `AdminRoute`; fetch `GET /admin/dashboard` via TanStack Query; display 4 metric tiles: total users, active sessions, MFA-enabled users, failed logins 24h.
+- [x] TASK-033: Add paginated user table to admin page — fetch `GET /admin/users?page=N&limit=50&search=...`; columns: username, email, created, locked status; row actions: Lock, Unlock, Delete (with confirm dialog).
+- [x] TASK-034: Add OAuth client management section — list `GET /admin/oauth/clients`; "Create client" form with `name`, `redirect_uris`, `scopes`, `is_confidential`; revoke button.
+- [x] TASK-035: Create `frontend/src/components/ConfirmDialog.tsx` — reusable modal for destructive actions (Delete, Bulk delete).
 
 **Completion criteria**: Navigating to `/admin` as a non-admin redirects to `/dashboard`; as an admin, metrics tiles load and user table renders with working lock/unlock/delete actions.
 
