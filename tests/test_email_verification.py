@@ -112,6 +112,38 @@ async def test_login_blocked_when_unverified(client):
 
 
 @pytest.mark.asyncio
+async def test_resend_invalidates_old_token(client):
+    """Old token must be rejected after resend; new token must verify successfully."""
+    first_tokens: list[str] = []
+    second_tokens: list[str] = []
+
+    async def capture_first(user_id, email, token):
+        first_tokens.append(token)
+
+    async def capture_second(user_id, email, token):
+        second_tokens.append(token)
+
+    with patch(_PATCH_TARGET, side_effect=capture_first):
+        await _register(client, "ev_resend_inv")
+
+    assert first_tokens, "first send_verification_email not called"
+
+    with patch(_PATCH_TARGET, side_effect=capture_second):
+        r = await client.post("/auth/resend-verification", json={"email": "ev_resend_inv@example.com"})
+    assert r.status_code == 200
+    assert second_tokens, "second send_verification_email not called"
+
+    # Old token must now be invalid (bulk-invalidated by resend).
+    r_old = await client.post("/auth/verify-email", json={"token": first_tokens[0]})
+    assert r_old.status_code == 400
+
+    # New token must still verify.
+    r_new = await client.post("/auth/verify-email", json={"token": second_tokens[0]})
+    assert r_new.status_code == 200
+    assert r_new.json()["ok"] is True
+
+
+@pytest.mark.asyncio
 async def test_login_allowed_after_verification(client):
     tokens: list[str] = []
 

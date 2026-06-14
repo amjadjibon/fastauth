@@ -96,6 +96,8 @@ class LoginResponse(BaseModel):
 async def register(body: RegisterRequest, session: SessionDep):
     if await store.username_exists(session, body.username):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
+    if await store.get_by_email(session, body.email) is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already taken")
 
     # Stage user + verification token in the same unit of work (HIGH-003).
     user = await store.create_user(session, body.username, body.email, body.password)
@@ -346,7 +348,7 @@ async def forgot_password(body: ForgotPasswordRequest, session: SessionDep):
         )
         session.add(reset_token)
         await session.commit()
-        logger.debug("Password reset token for user %s: %s", user.id, raw_token)
+        logger.debug("Password reset token issued for user %s", user.id)
 
     return {"message": "If that email exists, a reset link was sent"}
 

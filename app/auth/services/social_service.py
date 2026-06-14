@@ -91,15 +91,19 @@ async def auto_create_user_on_social_login(
     random_password = _secrets.token_hex(32)
     # Social-login users are created with email_verified=True by default because
     # the OAuth provider has already vouched for the address.
-    user = await repo.user.create(session, username=username, email=email, password=random_password, email_verified=email_verified)
-    await link_social_account(
-        session,
+    # User and social account are committed atomically — a crash between the two
+    # inserts would otherwise leave an orphaned user row with no login path.
+    user = await repo.user.create_no_commit(session, username=username, email=email, password=random_password, email_verified=email_verified)
+    account = UserSocialAccount(
         user_id=user.id,
         provider=provider,
         provider_user_id=provider_user_id,
         provider_email=email,
         provider_username=username,
     )
+    session.add(account)
+    await session.commit()
+    await session.refresh(user)
     return user
 
 

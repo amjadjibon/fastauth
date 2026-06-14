@@ -111,7 +111,7 @@ class ForgotPasswordRequest(SQLModel):
 class ResetPasswordRequest(SQLModel):
     model_config = ConfigDict(json_schema_extra={"example": {"token": "reset-token-example", "new_password": "NewP@ssw0rd!"}})
 
-    token: str = Field(min_length=1)
+    token: str = Field(min_length=1, max_length=128)
     new_password: str = Field(min_length=8, max_length=72)
 
     @field_validator("new_password")
