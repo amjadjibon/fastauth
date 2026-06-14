@@ -40,6 +40,12 @@ async def disable_mfa(body: MfaVerifyRequest, current_user: CurrentUser, session
     return {"message": "MFA disabled"}
 
 
+@router.get("/status")
+async def mfa_status(current_user: CurrentUser, session: SessionDep):
+    enabled = await mfa_service.is_mfa_enabled(session, current_user.id)
+    return {"enabled": enabled}
+
+
 @router.post("/backup-codes", response_model=MfaBackupCodesResponse)
 async def regenerate_backup_codes(
     body: MfaVerifyRequest, current_user: CurrentUser, session: SessionDep

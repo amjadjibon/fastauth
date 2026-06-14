@@ -90,7 +90,7 @@ function DashboardPage() {
 
   const { data: mfaStatus } = useQuery({
     queryKey: ['mfa-status'],
-    queryFn: () => api.get<{ enabled: boolean }>('/auth/mfa/status').then((r) => r.data).catch(() => ({ enabled: false })),
+    queryFn: () => api.get<{ enabled: boolean }>('/auth/mfa/status').then((r) => r.data),
   })
 
   const revokeSession = useMutation({

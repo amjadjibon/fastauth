@@ -48,14 +48,14 @@ The code review of PR #9 (`react-frontend`) identified one high-severity bug tha
 
 **Goal**: Dashboard MFA tile must reflect actual MFA state. The backend `GET /auth/mfa/status` endpoint is missing; the frontend silently catches the 404 and always shows "disabled".
 
-- [ ] TASK-004: In `app/auth/mfa/router.py`, add a new `GET /status` endpoint after the existing routes:
+- [x] TASK-004: In `app/auth/mfa/router.py`, add a new `GET /status` endpoint after the existing routes:
   ```python
   @router.get("/status")
   async def mfa_status(current_user: CurrentUser, session: SessionDep):
       enabled = await mfa_service.is_mfa_enabled(session, current_user.id)
       return {"enabled": enabled}
   ```
-- [ ] TASK-005: In `frontend/src/routes/dashboard.tsx`, remove the `.catch(() => ({ enabled: false }))` from the `mfa-status` query so a backend error is visible rather than silently swallowed.
+- [x] TASK-005: In `frontend/src/routes/dashboard.tsx`, remove the `.catch(() => ({ enabled: false }))` from the `mfa-status` query so a backend error is visible rather than silently swallowed.
 
 **Completion criteria**: `GET /auth/mfa/status` returns `{"enabled": true}` for a user with MFA set up and `{"enabled": false}` otherwise (verify with `curl -H "Authorization: Bearer <token>" http://localhost:8000/auth/mfa/status`).
 
