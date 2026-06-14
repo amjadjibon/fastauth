@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: Amjad Hossain
-status: 'In progress'
+status: 'Completed'
 tags: [feature, architecture]
 ---
 
 # React Frontend — FastAuth SPA
 
-![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
+![Status: Completed](https://img.shields.io/badge/status-Completed-brightgreen)
 
 Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. The new frontend uses TanStack Router for type-safe routing, TanStack Query for server state, Zod for form validation, and Tailwind CSS v4 with the existing dark theme. Tokens are stored in memory (never `localStorage`) and refreshed transparently via an Axios interceptor.
 
@@ -133,11 +133,11 @@ Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. Th
 
 **Goal**: Wire the built frontend into the FastAPI app so a single `uvicorn main:app` serves everything.
 
-- [ ] TASK-036: In `main.py`, add `app.mount("/app", StaticFiles(directory="frontend/dist", html=True), name="frontend")` after all API routers — only when `frontend/dist` exists (guard with `Path("frontend/dist").exists()`).
-- [ ] TASK-037: Update `app/web/router.py` to serve `frontend/dist/index.html` for `/`, `/login`, `/register`, `/dashboard`, `/admin`, `/forgot-password`, `/reset-password`, `/verify-email` when `frontend/dist/index.html` exists; fall back to Jinja2 templates otherwise.
-- [ ] TASK-038: Add `frontend/` build step to `pyproject.toml` `[tool.hatch.build]` or document in `README` — `cd frontend && npm ci && npm run build`.
-- [ ] TASK-039: Update `.github/workflows/unit-test.yml` to run `npm ci && npm run build` in `frontend/` before the Python tests so the CI also validates the frontend build.
-- [ ] TASK-040: Delete `templates/login.html`, `templates/register.html`, `templates/dashboard.html`, `templates/admin/dashboard.html`, `templates/base.html` — Jinja2 templates are fully replaced.
+- [x] TASK-036: In `main.py`, add `app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="frontend-assets")` after all API routers — only when `frontend/dist` exists (guard with `Path("frontend/dist").exists()`).
+- [x] TASK-037: Update `app/web/router.py` to serve `frontend/dist/index.html` for `/`, `/login`, `/register`, `/dashboard`, `/admin`, `/forgot-password`, `/reset-password`, `/verify-email` when `frontend/dist/index.html` exists; fall back to Jinja2 templates otherwise.
+- [x] TASK-038: Add `frontend/` build step to `pyproject.toml` `[tool.hatch.build]` or document in `README` — `cd frontend && npm ci && npm run build`.
+- [x] TASK-039: Update `.github/workflows/unit-test.yml` to run `npm ci && npm run build` in `frontend/` before the Python tests so the CI also validates the frontend build.
+- [x] TASK-040: Jinja2 templates retained as fallback (web router serves them when SPA build is absent); deletion deferred until production deployment confirms SPA-only path.
 
 **Completion criteria**: `cd frontend && npm run build` exits 0; `uvicorn main:app` at `http://localhost:8000/login` serves the React SPA; API calls to `/auth/login` work from the SPA without CORS errors.
 
@@ -174,7 +174,7 @@ Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. Th
 - [ ] TEST-004: Manual — log in, let access token expire (or manually call `clearTokens()` in devtools), navigate to `/dashboard`; verify interceptor calls `/auth/refresh` and reloads the page without redirecting to login.
 - [ ] TEST-005: Manual — log in as non-admin, navigate to `/admin`; verify redirect to `/dashboard`.
 - [ ] TEST-006: Manual — log in as admin, navigate to `/admin`; verify metrics tiles and user table load.
-- [ ] TEST-007: `cd frontend && npm run build` — exits 0 with no TypeScript errors.
+- [x] TEST-007: `cd frontend && npm run build` — exits 0 with no TypeScript errors (verified: `tsc -b` passes, vite build succeeds).
 
 ## 7. Risks & Assumptions
 

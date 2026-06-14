@@ -9,6 +9,7 @@ from alembic.config import Config
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from prometheus_client import make_asgi_app as _make_metrics_app
 from redis.asyncio import from_url
 from sqlalchemy import create_engine
@@ -133,6 +134,10 @@ instrument_app(app)
 instrument_sqlalchemy(_db_engine)
 
 app.mount("/metrics", _make_metrics_app())
+
+_frontend_dist = Path("frontend/dist")
+if _frontend_dist.exists():
+    app.mount("/assets", StaticFiles(directory=str(_frontend_dist / "assets")), name="frontend-assets")
 
 app.include_router(web_router)
 app.include_router(auth_router)
