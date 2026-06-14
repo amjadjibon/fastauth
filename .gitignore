@@ -180,3 +180,7 @@ tests/load/users.json
 # Frontend build artifacts
 frontend/dist/
 frontend/node_modules/
+
+# Allow frontend/src/lib (overrides Python lib/ pattern above)
+!frontend/src/lib/
+!frontend/src/lib/**

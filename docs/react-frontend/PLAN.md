@@ -63,14 +63,14 @@ Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. Th
 
 **Goal**: Establish the in-memory token store, Axios interceptor for transparent refresh, and the `AuthProvider` that all routes consume.
 
-- [ ] TASK-010: Create `frontend/src/lib/api.ts` — Axios instance with `baseURL: "/"`, `withCredentials: false`; attach `Authorization: Bearer <token>` from in-memory store on every request.
-- [ ] TASK-011: Add response interceptor in `api.ts`: on 401, attempt `POST /auth/refresh` with stored `refresh_token`; on success update in-memory tokens and retry original request; on failure navigate to `/login`.
-- [ ] TASK-012: Create `frontend/src/lib/tokens.ts` — module-level `let accessToken` and `let refreshToken` with `getTokens()`, `setTokens()`, `clearTokens()` exports (no `localStorage`).
-- [ ] TASK-013: Create `frontend/src/contexts/AuthContext.tsx` — `AuthProvider` fetches `/auth/me` on mount (if tokens exist) to populate `user`; exports `useAuth()` hook returning `{ user, login, logout, isLoading }`.
-- [ ] TASK-014: Implement `login(username, password)` in `AuthContext`: calls `POST /auth/login`, calls `setTokens()`, sets `user` from the response or a follow-up `/auth/me` call.
-- [ ] TASK-015: Implement `logout()` in `AuthContext`: calls `POST /auth/logout`, calls `clearTokens()`, sets `user` to `null`.
-- [ ] TASK-016: Create `frontend/src/components/ProtectedRoute.tsx` — renders children if `user !== null`, else `<Navigate to="/login" />`.
-- [ ] TASK-017: Create `frontend/src/components/AdminRoute.tsx` — renders children if `user.roles` includes `"admin"`, else `<Navigate to="/dashboard" />`.
+- [x] TASK-010: Create `frontend/src/lib/api.ts` — Axios instance with `baseURL: "/"`, `withCredentials: false`; attach `Authorization: Bearer <token>` from in-memory store on every request.
+- [x] TASK-011: Add response interceptor in `api.ts`: on 401, attempt `POST /auth/refresh` with stored `refresh_token`; on success update in-memory tokens and retry original request; on failure navigate to `/login`.
+- [x] TASK-012: Create `frontend/src/lib/tokens.ts` — module-level `let accessToken` and `let refreshToken` with `getTokens()`, `setTokens()`, `clearTokens()` exports (no `localStorage`).
+- [x] TASK-013: Create `frontend/src/contexts/AuthContext.tsx` — `AuthProvider` fetches `/auth/me` on mount (if tokens exist) to populate `user`; exports `useAuth()` hook returning `{ user, login, logout, isLoading }`.
+- [x] TASK-014: Implement `login(username, password)` in `AuthContext`: calls `POST /auth/login`, calls `setTokens()`, sets `user` from the response or a follow-up `/auth/me` call.
+- [x] TASK-015: Implement `logout()` in `AuthContext`: calls `POST /auth/logout`, calls `clearTokens()`, sets `user` to `null`.
+- [x] TASK-016: Create `frontend/src/components/ProtectedRoute.tsx` — renders children if `user !== null`, else `<Navigate to="/login" />`.
+- [x] TASK-017: Create `frontend/src/components/AdminRoute.tsx` — renders children if `user.roles` includes `"admin"`, else `<Navigate to="/dashboard" />`.
 
 **Completion criteria**: `AuthProvider` mounts without errors; `useAuth()` returns `{ user: null, isLoading: false }` on a fresh load; calling `login()` with valid credentials (via browser devtools) sets `user`.
 
