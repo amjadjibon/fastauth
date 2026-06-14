@@ -82,14 +82,14 @@ Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. Th
 
 **Goal**: All unauthenticated flows with Zod-validated forms and correct post-action routing.
 
-- [ ] TASK-018: Create `frontend/src/routes/login.tsx` — form with `username` + `password` fields; Zod schema: both required, non-empty; on success calls `AuthContext.login()` and navigates to `/dashboard`; on MFA required (`mfa_required: true`) navigates to `/login/mfa`.
-- [ ] TASK-019: Create `frontend/src/routes/login.mfa.tsx` — form with `mfa_session_token` (hidden, from route state) + `code` + `is_backup_code` toggle; calls `POST /auth/login/mfa`; on success sets tokens and navigates to `/dashboard`.
-- [ ] TASK-020: Create `frontend/src/routes/register.tsx` — form with `username`, `email`, `password`; Zod schema mirrors backend rules (min 3 chars username, email format, min 8 chars password with uppercase + digit); calls `POST /auth/register`; on success navigates to `/register/success` (no tokens expected).
-- [ ] TASK-021: Create `frontend/src/routes/register.success.tsx` — static "Check your email" confirmation card with link back to `/login`.
-- [ ] TASK-022: Create `frontend/src/routes/verify-email.tsx` — reads `token` from URL search param; calls `POST /auth/verify-email` with `{ token }`; shows success or error message.
-- [ ] TASK-023: Create `frontend/src/routes/forgot-password.tsx` — form with `email`; calls `POST /auth/forgot-password`; always shows neutral "If that email exists…" message after submit.
-- [ ] TASK-024: Create `frontend/src/routes/reset-password.tsx` — reads `token` from URL search param; form with `new_password` (Zod: min 8, uppercase, digit); calls `POST /auth/reset-password`; on success navigates to `/login` with a success flash.
-- [ ] TASK-025: Create `frontend/src/components/FormError.tsx` — reusable error banner component (matches existing `.error` CSS: dark red background, red border, light red text).
+- [x] TASK-018: Create `frontend/src/routes/login.tsx` — form with `username` + `password` fields; Zod schema: both required, non-empty; on success calls `AuthContext.login()` and navigates to `/dashboard`; on MFA required (`mfa_required: true`) navigates to `/login/mfa`.
+- [x] TASK-019: Create `frontend/src/routes/login.mfa.tsx` — form with `mfa_session_token` (hidden, from route state) + `code` + `is_backup_code` toggle; calls `POST /auth/login/mfa`; on success sets tokens and navigates to `/dashboard`.
+- [x] TASK-020: Create `frontend/src/routes/register.tsx` — form with `username`, `email`, `password`; Zod schema mirrors backend rules (min 3 chars username, email format, min 8 chars password with uppercase + digit); calls `POST /auth/register`; on success navigates to `/register/success` (no tokens expected).
+- [x] TASK-021: Create `frontend/src/routes/register.success.tsx` — static "Check your email" confirmation card with link back to `/login`.
+- [x] TASK-022: Create `frontend/src/routes/verify-email.tsx` — reads `token` from URL search param; calls `POST /auth/verify-email` with `{ token }`; shows success or error message.
+- [x] TASK-023: Create `frontend/src/routes/forgot-password.tsx` — form with `email`; calls `POST /auth/forgot-password`; always shows neutral "If that email exists…" message after submit.
+- [x] TASK-024: Create `frontend/src/routes/reset-password.tsx` — reads `token` from URL search param; form with `new_password` (Zod: min 8, uppercase, digit); calls `POST /auth/reset-password`; on success navigates to `/login` with a success flash.
+- [x] TASK-025: Create `frontend/src/components/FormError.tsx` — reusable error banner component (matches existing `.error` CSS: dark red background, red border, light red text).
 
 **Completion criteria**: Navigating to `/login`, `/register`, `/forgot-password`, `/reset-password?token=x`, `/verify-email?token=x` all render without errors; submitting an empty login form shows Zod validation errors inline without a network call.
 
