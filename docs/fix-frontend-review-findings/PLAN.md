@@ -67,8 +67,8 @@ The code review of PR #9 (`react-frontend`) identified one high-severity bug tha
 
 **Goal**: When `POST /auth/mfa/setup` fails, the user must see an error message and a "Try again" button instead of a blank card.
 
-- [ ] TASK-006: In `frontend/src/routes/dashboard.mfa.tsx`, add `'error'` to the step type union: `useState<'loading' | 'setup' | 'success' | 'error'>('loading')`.
-- [ ] TASK-007: In the same file, replace `.catch(() => setStep('setup'))` with:
+- [x] TASK-006: In `frontend/src/routes/dashboard.mfa.tsx`, add `'error'` to the step type union: `useState<'loading' | 'setup' | 'success' | 'error'>('loading')`.
+- [x] TASK-007: In the same file, replace `.catch(() => setStep('setup'))` with:
   ```tsx
   .catch((err: unknown) => {
     const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
@@ -77,7 +77,7 @@ The code review of PR #9 (`react-frontend`) identified one high-severity bug tha
     setStep('error')
   })
   ```
-- [ ] TASK-008: Add an `{step === 'error' && ...}` branch in the JSX that renders `<FormError message={serverError} />` and a "Try again" button that resets `didSetup.current = false` and calls `setStep('loading')` then re-triggers the setup effect.
+- [x] TASK-008: Add an `{step === 'error' && ...}` branch in the JSX that renders `<FormError message={serverError} />` and a "Try again" button that resets `didSetup.current = false` and calls `setStep('loading')` then re-triggers the setup effect.
 
 **Completion criteria**: Simulating a network failure on the setup POST (e.g. backend down) renders an error message and a "Try again" button — not a blank card.
 
