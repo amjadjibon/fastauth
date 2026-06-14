@@ -1,5 +1,13 @@
 import hashlib
 import secrets
+from dataclasses import dataclass, field
+
+
+@dataclass
+class APIKeyPrincipal:
+    key_id: str
+    owner_user_id: str
+    scopes: list[str] = field(default_factory=list)
 
 
 def generate_api_key() -> tuple[str, str]:

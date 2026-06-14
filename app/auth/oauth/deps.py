@@ -1,9 +1,9 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from app.auth import repositories as repo
 from app.auth.models import OAuthClient
 from app.auth.deps import SessionDep
+from app.auth.oauth import repository as repo
 from app.core.security import verify_password
 
 _basic = HTTPBasic(auto_error=False)
@@ -20,7 +20,7 @@ async def client_authenticated(
             detail="Client credentials required",
             headers={"WWW-Authenticate": "Basic"},
         )
-    client = await repo.oauth.find_client_by_id(session, credentials.username)
+    client = await repo.find_client_by_id(session, credentials.username)
     if client is None or not client.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid client")
     if client.is_confidential and (

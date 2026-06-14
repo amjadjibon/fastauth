@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.admin.dashboard import get_dashboard_metrics
-from app.admin.models import (
+from app.admin.schemas import (
     DashboardMetrics,
     OAuthClientCreateRequest,
     OAuthClientResponse,
@@ -19,7 +19,7 @@ from app.admin.services.user_management import (
 from app.auth import repositories as repo
 from app.auth.deps import SessionDep
 from app.auth.models import User
-from app.auth.rbac.dependencies import RequireRoles
+from app.auth.rbac.deps import RequireRoles
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -117,11 +117,6 @@ async def bulk_delete_users(user_ids: list[str], session: SessionDep):
         user = await session.get(User, uid)
         if user:
             await repo.user.delete(session, user)
-
-
-# ---------------------------------------------------------------------------
-# OAuth client management
-# ---------------------------------------------------------------------------
 
 
 @router.post("/oauth/clients", dependencies=[_RequireAdmin])

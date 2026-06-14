@@ -1,8 +1,8 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.admin.models import DashboardMetrics
-from app.auth.audit.reports import (
+from app.admin.schemas import DashboardMetrics
+from app.auth.audit.repository import (
     active_sessions_count,
     failed_login_attempts_24h,
     mfa_enabled_users_count,

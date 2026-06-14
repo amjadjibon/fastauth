@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.auth.models import AuditLog
 from app.auth.deps import SessionDep
-from app.auth.rbac.dependencies import RequireRoles
+from app.auth.rbac.deps import RequireRoles
 
 router = APIRouter(prefix="/auth/audit", tags=["audit"])
 
@@ -89,14 +89,7 @@ async def export_audit_logs(
     writer.writerow(["id", "event_type", "user_id", "ip_address", "outcome", "created_at"])
     for log in logs:
         writer.writerow(
-            [
-                log.id,
-                log.event_type,
-                log.user_id,
-                log.ip_address,
-                log.outcome,
-                log.created_at.isoformat(),
-            ]
+            [log.id, log.event_type, log.user_id, log.ip_address, log.outcome, log.created_at.isoformat()]
         )
 
     buf.seek(0)

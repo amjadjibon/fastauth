@@ -1,4 +1,4 @@
-from app.auth.oauth.models import OIDCDiscoveryResponse
+from app.auth.oauth.schemas import OIDCDiscoveryResponse
 from app.core.config import settings
 
 

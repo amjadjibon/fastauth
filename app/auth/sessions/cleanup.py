@@ -4,12 +4,12 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import repositories as repo
+from app.auth.sessions import repository as repo
 
 logger = logging.getLogger("fastauth.sessions.cleanup")
 
 
 async def delete_expired_sessions(session: AsyncSession) -> int:
-    count = await repo.session.delete_expired(session)
+    count = await repo.delete_expired(session)
     logger.info("session cleanup complete", extra={"deleted": count})
     return count

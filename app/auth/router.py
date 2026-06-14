@@ -5,10 +5,12 @@ from jose import JWTError
 
 from app.auth import store
 from app.auth.audit.events import AuditEvent
-from app.auth.audit.logger import audit_log as _audit
+from app.auth.audit.service import audit_log as _audit
 from app.auth.deps import BearerDep, CurrentUser, SessionDep
-from app.auth.mfa.models import MfaLoginRequest
-from app.auth.mfa.totp import verify_totp as _verify_totp
+from app.auth.mfa import service as mfa_service
+from app.auth.mfa.domain import verify_totp as _verify_totp
+from app.auth.mfa.schemas import MfaLoginRequest
+from app.auth.rbac import repository as rbac_repo
 from app.auth.schemas import (
     LoginRequest,
     LoginResponse,
@@ -20,10 +22,12 @@ from app.auth.schemas import (
 )
 from app.auth.security.brute_force import get_brute_force_protection
 from app.auth.security.lockout import is_account_locked
-from app.auth.services import mfa_service
-from app.auth.verification.router import issue_verification_token as _issue_verification_token
+from app.auth.sessions import service as session_service
+from app.auth.sessions.domain import parse_user_agent
+from app.auth.verification.service import issue_verification_token as _issue_verification_token
 from app.core.config import settings
 from app.core.email import send_verification_email
+from app.core.encryption import decrypt as _decrypt
 from app.core.metrics import (
     auth_login_attempts_total,
     auth_registrations_total,
@@ -42,7 +46,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(RateLimiter(times=10, seconds=60))],
     responses={
-        409: {"description": "Username or email already taken", "content": {"application/json": {"example": {"detail": "Username already taken"}}}},
+        409: {"description": "Username or email already taken"},
         422: {"description": "Validation error (weak password, invalid email, etc.)"},
         429: {"description": "Rate limited"},
     },
@@ -53,14 +57,12 @@ async def register(body: RegisterRequest, session: SessionDep):
     if await store.get_by_email(session, body.email) is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already taken")
 
-    # Stage user + verification token in the same unit of work (HIGH-003).
     user = await store.create_user(session, body.username, body.email, body.password)
     raw_token = await _issue_verification_token(session, user, commit=False)
     await session.commit()
     await session.refresh(user)
 
     auth_registrations_total.inc()
-    # Send email outside the transaction — failure is recoverable via /auth/resend-verification.
     await send_verification_email(user.id, user.email, raw_token)
     await _audit(session, AuditEvent.EMAIL_VERIFICATION_SENT, user_id=user.id)
     return RegisterResponse(user_id=user.id)
@@ -71,13 +73,11 @@ async def register(body: RegisterRequest, session: SessionDep):
     response_model=LoginResponse,
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
     responses={
-        401: {"description": "Invalid credentials", "content": {"application/json": {"example": {"detail": "Invalid credentials"}}}},
-        429: {"description": "Rate limited or brute-force protection triggered", "content": {"application/json": {"example": {"detail": "Too many failed attempts. Try again later."}}}},
+        401: {"description": "Invalid credentials"},
+        429: {"description": "Rate limited or brute-force protection triggered"},
     },
 )
 async def login(body: LoginRequest, session: SessionDep, request: Request):
-    from app.auth.services import session_service as svc
-    from app.auth.sessions.device_info import parse_user_agent
     from app.core.limiter import _redis
 
     ip = request.client.host if request.client else "unknown"
@@ -110,7 +110,6 @@ async def login(body: LoginRequest, session: SessionDep, request: Request):
     if settings.require_email_verification and not user.email_verified:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified")
 
-    # Clear brute-force counter only after full authentication succeeds (LOW-003).
     if _redis:
         await _redis.delete(f"bf:attempts:user:{body.username}", f"bf:attempts:ip:{ip}")
 
@@ -126,7 +125,7 @@ async def login(body: LoginRequest, session: SessionDep, request: Request):
 
     ua = request.headers.get("user-agent", "")
     device = parse_user_agent(request)
-    access, refresh, _ = await svc.create_session(
+    access, refresh, _ = await session_service.create_session(
         session,
         user_id=user.id,
         ip_address=ip,
@@ -167,16 +166,12 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
     if body.is_backup_code:
         ok = await mfa_service.verify_backup_code(session, user.id, body.code)
     else:
-        from app.core.encryption import decrypt as _decrypt
-
         ok = _verify_totp(_decrypt(mfa.secret_encrypted), body.code)
 
     if not ok:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
 
-    from app.auth.services import session_service as svc
-
-    access, refresh, _ = await svc.create_session(session, user_id=user.id)
+    access, refresh, _ = await session_service.create_session(session, user_id=user.id)
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 
@@ -185,13 +180,11 @@ async def login_mfa(body: MfaLoginRequest, session: SessionDep):
     response_model=TokenResponse,
     dependencies=[Depends(RateLimiter(times=20, seconds=60))],
     responses={
-        401: {"description": "Invalid or revoked refresh token", "content": {"application/json": {"example": {"detail": "Invalid or expired refresh token"}}}},
+        401: {"description": "Invalid or revoked refresh token"},
     },
 )
 async def refresh(body: RefreshRequest, session: SessionDep):
-    from app.auth.services import session_service as svc
-
-    result = await svc.refresh_session(session, body.refresh_token)
+    result = await session_service.refresh_session(session, body.refresh_token)
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or revoked refresh token"
@@ -203,10 +196,8 @@ async def refresh(body: RefreshRequest, session: SessionDep):
 
 @router.get("/me")
 async def me(current_user: CurrentUser, session: SessionDep):
-    from app.auth.rbac.repositories import role_repository
-
-    roles = await role_repository.get_user_roles(session, current_user.id)
-    perms = await role_repository.get_user_permissions(session, current_user.id)
+    roles = await rbac_repo.get_user_roles(session, current_user.id)
+    perms = await rbac_repo.get_user_permissions(session, current_user.id)
     user_data = UserResponse.model_validate(current_user).model_dump()
     user_data["roles"] = [r.name for r in roles]
     user_data["permissions"] = [f"{p.resource}:{p.action}" for p in perms]
@@ -217,8 +208,6 @@ async def me(current_user: CurrentUser, session: SessionDep):
 async def logout(
     current_user: CurrentUser, credentials: BearerDep, session: SessionDep, request: Request
 ):
-    from app.auth.services import session_service as svc
-
     try:
         payload = decode_token(credentials.credentials)
     except Exception:
@@ -228,7 +217,7 @@ async def logout(
     ip = request.client.host if request.client else "unknown"
 
     if jti:
-        await svc.revoke_session_by_jti(session, jti, current_user.id)
+        await session_service.revoke_session_by_jti(session, jti, current_user.id)
         exp = payload.get("exp")
         if exp:
             ttl = max(0, int(exp - datetime.now(UTC).timestamp()))

@@ -3,8 +3,21 @@
 import pytest
 from httpx import AsyncClient
 
-from app.auth.mfa.backup_codes import generate_backup_codes, hash_backup_codes, verify_backup_code
-from app.auth.mfa.totp import generate_qr_code_uri, generate_secret, verify_totp
+from app.auth.mfa.domain import (
+    generate_backup_codes,
+    generate_qr_code_uri,
+    generate_secret,
+    hash_backup_code as _hash_one,
+    verify_backup_code as _verify_backup_code,
+    verify_totp,
+)
+
+# Compatibility shims for tests that used the old multi-hash signature
+def hash_backup_codes(codes: list[str]) -> list[str]:
+    return [_hash_one(c) for c in codes]
+
+def verify_backup_code(plain_code: str, code_hashes: list[str]) -> str | None:
+    return _verify_backup_code(plain_code, code_hashes)
 
 
 def test_totp_secret_generation():

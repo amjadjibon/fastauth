@@ -1,16 +1,10 @@
-import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import repositories as repo
-from app.auth.repositories.oauth_repository import consume_authorization_code
+from app.auth.oauth import repository as repo
 from app.core.security import create_token, decode_token
-
-
-def _hash_token(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
 
 
 async def authorize_client(
@@ -23,7 +17,7 @@ async def authorize_client(
     code_challenge_method: str | None = None,
     nonce: str | None = None,
 ) -> str | None:
-    client = await repo.oauth.find_client_by_id(session, client_id)
+    client = await repo.find_client_by_id(session, client_id)
     if client is None or not client.is_active:
         return None
     if redirect_uri not in client.redirect_uris.split():
@@ -31,7 +25,7 @@ async def authorize_client(
 
     code = secrets.token_urlsafe(32)
     expires_at = datetime.now(UTC) + timedelta(minutes=10)
-    await repo.oauth.create_authorization_code(
+    await repo.create_authorization_code(
         session,
         code=code,
         client_id=client_id,
@@ -53,7 +47,7 @@ async def exchange_code_for_token(
     redirect_uri: str,
     code_verifier: str | None = None,
 ) -> dict | None:
-    auth_code = await consume_authorization_code(session, code)
+    auth_code = await repo.consume_authorization_code(session, code)
     if auth_code is None:
         return None
     if auth_code.client_id != client_id:
@@ -61,7 +55,6 @@ async def exchange_code_for_token(
     if auth_code.redirect_uri != redirect_uri:
         return None
 
-    # PKCE verification is handled at the route layer using pkce.verify_code_challenge
     access_token = create_token(
         {"sub": auth_code.user_id, "type": "access", "scope": auth_code.scopes},
         timedelta(hours=1),
@@ -78,7 +71,6 @@ async def exchange_code_for_token(
 
 async def validate_token(token: str) -> dict | None:
     try:
-        payload = decode_token(token)
-        return payload
+        return decode_token(token)
     except Exception:
         return None

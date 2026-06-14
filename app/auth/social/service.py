@@ -3,9 +3,8 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import repositories as repo
-from app.auth.models import UserSocialAccount
-from app.auth.models import User
+from app.auth.models import User, UserSocialAccount
+from app.auth.repositories import user_repository as user_repo
 
 
 async def get_oauth_url(provider: str, state: str, redirect_uri: str) -> str:
@@ -68,10 +67,10 @@ async def handle_social_login(
     """Find or auto-create a user based on social account."""
     existing = await _find_social_account(session, provider, provider_user_id)
     if existing:
-        return await repo.user.find_by_id(session, existing.user_id)
+        return await user_repo.find_by_id(session, existing.user_id)
 
     if email:
-        user = await repo.user.find_by_email(session, email)
+        user = await user_repo.find_by_email(session, email)
         if user:
             return user
 
@@ -93,7 +92,7 @@ async def auto_create_user_on_social_login(
     # the OAuth provider has already vouched for the address.
     # User and social account are committed atomically — a crash between the two
     # inserts would otherwise leave an orphaned user row with no login path.
-    user = await repo.user.create_no_commit(session, username=username, email=email, password=random_password, email_verified=email_verified)
+    user = await user_repo.create_no_commit(session, username=username, email=email, password=random_password, email_verified=email_verified)
     account = UserSocialAccount(
         user_id=user.id,
         provider=provider,

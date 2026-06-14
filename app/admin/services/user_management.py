@@ -3,9 +3,8 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.models import UserMfaSecret, UserSession
-from app.auth.models import User
-from app.auth.rbac.repositories import role_repository
+from app.auth.models import User, UserMfaSecret, UserSession
+from app.auth.rbac import repository as rbac_repo
 from app.auth.security.lockout import is_account_locked, lock_account, unlock_account
 
 
@@ -33,7 +32,7 @@ async def get_user_detail(session: AsyncSession, user_id: str) -> dict | None:
     if user is None:
         return None
 
-    roles = await role_repository.get_user_roles(session, user_id)
+    roles = await rbac_repo.get_user_roles(session, user_id)
     mfa_result = await session.execute(
         select(UserMfaSecret).where(UserMfaSecret.user_id == user_id, UserMfaSecret.is_verified)
     )

@@ -3,7 +3,7 @@
 import pytest
 from httpx import AsyncClient
 
-from app.auth.oauth.pkce import (
+from app.auth.oauth.domain import (
     generate_code_challenge,
     generate_code_verifier,
     verify_code_challenge,

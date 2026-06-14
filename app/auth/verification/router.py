@@ -1,79 +1,29 @@
-import hashlib
-import secrets
-from datetime import UTC, datetime, timedelta
-
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select, update
+from fastapi import APIRouter, Depends, Request, status
 
 from app.auth import store
 from app.auth.audit.events import AuditEvent
-from app.auth.audit.logger import audit_log as _audit
-from app.auth.models import EmailVerificationToken
+from app.auth.audit.service import audit_log as _audit
 from app.auth.deps import SessionDep
-from app.auth.schemas import ResendVerificationRequest, VerifyEmailRequest
-from app.core.email import send_verification_email
+from app.auth.verification import service as verification_service
+from app.auth.verification.schemas import ResendVerificationRequest, VerifyEmailRequest
 from app.core.ratelimit import RateLimiter
+from fastapi import HTTPException
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-async def issue_verification_token(session, user, *, commit: bool = True) -> str:
-    """Stage a new verification token, invalidating existing unused ones first.
-
-    When commit=False the caller is responsible for the commit (used in register
-    to atomically create both the user row and the token row).
-    """
-    await session.execute(
-        update(EmailVerificationToken)
-        .where(
-            EmailVerificationToken.user_id == user.id,
-            EmailVerificationToken.used_at.is_(None),  # type: ignore
-        )
-        .values(used_at=datetime.now(UTC))
-    )
-
-    raw_token = secrets.token_urlsafe(32)
-    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    expires_at = datetime.now(UTC) + timedelta(hours=24)
-    session.add(EmailVerificationToken(user_id=user.id, token_hash=token_hash, expires_at=expires_at))
-
-    if commit:
-        await session.commit()
-        await send_verification_email(user.id, user.email, raw_token)
-
-    return raw_token
+# Re-exported for use in auth/router.py register flow
+issue_verification_token = verification_service.issue_verification_token
 
 
 @router.post("/verify-email", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def verify_email(body: VerifyEmailRequest, session: SessionDep, request: Request):
-    token_hash = hashlib.sha256(body.token.encode()).hexdigest()
-    now = datetime.now(UTC)
-
-    result = await session.execute(
-        select(EmailVerificationToken)
-        .where(
-            EmailVerificationToken.token_hash == token_hash,
-            EmailVerificationToken.used_at.is_(None),  # type: ignore
-            EmailVerificationToken.expires_at > now,
-        )
-        .with_for_update()
-    )
-    vtoken = result.scalar_one_or_none()
-    if vtoken is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
-
-    user = await store.get_by_id(session, vtoken.user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
-
-    vtoken.used_at = now
-    user.email_verified = True
-    session.add(vtoken)
-    session.add(user)
-    await session.commit()
+    user, error = await verification_service.verify_email(session, body.token)
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     ip = request.client.host if request.client else "unknown"
-    await _audit(session, AuditEvent.EMAIL_VERIFIED, user_id=user.id, ip_address=ip)
+    await _audit(session, AuditEvent.EMAIL_VERIFIED, user_id=user.id, ip_address=ip)  # type: ignore[union-attr]
     return {"ok": True}
 
 
@@ -85,6 +35,6 @@ async def resend_verification(body: ResendVerificationRequest, session: SessionD
     if user is None or user.email_verified:
         return _neutral
 
-    await issue_verification_token(session, user)
+    await verification_service.issue_verification_token(session, user)
     await _audit(session, AuditEvent.EMAIL_VERIFICATION_SENT, user_id=user.id)
     return _neutral

@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.auth.deps import CurrentUser, SessionDep
+from app.auth.oauth import service as oauth_service
 from app.auth.oauth.discovery import get_oidc_discovery
+from app.auth.oauth.domain import verify_code_challenge
 from app.auth.oauth.jwks import get_jwks
-from app.auth.oauth.models import AuthorizationCodeRequest, OAuthTokenResponse, TokenRequest
-from app.auth.oauth.pkce import verify_code_challenge
-from app.auth.services import oauth_service
+from app.auth.oauth.schemas import AuthorizationCodeRequest, OAuthTokenResponse, TokenRequest
+from app.auth.oauth import repository as oauth_repo
+from app.auth.models import OAuthAuthorizationCode
 from app.core.ratelimit import RateLimiter
+from sqlalchemy import select
 
 router = APIRouter(tags=["oauth2"])
 
@@ -50,7 +53,6 @@ async def authorize(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid client or redirect_uri"
         )
-
     return {"code": code, "state": body.state}
 
 
@@ -59,10 +61,7 @@ async def authorize(
     response_model=OAuthTokenResponse,
     dependencies=[Depends(RateLimiter(times=20, seconds=60))],
 )
-async def token(
-    body: TokenRequest,
-    session: SessionDep,
-):
+async def token(body: TokenRequest, session: SessionDep):
     if body.grant_type != "authorization_code":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported grant_type"
@@ -71,11 +70,6 @@ async def token(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Missing required fields"
         )
-
-    # If PKCE is used, verify the code challenge before exchanging
-    from sqlalchemy import select
-
-    from app.auth.models import OAuthAuthorizationCode
 
     result = await session.execute(
         select(OAuthAuthorizationCode).where(OAuthAuthorizationCode.code == body.code)
@@ -106,7 +100,6 @@ async def token(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code"
         )
-
     return OAuthTokenResponse(**result)
 
 

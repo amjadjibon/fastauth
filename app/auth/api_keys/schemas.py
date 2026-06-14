@@ -1,14 +1,6 @@
-from dataclasses import dataclass, field
 from datetime import datetime
 
 from pydantic import BaseModel
-
-
-@dataclass
-class APIKeyPrincipal:
-    key_id: str
-    owner_user_id: str
-    scopes: list[str] = field(default_factory=list)
 
 
 class CreateAPIKeyRequest(BaseModel):

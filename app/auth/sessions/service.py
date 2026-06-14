@@ -3,8 +3,8 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import repositories as repo
 from app.auth.models import UserSession
+from app.auth.sessions import repository as repo
 from app.core.config import settings
 from app.core.security import create_token, decode_token
 
@@ -24,7 +24,6 @@ async def create_session(
     browser: str | None = None,
     os: str | None = None,
 ) -> tuple[str, str, UserSession]:
-    """Create session, returning (access_token, refresh_token, session)."""
     jti = _make_jti()
     expires_at = datetime.now(UTC) + timedelta(seconds=settings.refresh_token_expire_seconds)
 
@@ -37,7 +36,7 @@ async def create_session(
         timedelta(seconds=settings.refresh_token_expire_seconds),
     )
 
-    db_session = await repo.session.create_session(
+    db_session = await repo.create_session(
         session,
         user_id=user_id,
         refresh_token_jti=jti,
@@ -55,7 +54,6 @@ async def create_session(
 async def refresh_session(
     session: AsyncSession, refresh_token: str
 ) -> tuple[str, str, UserSession] | None:
-    """Validate refresh token, revoke old session, return new token pair."""
     try:
         payload = decode_token(refresh_token)
     except Exception:
@@ -69,7 +67,7 @@ async def refresh_session(
     if not jti or not user_id:
         return None
 
-    db_session = await repo.session.find_by_refresh_token_jti(session, jti)
+    db_session = await repo.find_by_refresh_token_jti(session, jti)
     if db_session is None or db_session.revoked_at is not None:
         return None
     expires_at = db_session.expires_at
@@ -78,8 +76,7 @@ async def refresh_session(
     if expires_at < datetime.now(UTC):
         return None
 
-    # Rotate: revoke old session, create new one
-    await repo.session.revoke_session(session, db_session)
+    await repo.revoke_session(session, db_session)
     return await create_session(
         session,
         user_id=user_id,
@@ -93,18 +90,17 @@ async def refresh_session(
 
 
 async def revoke_session_by_jti(session: AsyncSession, jti: str, user_id: str) -> bool:
-    """Revoke a session identified by its refresh_token_jti (embedded in the access token)."""
-    db_session = await repo.session.find_by_refresh_token_jti(session, jti)
+    db_session = await repo.find_by_refresh_token_jti(session, jti)
     if db_session is None or db_session.user_id != user_id:
         return False
     if db_session.revoked_at is not None:
         return False
-    await repo.session.revoke_session(session, db_session)
+    await repo.revoke_session(session, db_session)
     return True
 
 
 async def revoke_all_user_sessions(session: AsyncSession, user_id: str) -> int:
-    return await repo.session.revoke_all_user_sessions(session, user_id)
+    return await repo.revoke_all_user_sessions(session, user_id)
 
 
 async def revoke_session(session: AsyncSession, session_id: str, user_id: str) -> bool:
@@ -113,9 +109,9 @@ async def revoke_session(session: AsyncSession, session_id: str, user_id: str) -
         return False
     if db_session.revoked_at is not None:
         return False
-    await repo.session.revoke_session(session, db_session)
+    await repo.revoke_session(session, db_session)
     return True
 
 
 async def list_active_sessions(session: AsyncSession, user_id: str) -> list[UserSession]:
-    return await repo.session.find_active_by_user_id(session, user_id)
+    return await repo.find_active_by_user_id(session, user_id)

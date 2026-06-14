@@ -4,8 +4,8 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.auth import repositories as repo
 from app.auth.models import UserSession
+from app.auth.sessions import repository as repo
 from app.auth.deps import SessionDep
 from app.core.security import decode_token
 
@@ -28,7 +28,7 @@ async def validate_session(
     if not jti:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing JTI")
 
-    db_session = await repo.session.find_by_refresh_token_jti(session, jti)
+    db_session = await repo.find_by_refresh_token_jti(session, jti)
     if db_session is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session not found")
     if db_session.revoked_at is not None:
