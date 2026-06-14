@@ -135,7 +135,7 @@ instrument_sqlalchemy(_db_engine)
 
 app.mount("/metrics", _make_metrics_app())
 
-_frontend_dist = Path("frontend/dist")
+_frontend_dist = Path(__file__).resolve().parent / "frontend" / "dist"
 if _frontend_dist.exists():
     app.mount("/assets", StaticFiles(directory=str(_frontend_dist / "assets")), name="frontend-assets")
 

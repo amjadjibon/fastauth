@@ -102,9 +102,9 @@ The code review of PR #9 (`react-frontend`) identified one high-severity bug tha
 
 **Goal**: Remove dead code and make path resolution robust.
 
-- [ ] TASK-011: In `app/web/router.py`, delete the unused `_SPA_ROUTES = [...]` assignment (lines 7–8).
-- [ ] TASK-012: In `app/web/router.py`, remove the extra outer parentheses from `router.get("/")((_spa_or_template("login.html")))` → `router.get("/")(_spa_or_template("login.html"))`.
-- [ ] TASK-013: In `main.py`, change `_frontend_dist = Path("frontend/dist")` to `_frontend_dist = Path(__file__).resolve().parent / "frontend" / "dist"` so the path resolves correctly regardless of the working directory when uvicorn starts.
+- [x] TASK-011: In `app/web/router.py`, delete the unused `_SPA_ROUTES = [...]` assignment (lines 7–8).
+- [x] TASK-012: In `app/web/router.py`, remove the extra outer parentheses from `router.get("/")((_spa_or_template("login.html")))` → `router.get("/")(_spa_or_template("login.html"))`.
+- [x] TASK-013: In `main.py`, change `_frontend_dist = Path("frontend/dist")` to `_frontend_dist = Path(__file__).resolve().parent / "frontend" / "dist"` so the path resolves correctly regardless of the working directory when uvicorn starts.
 
 **Completion criteria**: `grep "_SPA_ROUTES" app/web/router.py` returns nothing; `grep 'Path("frontend/dist")' main.py` returns nothing.
 
