@@ -1,6 +1,6 @@
 ---
 goal: Email verification — block fake-email signups by requiring users to confirm their address before full access
-version: 1.1
+version: 1.2
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: amjadjibon
@@ -131,6 +131,22 @@ Registration accepts any email address today. This adds a flag-gated email verif
 **Completion criteria**: `uv run pytest tests/test_email_verification.py -v` — all 7 pass after fixes.
 
 **git commit**: `git add -A && git commit -m "fix: address review findings from iteration 1"`
+
+---
+
+### Phase 7: Fix Review Findings (Iteration 2)
+
+**Goal**: Address 1 High and 2 Medium findings from iteration 2 code review, plus 2 Low fixes.
+
+- [ ] TASK-021: [HIGH-004] Remove raw reset token from `app/auth/router.py` line ~349 — replace `logger.debug("Password reset token for user %s: %s", user.id, raw_token)` with `logger.debug("Password reset token issued for user %s", user.id)`.
+- [ ] TASK-022: [MED-005] Add resend-invalidation test to `tests/test_email_verification.py`: register, capture first token, call `/auth/resend-verification`, capture second token, assert first token returns 400, second token verifies successfully.
+- [ ] TASK-023: [MED-006] Fix non-atomic social user creation in `app/auth/services/social_service.py` — use `repo.user.create_no_commit(...)`, add `UserSocialAccount` to session, single `await session.commit()`, then `await session.refresh(user)`.
+- [ ] TASK-024: [LOW-007] Add email uniqueness pre-check in `register` in `app/auth/router.py` — before user creation, check `await store.get_by_email(session, body.email)` and raise `HTTPException(409, "Email already taken")` if found.
+- [ ] TASK-025: [LOW-002] Add `max_length=128` to `ResetPasswordRequest.token` field in `app/auth/models.py`.
+
+**Completion criteria**: `uv run pytest tests/test_email_verification.py -v` — all 8 pass; no raw token visible in any log line for `forgot_password`.
+
+**git commit**: `git add -u && git commit -m "fix: address review findings from iteration 2"`
 
 ---
 
