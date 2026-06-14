@@ -35,6 +35,17 @@ jobs:
           SECRET_KEY: Unit Test-test-secret-key
           DATABASE_URL: "sqlite:///:memory:"
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
   build:
     needs: test
     runs-on: ubuntu-latest
