@@ -14,9 +14,11 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RegisterSuccessRouteImport } from './routes/register.success'
 import { Route as LoginMfaRouteImport } from './routes/login.mfa'
+import { Route as DashboardMfaRouteImport } from './routes/dashboard.mfa'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -43,6 +45,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -58,35 +65,46 @@ const LoginMfaRoute = LoginMfaRouteImport.update({
   path: '/mfa',
   getParentRoute: () => LoginRoute,
 } as any)
+const DashboardMfaRoute = DashboardMfaRouteImport.update({
+  id: '/mfa',
+  path: '/mfa',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/dashboard/mfa': typeof DashboardMfaRoute
   '/login/mfa': typeof LoginMfaRoute
   '/register/success': typeof RegisterSuccessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/dashboard/mfa': typeof DashboardMfaRoute
   '/login/mfa': typeof LoginMfaRoute
   '/register/success': typeof RegisterSuccessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/dashboard/mfa': typeof DashboardMfaRoute
   '/login/mfa': typeof LoginMfaRoute
   '/register/success': typeof RegisterSuccessRoute
 }
@@ -94,37 +112,44 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dashboard'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/dashboard/mfa'
     | '/login/mfa'
     | '/register/success'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/dashboard'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/dashboard/mfa'
     | '/login/mfa'
     | '/register/success'
   id:
     | '__root__'
     | '/'
+    | '/dashboard'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/dashboard/mfa'
     | '/login/mfa'
     | '/register/success'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRouteWithChildren
   RegisterRoute: typeof RegisterRouteWithChildren
@@ -169,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -190,8 +222,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginMfaRouteImport
       parentRoute: typeof LoginRoute
     }
+    '/dashboard/mfa': {
+      id: '/dashboard/mfa'
+      path: '/mfa'
+      fullPath: '/dashboard/mfa'
+      preLoaderRoute: typeof DashboardMfaRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
+
+interface DashboardRouteChildren {
+  DashboardMfaRoute: typeof DashboardMfaRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardMfaRoute: DashboardMfaRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
 
 interface LoginRouteChildren {
   LoginMfaRoute: typeof LoginMfaRoute
@@ -217,6 +268,7 @@ const RegisterRouteWithChildren = RegisterRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRouteWithChildren,
   RegisterRoute: RegisterRouteWithChildren,

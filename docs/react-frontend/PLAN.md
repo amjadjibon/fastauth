@@ -101,12 +101,12 @@ Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. Th
 
 **Goal**: Authenticated user home screen showing profile, roles/permissions, email verification status, and active sessions.
 
-- [ ] TASK-026: Create `frontend/src/routes/dashboard.tsx` — wrap with `ProtectedRoute`; fetch `/auth/me` via TanStack Query (`useQuery`); display username, email, `email_verified` badge, roles list, permissions list.
-- [ ] TASK-027: Add active sessions tile to dashboard — fetch `GET /auth/sessions`; display count and list of sessions (device, browser, OS, last active); include "Revoke" button per session calling `DELETE /auth/sessions/{id}`.
-- [ ] TASK-028: Add MFA status tile — if `/auth/me` (or a separate `/auth/mfa/status`) shows MFA enabled, show "MFA active" badge; otherwise show "Enable MFA" button linking to `/dashboard/mfa`.
-- [ ] TASK-029: Create `frontend/src/routes/dashboard.mfa.tsx` — calls `POST /auth/mfa/setup`; displays QR URI in an `<img src="...">` (use `qrcode` npm package to render client-side) + secret + backup codes; has a "Verify" form calling `POST /auth/mfa/verify`.
-- [ ] TASK-030: Create `frontend/src/components/Topbar.tsx` — FastAuth logo + "Sign out" button calling `AuthContext.logout()`; used on all authenticated pages.
-- [ ] TASK-031: Add "Change password" section to dashboard — form with `current_password` + `new_password`; Zod validation (same strength rules); calls `POST /auth/change-password`.
+- [x] TASK-026: Create `frontend/src/routes/dashboard.tsx` — wrap with `ProtectedRoute`; fetch `/auth/me` via TanStack Query (`useQuery`); display username, email, `email_verified` badge, roles list, permissions list.
+- [x] TASK-027: Add active sessions tile to dashboard — fetch `GET /auth/sessions`; display count and list of sessions (device, browser, OS, last active); include "Revoke" button per session calling `DELETE /auth/sessions/{id}`.
+- [x] TASK-028: Add MFA status tile — if `/auth/me` (or a separate `/auth/mfa/status`) shows MFA enabled, show "MFA active" badge; otherwise show "Enable MFA" button linking to `/dashboard/mfa`.
+- [x] TASK-029: Create `frontend/src/routes/dashboard.mfa.tsx` — calls `POST /auth/mfa/setup`; displays QR URI in an `<img src="...">` (use `qrcode` npm package to render client-side) + secret + backup codes; has a "Verify" form calling `POST /auth/mfa/verify`.
+- [x] TASK-030: Create `frontend/src/components/Topbar.tsx` — FastAuth logo + "Sign out" button calling `AuthContext.logout()`; used on all authenticated pages.
+- [x] TASK-031: Add "Change password" section to dashboard — form with `current_password` + `new_password`; Zod validation (same strength rules); calls `POST /auth/change-password`.
 
 **Completion criteria**: Logged-in user sees their username, email, verified status, roles, and sessions on `/dashboard`; clicking "Sign out" calls `POST /auth/logout` and redirects to `/login`.
 
