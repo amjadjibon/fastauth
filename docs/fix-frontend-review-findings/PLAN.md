@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: Amjad Hossain
-status: 'Planned'
+status: 'In progress'
 tags: [bug]
 ---
 
 # Fix React Frontend Review Findings
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 The code review of PR #9 (`react-frontend`) identified one high-severity bug that breaks the MFA login flow entirely, two medium bugs (missing backend endpoint, blank error card on MFA setup failure, unbounded search requests), and three low-priority cleanups. This plan fixes all findings in severity order so the highest-impact issue ships first.
 
