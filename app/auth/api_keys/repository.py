@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.api_keys.utils import generate_api_key
-from app.auth.db_models import APIKey
+from app.auth.models import APIKey
 
 
 async def create(

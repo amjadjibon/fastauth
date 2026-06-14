@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.audit.events import AuditEvent
-from app.auth.db_models import AuditLog
+from app.auth.models import AuditLog
 
 
 async def failed_login_attempts_24h(session: AsyncSession) -> int:
@@ -19,7 +19,7 @@ async def failed_login_attempts_24h(session: AsyncSession) -> int:
 
 
 async def active_sessions_count(session: AsyncSession) -> int:
-    from app.auth.db_models import UserSession
+    from app.auth.models import UserSession
 
     now = datetime.now(UTC)
     result = await session.execute(
@@ -32,7 +32,7 @@ async def active_sessions_count(session: AsyncSession) -> int:
 
 
 async def mfa_enabled_users_count(session: AsyncSession) -> int:
-    from app.auth.db_models import UserMfaSecret
+    from app.auth.models import UserMfaSecret
 
     result = await session.execute(
         select(func.count()).where(UserMfaSecret.is_verified == True)  # noqa: E712

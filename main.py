@@ -15,8 +15,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from app.shared.database import Base as _Base
 
-import app.auth.db_models as _auth_db_models  # noqa: F401 — register extended models for SQLModel.metadata
-import app.auth.models as _auth_models  # noqa: F401 — register models for SQLModel.metadata
+import app.auth.models as _auth_models  # noqa: F401 — register ORM models with Base.metadata
 from app.admin.router import router as admin_router
 from app.auth.api_keys.router import router as api_keys_router
 from app.auth.audit.router import router as audit_router

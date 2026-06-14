@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
-from app.auth.db_models import AuditLog
+from app.auth.models import AuditLog
 from app.auth.deps import SessionDep
 from app.auth.rbac.dependencies import RequireRoles
 

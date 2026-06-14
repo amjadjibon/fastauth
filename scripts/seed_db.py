@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sqlalchemy import insert, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.auth.db_models import UserRole
+from app.auth.models import UserRole
 from app.auth.models import User
 from app.core.config import settings
 from app.core.security import hash_password

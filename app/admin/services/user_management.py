@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.db_models import UserMfaSecret, UserSession
+from app.auth.models import UserMfaSecret, UserSession
 from app.auth.models import User
 from app.auth.rbac.repositories import role_repository
 from app.auth.security.lockout import is_account_locked, lock_account, unlock_account

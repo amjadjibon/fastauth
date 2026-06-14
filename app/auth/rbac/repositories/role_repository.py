@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.db_models import Permission, Role, RolePermission, UserRole
+from app.auth.models import Permission, Role, RolePermission, UserRole
 
 
 async def find_by_name(session: AsyncSession, name: str) -> Role | None:

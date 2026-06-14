@@ -8,7 +8,7 @@ from sqlalchemy import select, update
 from app.auth import store
 from app.auth.audit.events import AuditEvent
 from app.auth.audit.logger import audit_log as _audit
-from app.auth.db_models import EmailVerificationToken
+from app.auth.models import EmailVerificationToken
 from app.auth.deps import SessionDep
 from app.auth.schemas import ResendVerificationRequest, VerifyEmailRequest
 from app.core.email import send_verification_email

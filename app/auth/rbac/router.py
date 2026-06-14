@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from app.auth.db_models import Permission, Role
+from app.auth.models import Permission, Role
 from app.auth.deps import CurrentUser, SessionDep
 from app.auth.rbac.dependencies import RequireRoles
 from app.auth.rbac.models import (

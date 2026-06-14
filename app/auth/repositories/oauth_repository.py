@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.db_models import OAuthAuthorizationCode, OAuthClient
+from app.auth.models import OAuthAuthorizationCode, OAuthClient
 
 
 async def find_client_by_id(session: AsyncSession, client_id: str) -> OAuthClient | None:

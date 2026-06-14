@@ -4,8 +4,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine
 
-import app.auth.db_models  # noqa: F401 — registers all ORM models with Base.metadata
-import app.auth.models  # noqa: F401
+import app.auth.models  # noqa: F401 — registers all ORM models with Base.metadata
 from app.core.config import settings
 from app.shared.database import Base
 

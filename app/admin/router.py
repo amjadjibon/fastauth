@@ -128,7 +128,7 @@ async def bulk_delete_users(user_ids: list[str], session: SessionDep):
 async def create_oauth_client(body: OAuthClientCreateRequest, session: SessionDep):
     import secrets
 
-    from app.auth.db_models import OAuthClient
+    from app.auth.models import OAuthClient
     from app.core.security import hash_password as _hash
 
     client_id = secrets.token_hex(16)
@@ -155,7 +155,7 @@ async def create_oauth_client(body: OAuthClientCreateRequest, session: SessionDe
 async def list_oauth_clients(session: SessionDep):
     from sqlalchemy import select
 
-    from app.auth.db_models import OAuthClient
+    from app.auth.models import OAuthClient
 
     result = await session.execute(select(OAuthClient))
     return list(result.scalars().all())
@@ -165,7 +165,7 @@ async def list_oauth_clients(session: SessionDep):
     "/oauth/clients/{client_id}", response_model=OAuthClientResponse, dependencies=[_RequireAdmin]
 )
 async def get_oauth_client(client_id: str, session: SessionDep):
-    from app.auth.db_models import OAuthClient
+    from app.auth.models import OAuthClient
 
     client = await session.get(OAuthClient, client_id)
     if client is None:
@@ -179,7 +179,7 @@ async def get_oauth_client(client_id: str, session: SessionDep):
     dependencies=[_RequireAdmin],
 )
 async def revoke_oauth_client(client_id: str, session: SessionDep):
-    from app.auth.db_models import OAuthClient
+    from app.auth.models import OAuthClient
 
     client = await session.get(OAuthClient, client_id)
     if client is None:

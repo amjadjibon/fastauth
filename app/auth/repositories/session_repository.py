@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.db_models import UserSession
+from app.auth.models import UserSession
 
 
 async def create_session(

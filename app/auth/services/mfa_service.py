@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.db_models import UserMfaBackupCode, UserMfaSecret
+from app.auth.models import UserMfaBackupCode, UserMfaSecret
 
 
 def _hash_code(code: str) -> str:

@@ -9,7 +9,7 @@ from sqlalchemy import select
 from app.auth import store
 from app.auth.audit.events import AuditEvent
 from app.auth.audit.logger import audit_log as _audit
-from app.auth.db_models import PasswordResetToken
+from app.auth.models import PasswordResetToken
 from app.auth.deps import CurrentUser, SessionDep
 from app.auth.schemas import ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest
 from app.auth.security.password_history import add_password_to_history, check_password_not_reused

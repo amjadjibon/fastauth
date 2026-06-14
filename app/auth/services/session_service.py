@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import repositories as repo
-from app.auth.db_models import UserSession
+from app.auth.models import UserSession
 from app.core.config import settings
 from app.core.security import create_token, decode_token
 

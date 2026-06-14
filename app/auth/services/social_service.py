@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import repositories as repo
-from app.auth.db_models import UserSocialAccount
+from app.auth.models import UserSocialAccount
 from app.auth.models import User
 
 

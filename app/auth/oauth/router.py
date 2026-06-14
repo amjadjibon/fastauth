@@ -75,7 +75,7 @@ async def token(
     # If PKCE is used, verify the code challenge before exchanging
     from sqlalchemy import select
 
-    from app.auth.db_models import OAuthAuthorizationCode
+    from app.auth.models import OAuthAuthorizationCode
 
     result = await session.execute(
         select(OAuthAuthorizationCode).where(OAuthAuthorizationCode.code == body.code)

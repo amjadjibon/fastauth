@@ -5,8 +5,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-import app.auth.db_models as _db_models  # noqa: F401 — registers ORM models with Base.metadata
-import app.auth.models as _models  # noqa: F401
+import app.auth.models as _models  # noqa: F401 — registers ORM models with Base.metadata
 from app.core.db import engine
 from app.shared.database import Base
 from main import app as fastapi_app

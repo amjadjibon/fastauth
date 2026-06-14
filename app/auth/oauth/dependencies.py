@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from app.auth import repositories as repo
-from app.auth.db_models import OAuthClient
+from app.auth.models import OAuthClient
 from app.auth.deps import SessionDep
 from app.core.security import verify_password
 

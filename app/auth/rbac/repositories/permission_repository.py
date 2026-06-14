@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.db_models import Permission, RolePermission
+from app.auth.models import Permission, RolePermission
 
 
 async def create(

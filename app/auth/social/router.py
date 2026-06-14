@@ -177,7 +177,7 @@ async def link_account(
 async def list_linked_accounts(current_user: CurrentUser, session: SessionDep):
     from sqlalchemy import select
 
-    from app.auth.db_models import UserSocialAccount
+    from app.auth.models import UserSocialAccount
 
     result = await session.execute(
         select(UserSocialAccount).where(UserSocialAccount.user_id == current_user.id)
@@ -191,7 +191,7 @@ async def list_linked_accounts(current_user: CurrentUser, session: SessionDep):
 async def unlink_account(provider: str, current_user: CurrentUser, session: SessionDep):
     from sqlalchemy import select
 
-    from app.auth.db_models import UserSocialAccount
+    from app.auth.models import UserSocialAccount
 
     result = await session.execute(
         select(UserSocialAccount).where(

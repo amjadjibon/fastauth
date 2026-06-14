@@ -3,7 +3,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.db_models import AuditLog
+from app.auth.models import AuditLog
 
 logger = logging.getLogger("fastauth.audit")
 

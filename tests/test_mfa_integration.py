@@ -102,7 +102,7 @@ async def test_totp_secret_is_encrypted_in_db(client: AsyncClient):
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from app.auth.db_models import UserMfaSecret
+    from app.auth.models import UserMfaSecret
     from app.core.db import engine
 
     async with AsyncSession(engine) as session:

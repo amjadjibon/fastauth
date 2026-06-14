@@ -10,7 +10,7 @@ _HISTORY_DEPTH = 5
 
 async def check_password_not_reused(session: AsyncSession, user_id: str, new_password: str) -> bool:
     """Return True if new_password is safe (not in recent history)."""
-    from app.auth.db_models import PasswordHistory
+    from app.auth.models import PasswordHistory
 
     result = await session.execute(
         select(PasswordHistory)
@@ -25,7 +25,7 @@ async def add_password_to_history(
     session: AsyncSession, user_id: str, hashed_password: str
 ) -> None:
     """Record hashed_password in history; prune beyond _HISTORY_DEPTH entries."""
-    from app.auth.db_models import PasswordHistory
+    from app.auth.models import PasswordHistory
 
     entry = PasswordHistory(user_id=user_id, hashed_password=hashed_password)
     session.add(entry)
