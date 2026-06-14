@@ -99,14 +99,14 @@ async def test_totp_secret_is_encrypted_in_db(client: AsyncClient):
     await client.post("/auth/mfa/setup", headers={"Authorization": f"Bearer {access_token}"})
 
     # Query the DB directly
-    from sqlmodel import select
-    from sqlmodel.ext.asyncio.session import AsyncSession
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.auth.db_models import UserMfaSecret
     from app.core.db import engine
 
     async with AsyncSession(engine) as session:
-        result = await session.exec(
+        result = await session.execute(
             select(UserMfaSecret)
             .join(
                 __import__("app.auth.models", fromlist=["User"]).User,
@@ -114,7 +114,7 @@ async def test_totp_secret_is_encrypted_in_db(client: AsyncClient):
             )
             .where(__import__("app.auth.models", fromlist=["User"]).User.username == "mfa_enc_test")
         )
-        mfa = result.first()
+        mfa = result.scalar_one_or_none()
 
     assert mfa is not None
     assert mfa.secret_encrypted.startswith("gAAAAA"), (

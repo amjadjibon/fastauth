@@ -135,7 +135,7 @@ async def test_revoked_api_key_rejected(client):
     from app.auth.api_keys.utils import hash_api_key
     from app.auth.api_keys.repository import find_by_hash
     # Confirm the key is marked revoked in the DB
-    from sqlmodel.ext.asyncio.session import AsyncSession
+    from sqlalchemy.ext.asyncio import AsyncSession
     from app.core.db import engine
     async with AsyncSession(engine) as session:
         row = await find_by_hash(session, hash_api_key(raw_key))
@@ -162,7 +162,7 @@ async def test_scope_enforcement(client):
 
     from app.auth.api_keys.utils import hash_api_key
     from app.auth.api_keys.repository import find_by_hash
-    from sqlmodel.ext.asyncio.session import AsyncSession
+    from sqlalchemy.ext.asyncio import AsyncSession
     from app.core.db import engine
     async with AsyncSession(engine) as session:
         row = await find_by_hash(session, hash_api_key(raw_key))

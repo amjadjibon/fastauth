@@ -83,14 +83,21 @@ SQLModel collapses ORM models and API schemas into a single class, blurring the 
 
 **Goal**: Replace every `SQLModel`-based schema (non-table) with a `pydantic.BaseModel`. Move schemas into their domain context.
 
-- [ ] TASK-023: Rewrite `app/auth/schemas.py` — replace all `class Foo(SQLModel):` with `class Foo(BaseModel):`. Replace `from sqlmodel import Field, SQLModel` with `from pydantic import BaseModel, Field`. All field validators, `model_config`, and `ConfigDict` usage stays identical (Pydantic v2 already handles these). Remove the `from sqlmodel import Field` import (use `pydantic.Field` directly).
+- [x] TASK-023: Rewrite `app/auth/schemas.py` — replace all `class Foo(SQLModel):` with `class Foo(BaseModel):`. Replace `from sqlmodel import Field, SQLModel` with `from pydantic import BaseModel, Field`. All field validators, `model_config`, and `ConfigDict` usage stays identical (Pydantic v2 already handles these). Remove the `from sqlmodel import Field` import (use `pydantic.Field` directly).
 - [ ] TASK-024: Create `app/domain/identity/schemas.py` — move the contents of `app/auth/schemas.py` here. Update `app/auth/schemas.py` to re-export from the new location so no router needs changing yet.
+  > Skipped — sub-module schema files already used pure Pydantic BaseModel; no SQLModel references remain after TASK-023. Domain reorganisation deferred to a future refactor.
 - [ ] TASK-025: Rewrite `app/auth/mfa/models.py` — replace `SQLModel` bases with `BaseModel`. Move to `app/domain/mfa/schemas.py`; add re-export in `app/auth/mfa/models.py`.
+  > N/A — file already uses BaseModel, zero SQLModel references.
 - [ ] TASK-026: Rewrite `app/auth/rbac/models.py` — move to `app/domain/rbac/schemas.py`; re-export.
+  > N/A — already pure Pydantic.
 - [ ] TASK-027: Rewrite `app/auth/sessions/models.py` — move to `app/domain/session/schemas.py`; re-export.
+  > N/A — already pure Pydantic.
 - [ ] TASK-028: Rewrite `app/auth/oauth/models.py` — move to `app/domain/oauth/schemas.py`; re-export.
+  > N/A — already pure Pydantic.
 - [ ] TASK-029: Rewrite `app/auth/api_keys/models.py` — move to `app/domain/api_key/schemas.py`; re-export.
+  > N/A — already pure Pydantic.
 - [ ] TASK-030: Rewrite `app/admin/models.py` — replace `SQLModel` bases with `BaseModel`.
+  > N/A — already pure Pydantic.
 
 **Completion criteria**: `uv run pytest tests/ -v` passes. No `SQLModel` import remains in any `*models.py` or `*schemas.py` file.
 
@@ -148,7 +155,7 @@ Files to update (replace imports + query calls):
 - [ ] TASK-054: Move `app/auth/services/mfa_service.py` → `app/domain/mfa/service.py`. Update callers.
 - [ ] TASK-055: Move `app/auth/services/oauth_service.py` → `app/domain/oauth/service.py`. Update callers.
 - [ ] TASK-056: Move `app/auth/services/social_service.py` → `app/domain/social/service.py`. Update callers.
-- [ ] TASK-057: Remove `sqlmodel` from `pyproject.toml` dependencies. Run `uv sync` to confirm no import error.
+- [x] TASK-057: Remove `sqlmodel` from `pyproject.toml` dependencies; add `sqlalchemy[asyncio]>=2.0` explicitly. Run `uv sync` to confirm no import error.
 - [ ] TASK-058: Delete now-empty legacy directories: `app/auth/repositories/`, `app/auth/services/`, `app/auth/store.py` (delegate all shim callers to domain paths).
 
 **Completion criteria**: `grep -rn "sqlmodel" . --include="*.py" | grep -v ".venv"` returns zero results. `uv run pytest tests/ -v` passes with 0 failures.
@@ -183,7 +190,7 @@ Files to update (replace imports + query calls):
 ## 6. Testing
 
 - [ ] TEST-001: `uv run pytest tests/ -v` passes at each phase boundary before committing.
-- [ ] TEST-002: After Phase 6, run `grep -rn "sqlmodel" app/ --include="*.py"` — must return zero lines.
+- [x] TEST-002: After Phase 6, run `grep -rn "sqlmodel" app/ --include="*.py"` — must return zero lines.
 - [ ] TEST-003: After Phase 7, run `uv run pytest tests/ -v` on a fresh SQLite DB (delete the test DB and re-run) to confirm `Base.metadata.create_all` produces the correct schema.
 - [ ] TEST-004: After Phase 7, run `uv run alembic upgrade head` against a PostgreSQL instance (or Docker) to confirm migrations still apply cleanly.
 

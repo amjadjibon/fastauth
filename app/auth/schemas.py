@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
-from sqlmodel import Field, SQLModel
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 _JWT_EXAMPLE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
@@ -9,7 +8,7 @@ _JWT_EXAMPLE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0
 # --- Request models ---
 
 
-class RegisterRequest(SQLModel):
+class RegisterRequest(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"username": "alice", "email": "alice@example.com", "password": "MyP@ssw0rd!"}})
 
     username: str = Field(min_length=3, max_length=32)
@@ -33,20 +32,20 @@ class RegisterRequest(SQLModel):
         return v
 
 
-class LoginRequest(SQLModel):
+class LoginRequest(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"username": "alice", "password": "MyP@ssw0rd!"}})
 
     username: str = Field(min_length=1, max_length=32)
     password: str = Field(min_length=1, max_length=72)
 
 
-class RefreshRequest(SQLModel):
+class RefreshRequest(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"refresh_token": _JWT_EXAMPLE}})
 
     refresh_token: str = Field(min_length=1)
 
 
-class ChangePasswordRequest(SQLModel):
+class ChangePasswordRequest(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"current_password": "MyP@ssw0rd!", "new_password": "NewP@ssw0rd!"}})
 
     current_password: str = Field(min_length=1, max_length=72)
@@ -62,25 +61,25 @@ class ChangePasswordRequest(SQLModel):
         return v
 
 
-class VerifyEmailRequest(SQLModel):
+class VerifyEmailRequest(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"token": "verify-token-example"}})
 
     token: str = Field(min_length=1, max_length=128)
 
 
-class ResendVerificationRequest(SQLModel):
+class ResendVerificationRequest(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"email": "alice@example.com"}})
 
     email: EmailStr
 
 
-class ForgotPasswordRequest(SQLModel):
+class ForgotPasswordRequest(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"email": "alice@example.com"}})
 
     email: EmailStr
 
 
-class ResetPasswordRequest(SQLModel):
+class ResetPasswordRequest(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"token": "reset-token-example", "new_password": "NewP@ssw0rd!"}})
 
     token: str = Field(min_length=1, max_length=128)
@@ -99,7 +98,7 @@ class ResetPasswordRequest(SQLModel):
 # --- Response models ---
 
 
-class TokenResponse(SQLModel):
+class TokenResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"access_token": _JWT_EXAMPLE, "refresh_token": _JWT_EXAMPLE, "token_type": "bearer"}})
 
     access_token: str
@@ -107,13 +106,13 @@ class TokenResponse(SQLModel):
     token_type: str = "bearer"
 
 
-class RegisterResponse(SQLModel):
+class RegisterResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"user_id": "00000000-0000-0000-0000-000000000001"}})
 
     user_id: str
 
 
-class UserResponse(SQLModel):
+class UserResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {
         "id": "00000000-0000-0000-0000-000000000001",
         "username": "alice",
