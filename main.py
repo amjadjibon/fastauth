@@ -13,7 +13,7 @@ from prometheus_client import make_asgi_app as _make_metrics_app
 from redis.asyncio import from_url
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
-from sqlmodel import SQLModel
+from app.shared.database import Base as _Base
 
 import app.auth.db_models as _auth_db_models  # noqa: F401 — register extended models for SQLModel.metadata
 import app.auth.models as _auth_models  # noqa: F401 — register models for SQLModel.metadata
@@ -60,7 +60,7 @@ _MIGRATE_BACKOFF_SECONDS = 2
 def _migrate() -> None:
     if settings.is_sqlite:
         engine = create_engine(settings.database_url)
-        SQLModel.metadata.create_all(engine)
+        _Base.metadata.create_all(engine)
         engine.dispose()
     else:
         command.upgrade(Config(str(_ALEMBIC_INI)), "head")

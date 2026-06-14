@@ -3,7 +3,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlmodel import select, update
+from sqlalchemy import select, update
 
 from app.auth import store
 from app.auth.audit.events import AuditEvent
@@ -23,7 +23,7 @@ async def issue_verification_token(session, user, *, commit: bool = True) -> str
     When commit=False the caller is responsible for the commit (used in register
     to atomically create both the user row and the token row).
     """
-    await session.exec(
+    await session.execute(
         update(EmailVerificationToken)
         .where(
             EmailVerificationToken.user_id == user.id,
@@ -49,7 +49,7 @@ async def verify_email(body: VerifyEmailRequest, session: SessionDep, request: R
     token_hash = hashlib.sha256(body.token.encode()).hexdigest()
     now = datetime.now(UTC)
 
-    result = await session.exec(
+    result = await session.execute(
         select(EmailVerificationToken)
         .where(
             EmailVerificationToken.token_hash == token_hash,
@@ -58,7 +58,7 @@ async def verify_email(body: VerifyEmailRequest, session: SessionDep, request: R
         )
         .with_for_update()
     )
-    vtoken = result.first()
+    vtoken = result.scalar_one_or_none()
     if vtoken is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
 

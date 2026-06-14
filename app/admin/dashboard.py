@@ -1,5 +1,5 @@
-from sqlmodel import func, select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin.models import DashboardMetrics
 from app.auth.audit.reports import (
@@ -10,8 +10,8 @@ from app.auth.audit.reports import (
 
 
 async def get_dashboard_metrics(session: AsyncSession) -> DashboardMetrics:
-    user_count_result = await session.exec(select(func.count()))
-    total_users = user_count_result.one() or 0
+    user_count_result = await session.execute(select(func.count()))
+    total_users = user_count_result.scalar() or 0
 
     return DashboardMetrics(
         total_users=total_users,

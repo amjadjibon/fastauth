@@ -4,7 +4,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlmodel import select
+from sqlalchemy import select
 
 from app.auth import store
 from app.auth.audit.events import AuditEvent
@@ -66,14 +66,14 @@ async def reset_password(body: ResetPasswordRequest, session: SessionDep, reques
     token_hash = hashlib.sha256(body.token.encode()).hexdigest()
     now = datetime.now(UTC)
 
-    result = await session.exec(
+    result = await session.execute(
         select(PasswordResetToken).where(
             PasswordResetToken.token_hash == token_hash,
             PasswordResetToken.used_at.is_(None),  # type: ignore
             PasswordResetToken.expires_at > now,
         )
     )
-    reset_token = result.first()
+    reset_token = result.scalar_one_or_none()
     if reset_token is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token"

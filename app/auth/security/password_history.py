@@ -1,7 +1,7 @@
 """Password history — prevent reuse of last N passwords."""
 
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import verify_password
 
@@ -12,13 +12,13 @@ async def check_password_not_reused(session: AsyncSession, user_id: str, new_pas
     """Return True if new_password is safe (not in recent history)."""
     from app.auth.db_models import PasswordHistory
 
-    result = await session.exec(
+    result = await session.execute(
         select(PasswordHistory)
         .where(PasswordHistory.user_id == user_id)
         .order_by(PasswordHistory.created_at.desc())  # type: ignore
         .limit(_HISTORY_DEPTH)
     )
-    return all(not verify_password(new_password, row.hashed_password) for row in result.all())
+    return all(not verify_password(new_password, row.hashed_password) for row in result.scalars().all())
 
 
 async def add_password_to_history(
@@ -32,12 +32,12 @@ async def add_password_to_history(
     await session.commit()
 
     # Prune oldest entries beyond depth
-    result = await session.exec(
+    result = await session.execute(
         select(PasswordHistory)
         .where(PasswordHistory.user_id == user_id)
         .order_by(PasswordHistory.created_at.desc())  # type: ignore
     )
-    all_rows = list(result.all())
+    all_rows = list(result.scalars().all())
     for old in all_rows[_HISTORY_DEPTH:]:
         await session.delete(old)
     if len(all_rows) > _HISTORY_DEPTH:

@@ -1,6 +1,6 @@
 ---
 goal: Refactor app to DDD-style architecture — replace SQLModel with SQLAlchemy 2.x ORM + Pydantic v2 schemas
-version: 1.0
+version: 1.1
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: amjadjibon
@@ -36,12 +36,13 @@ SQLModel collapses ORM models and API schemas into a single class, blurring the 
 
 **Goal**: Establish `Base = DeclarativeBase()` and migrate `AsyncSession` to pure SQLAlchemy before touching any model. All existing code continues to work after this phase.
 
-- [ ] TASK-001: Create `app/shared/__init__.py` (empty).
-- [ ] TASK-002: Create `app/shared/database.py` — define `Base = DeclarativeBase()`, export `engine` (copied from `app/core/db.py`), and `get_session` as an async generator yielding `AsyncSession` from `sqlalchemy.ext.asyncio`. Remove the `sqlmodel` import from `app/core/db.py` and import `AsyncSession` from `sqlalchemy.ext.asyncio` instead.
-- [ ] TASK-003: Update `app/auth/deps.py` — change `from sqlmodel.ext.asyncio.session import AsyncSession` to `from sqlalchemy.ext.asyncio import AsyncSession`.
-- [ ] TASK-004: Update `migrations/env.py` — replace `from sqlmodel import SQLModel` and `target_metadata = SQLModel.metadata` with `from app.shared.database import Base` and `target_metadata = Base.metadata`.
-- [ ] TASK-005: Update `tests/conftest.py` — replace `from sqlmodel import SQLModel` with `from app.shared.database import Base`; change `SQLModel.metadata.create_all` → `Base.metadata.create_all` and `SQLModel.metadata.drop_all` → `Base.metadata.drop_all`.
-- [ ] TASK-006: Update `main.py` — replace `from sqlmodel import SQLModel` with `from app.shared.database import Base`; change `SQLModel.metadata.create_all` → `Base.metadata.create_all`; add `import app.domain` noqa import once domain package exists (leave as TODO comment for now).
+- [x] TASK-001: Create `app/shared/__init__.py` (empty).
+- [x] TASK-002: Create `app/shared/database.py` — define `Base = DeclarativeBase()`, export `engine` (copied from `app/core/db.py`), and `get_session` as an async generator yielding `AsyncSession` from `sqlalchemy.ext.asyncio`. Remove the `sqlmodel` import from `app/core/db.py` and import `AsyncSession` from `sqlalchemy.ext.asyncio` instead.
+  > Deviation: `Base` is defined as `class Base(DeclarativeBase): metadata = SQLModel.metadata` to share the registry with existing SQLModel table=True models during the transition. This avoids splitting metadata between two registries while models are being migrated phase by phase.
+- [x] TASK-003: Update `app/auth/deps.py` — change `from sqlmodel.ext.asyncio.session import AsyncSession` to `from sqlalchemy.ext.asyncio import AsyncSession`.
+- [x] TASK-004: Update `migrations/env.py` — replace `from sqlmodel import SQLModel` and `target_metadata = SQLModel.metadata` with `from app.shared.database import Base` and `target_metadata = Base.metadata`.
+- [x] TASK-005: Update `tests/conftest.py` — replace `from sqlmodel import SQLModel` with `from app.shared.database import Base`; change `SQLModel.metadata.create_all` → `Base.metadata.create_all` and `SQLModel.metadata.drop_all` → `Base.metadata.drop_all`.
+- [x] TASK-006: Update `main.py` — replace `from sqlmodel import SQLModel` with `from app.shared.database import Base`; change `SQLModel.metadata.create_all` → `Base.metadata.create_all`; add `import app.domain` noqa import once domain package exists (leave as TODO comment for now).
 
 **Completion criteria**: `uv run pytest tests/ -v` passes (existing models still use SQLModel — the Base isn't used yet, but the session/metadata wiring is ready).
 
@@ -130,22 +131,22 @@ The key API change is:
 - **After**: `from sqlalchemy.ext.asyncio import AsyncSession`
 
 Files to update (replace imports + query calls):
-- [ ] TASK-031: `app/auth/repositories/user_repository.py`
-- [ ] TASK-032: `app/auth/repositories/session_repository.py`
-- [ ] TASK-033: `app/auth/repositories/oauth_repository.py`
-- [ ] TASK-034: `app/auth/rbac/repositories/role_repository.py`
-- [ ] TASK-035: `app/auth/rbac/repositories/permission_repository.py`
-- [ ] TASK-036: `app/auth/api_keys/repository.py`
-- [ ] TASK-037: `app/auth/services/mfa_service.py`
-- [ ] TASK-038: `app/auth/services/session_service.py`
-- [ ] TASK-039: `app/auth/services/oauth_service.py`
-- [ ] TASK-040: `app/auth/services/social_service.py`
-- [ ] TASK-041: `app/auth/security/password_history.py`
-- [ ] TASK-042: `app/auth/audit/logger.py` and `app/auth/audit/reports.py`
-- [ ] TASK-043: `app/admin/dashboard.py` and `app/admin/services/user_management.py`
-- [ ] TASK-044: `app/auth/sessions/cleanup.py`
-- [ ] TASK-045: All router files that use inline `from sqlmodel import select` — `app/auth/password/router.py`, `app/auth/verification/router.py`, `app/auth/social/router.py`, `app/auth/oauth/router.py`, `app/auth/audit/router.py`, `app/auth/rbac/router.py`, `app/admin/router.py`.
-- [ ] TASK-046: `app/core/db.py` — remove any remaining `sqlmodel` import; confirm it only uses `sqlalchemy.ext.asyncio`.
+- [x] TASK-031: `app/auth/repositories/user_repository.py`
+- [x] TASK-032: `app/auth/repositories/session_repository.py`
+- [x] TASK-033: `app/auth/repositories/oauth_repository.py`
+- [x] TASK-034: `app/auth/rbac/repositories/role_repository.py`
+- [x] TASK-035: `app/auth/rbac/repositories/permission_repository.py`
+- [x] TASK-036: `app/auth/api_keys/repository.py`
+- [x] TASK-037: `app/auth/services/mfa_service.py`
+- [x] TASK-038: `app/auth/services/session_service.py`
+- [x] TASK-039: `app/auth/services/oauth_service.py`
+- [x] TASK-040: `app/auth/services/social_service.py`
+- [x] TASK-041: `app/auth/security/password_history.py`
+- [x] TASK-042: `app/auth/audit/logger.py` and `app/auth/audit/reports.py`
+- [x] TASK-043: `app/admin/dashboard.py` and `app/admin/services/user_management.py`
+- [x] TASK-044: `app/auth/sessions/cleanup.py`
+- [x] TASK-045: All router files that use inline `from sqlmodel import select` — `app/auth/password/router.py`, `app/auth/verification/router.py`, `app/auth/social/router.py`, `app/auth/oauth/router.py`, `app/auth/audit/router.py`, `app/auth/rbac/router.py`, `app/admin/router.py`.
+- [x] TASK-046: `app/core/db.py` — remove any remaining `sqlmodel` import; confirm it only uses `sqlalchemy.ext.asyncio`.
 
 **Completion criteria**: `grep -rn "sqlmodel" app/ --include="*.py"` returns zero results. `uv run pytest tests/ -v` passes.
 

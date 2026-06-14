@@ -175,31 +175,31 @@ async def link_account(
 
 @router.get("/linked")
 async def list_linked_accounts(current_user: CurrentUser, session: SessionDep):
-    from sqlmodel import select
+    from sqlalchemy import select
 
     from app.auth.db_models import UserSocialAccount
 
-    result = await session.exec(
+    result = await session.execute(
         select(UserSocialAccount).where(UserSocialAccount.user_id == current_user.id)
     )
     return [
-        {"provider": a.provider, "provider_username": a.provider_username} for a in result.all()
+        {"provider": a.provider, "provider_username": a.provider_username} for a in result.scalars().all()
     ]
 
 
 @router.delete("/unlink/{provider}", status_code=status.HTTP_204_NO_CONTENT)
 async def unlink_account(provider: str, current_user: CurrentUser, session: SessionDep):
-    from sqlmodel import select
+    from sqlalchemy import select
 
     from app.auth.db_models import UserSocialAccount
 
-    result = await session.exec(
+    result = await session.execute(
         select(UserSocialAccount).where(
             UserSocialAccount.user_id == current_user.id,
             UserSocialAccount.provider == provider,
         )
     )
-    account = result.first()
+    account = result.scalar_one_or_none()
     if account is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Social account not linked"

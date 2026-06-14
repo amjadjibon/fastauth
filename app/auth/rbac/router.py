@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlmodel import select
+from sqlalchemy import select
 
 from app.auth.db_models import Permission, Role
 from app.auth.deps import CurrentUser, SessionDep
@@ -32,8 +32,8 @@ async def create_role(body: CreateRoleRequest, session: SessionDep):
 
 @router.get("", response_model=list[RoleResponse])
 async def list_roles(session: SessionDep):
-    result = await session.exec(select(Role))
-    return list(result.all())
+    result = await session.execute(select(Role))
+    return list(result.scalars().all())
 
 
 @router.patch("/{role_id}", response_model=RoleResponse, dependencies=[RequireRoles(["admin"])])

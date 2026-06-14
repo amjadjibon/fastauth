@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.api_keys.utils import generate_api_key
 from app.auth.db_models import APIKey
@@ -31,15 +31,15 @@ async def create(
 
 
 async def find_by_hash(session: AsyncSession, key_hash: str) -> APIKey | None:
-    result = await session.exec(select(APIKey).where(APIKey.key_hash == key_hash))
-    return result.first()
+    result = await session.execute(select(APIKey).where(APIKey.key_hash == key_hash))
+    return result.scalar_one_or_none()
 
 
 async def list_for_user(session: AsyncSession, user_id: str) -> list[APIKey]:
-    result = await session.exec(
+    result = await session.execute(
         select(APIKey).where(APIKey.owner_user_id == user_id).order_by(APIKey.created_at)  # type: ignore
     )
-    return list(result.all())
+    return list(result.scalars().all())
 
 
 async def revoke(session: AsyncSession, key_id: str, owner_user_id: str) -> bool:

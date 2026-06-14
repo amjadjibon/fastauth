@@ -5,7 +5,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
-from sqlmodel import select
+from sqlalchemy import select
 
 from app.auth.db_models import AuditLog
 from app.auth.deps import SessionDep
@@ -34,8 +34,8 @@ async def list_audit_logs(
     if until:
         query = query.where(AuditLog.created_at <= until)
     query = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit)  # type: ignore
-    result = await session.exec(query)
-    logs = list(result.all())
+    result = await session.execute(query)
+    logs = list(result.scalars().all())
     return {
         "logs": [
             {
@@ -59,10 +59,10 @@ async def export_audit_logs(
     format: str = Query(default="csv", pattern="^(csv|json)$"),
     limit: int = Query(default=10000, le=50000),
 ):
-    result = await session.exec(
+    result = await session.execute(
         select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)  # type: ignore
     )
-    logs = list(result.all())
+    logs = list(result.scalars().all())
 
     if format == "json":
         data = json.dumps(

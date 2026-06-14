@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import repositories as repo
 from app.auth.db_models import UserSocialAccount
@@ -110,10 +110,10 @@ async def auto_create_user_on_social_login(
 async def _find_social_account(
     session: AsyncSession, provider: str, provider_user_id: str
 ) -> UserSocialAccount | None:
-    result = await session.exec(
+    result = await session.execute(
         select(UserSocialAccount).where(
             UserSocialAccount.provider == provider,
             UserSocialAccount.provider_user_id == provider_user_id,
         )
     )
-    return result.first()
+    return result.scalar_one_or_none()

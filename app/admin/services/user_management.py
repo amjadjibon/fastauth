@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
-from sqlmodel import func, select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.db_models import UserMfaSecret, UserSession
 from app.auth.models import User
@@ -21,11 +21,11 @@ async def list_users(
         query = query.where(
             User.username.contains(search) | User.email.contains(search)  # type: ignore
         )
-    count_result = await session.exec(select(func.count()))
-    total = count_result.one() or 0
+    count_result = await session.execute(select(func.count()))
+    total = count_result.scalar() or 0
     query = query.offset((page - 1) * limit).limit(limit)
-    result = await session.exec(query)
-    return list(result.all()), total
+    result = await session.execute(query)
+    return list(result.scalars().all()), total
 
 
 async def get_user_detail(session: AsyncSession, user_id: str) -> dict | None:
@@ -34,20 +34,20 @@ async def get_user_detail(session: AsyncSession, user_id: str) -> dict | None:
         return None
 
     roles = await role_repository.get_user_roles(session, user_id)
-    mfa_result = await session.exec(
+    mfa_result = await session.execute(
         select(UserMfaSecret).where(UserMfaSecret.user_id == user_id, UserMfaSecret.is_verified)
     )
-    mfa_enabled = mfa_result.first() is not None
+    mfa_enabled = mfa_result.scalar_one_or_none() is not None
 
     now = datetime.now(UTC)
-    session_result = await session.exec(
+    session_result = await session.execute(
         select(func.count()).where(
             UserSession.user_id == user_id,
             UserSession.revoked_at.is_(None),  # type: ignore
             UserSession.expires_at > now,
         )
     )
-    active_sessions = session_result.one() or 0
+    active_sessions = session_result.scalar() or 0
     locked = await is_account_locked(user_id)
 
     return {

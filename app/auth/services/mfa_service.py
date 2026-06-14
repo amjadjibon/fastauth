@@ -2,8 +2,8 @@ import hashlib
 import secrets
 from datetime import UTC, datetime
 
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.db_models import UserMfaBackupCode, UserMfaSecret
 
@@ -46,8 +46,8 @@ async def verify_totp(session: AsyncSession, user_id: str, code: str) -> bool:
 
 async def generate_backup_codes(session: AsyncSession, user_id: str) -> list[str]:
     # Delete old backup codes
-    old = await session.exec(select(UserMfaBackupCode).where(UserMfaBackupCode.user_id == user_id))
-    for code in old.all():
+    result = await session.execute(select(UserMfaBackupCode).where(UserMfaBackupCode.user_id == user_id))
+    for code in result.scalars().all():
         await session.delete(code)
 
     plain_codes: list[str] = []
@@ -63,14 +63,14 @@ async def generate_backup_codes(session: AsyncSession, user_id: str) -> list[str
 
 async def verify_backup_code(session: AsyncSession, user_id: str, plain_code: str) -> bool:
     code_hash = _hash_code(plain_code)
-    result = await session.exec(
+    result = await session.execute(
         select(UserMfaBackupCode).where(
             UserMfaBackupCode.user_id == user_id,
             UserMfaBackupCode.code_hash == code_hash,
             UserMfaBackupCode.used_at.is_(None),  # type: ignore
         )
     )
-    code_obj = result.first()
+    code_obj = result.scalar_one_or_none()
     if code_obj is None:
         return False
     code_obj.used_at = datetime.now(UTC)
@@ -89,5 +89,5 @@ async def get_mfa_secret(session: AsyncSession, user_id: str) -> UserMfaSecret |
 
 
 async def _get_mfa_secret(session: AsyncSession, user_id: str) -> UserMfaSecret | None:
-    result = await session.exec(select(UserMfaSecret).where(UserMfaSecret.user_id == user_id))
-    return result.first()
+    result = await session.execute(select(UserMfaSecret).where(UserMfaSecret.user_id == user_id))
+    return result.scalar_one_or_none()

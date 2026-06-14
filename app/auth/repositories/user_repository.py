@@ -1,13 +1,13 @@
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
 from app.core.security import hash_password
 
 
 async def username_exists(session: AsyncSession, username: str) -> bool:
-    result = await session.exec(select(User.id).where(User.username == username))
-    return result.first() is not None
+    result = await session.execute(select(User.id).where(User.username == username))
+    return result.scalar_one_or_none() is not None
 
 
 async def find_by_id(session: AsyncSession, user_id: str) -> User | None:
@@ -15,13 +15,13 @@ async def find_by_id(session: AsyncSession, user_id: str) -> User | None:
 
 
 async def find_by_username(session: AsyncSession, username: str) -> User | None:
-    result = await session.exec(select(User).where(User.username == username))
-    return result.first()
+    result = await session.execute(select(User).where(User.username == username))
+    return result.scalar_one_or_none()
 
 
 async def find_by_email(session: AsyncSession, email: str) -> User | None:
-    result = await session.exec(select(User).where(User.email == email))
-    return result.first()
+    result = await session.execute(select(User).where(User.email == email))
+    return result.scalar_one_or_none()
 
 
 async def create(session: AsyncSession, username: str, email: str, password: str, email_verified: bool = False) -> User:

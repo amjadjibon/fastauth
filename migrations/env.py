@@ -3,17 +3,17 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import create_engine
-from sqlmodel import SQLModel
 
-# import models so their metadata is registered before autogenerate
+import app.auth.db_models  # noqa: F401 — registers all ORM models with Base.metadata
 import app.auth.models  # noqa: F401
 from app.core.config import settings
+from app.shared.database import Base
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = SQLModel.metadata
+target_metadata = Base.metadata
 
 
 def _set_nano_rev_id(_context, _revision, directives):  # type: ignore[override]

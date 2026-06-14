@@ -153,12 +153,12 @@ async def create_oauth_client(body: OAuthClientCreateRequest, session: SessionDe
     "/oauth/clients", response_model=list[OAuthClientResponse], dependencies=[_RequireAdmin]
 )
 async def list_oauth_clients(session: SessionDep):
-    from sqlmodel import select
+    from sqlalchemy import select
 
     from app.auth.db_models import OAuthClient
 
-    result = await session.exec(select(OAuthClient))
-    return list(result.all())
+    result = await session.execute(select(OAuthClient))
+    return list(result.scalars().all())
 
 
 @router.get(

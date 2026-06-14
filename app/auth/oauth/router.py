@@ -73,14 +73,14 @@ async def token(
         )
 
     # If PKCE is used, verify the code challenge before exchanging
-    from sqlmodel import select
+    from sqlalchemy import select
 
     from app.auth.db_models import OAuthAuthorizationCode
 
-    result = await session.exec(
+    result = await session.execute(
         select(OAuthAuthorizationCode).where(OAuthAuthorizationCode.code == body.code)
     )
-    pending_code = result.first()
+    pending_code = result.scalar_one_or_none()
     if pending_code and pending_code.code_challenge:
         if not body.code_verifier:
             raise HTTPException(

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.db_models import OAuthAuthorizationCode, OAuthClient
 
@@ -43,10 +43,10 @@ async def create_authorization_code(
 async def consume_authorization_code(
     session: AsyncSession, code: str
 ) -> OAuthAuthorizationCode | None:
-    result = await session.exec(
+    result = await session.execute(
         select(OAuthAuthorizationCode).where(OAuthAuthorizationCode.code == code)
     )
-    auth_code = result.first()
+    auth_code = result.scalar_one_or_none()
     if auth_code is None:
         return None
     if auth_code.used_at is not None:

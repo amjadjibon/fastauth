@@ -1,7 +1,7 @@
 import json
 import logging
 
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.db_models import AuditLog
 

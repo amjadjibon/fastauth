@@ -2,7 +2,7 @@
 
 import logging
 
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import repositories as repo
 
