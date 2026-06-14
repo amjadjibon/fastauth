@@ -1,10 +1,7 @@
-import hashlib
-import secrets
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError
-from pydantic import BaseModel
 
 from app.auth import store
 from app.auth.audit.events import AuditEvent
@@ -12,74 +9,31 @@ from app.auth.audit.logger import audit_log as _audit
 from app.auth.deps import BearerDep, CurrentUser, SessionDep
 from app.auth.mfa.models import MfaLoginRequest
 from app.auth.mfa.totp import verify_totp as _verify_totp
-from app.auth.models import (
-    ChangePasswordRequest,
-    ForgotPasswordRequest,
+from app.auth.schemas import (
     LoginRequest,
+    LoginResponse,
     RefreshRequest,
     RegisterRequest,
     RegisterResponse,
-    ResendVerificationRequest,
-    ResetPasswordRequest,
     TokenResponse,
     UserResponse,
-    VerifyEmailRequest,
 )
 from app.auth.security.brute_force import get_brute_force_protection
 from app.auth.security.lockout import is_account_locked
 from app.auth.services import mfa_service
+from app.auth.verification.router import issue_verification_token as _issue_verification_token
 from app.core.config import settings
+from app.core.email import send_verification_email
 from app.core.metrics import (
     auth_login_attempts_total,
     auth_registrations_total,
     auth_token_refreshes_total,
 )
 from app.core.ratelimit import RateLimiter
-from app.core.security import create_token, decode_token, hash_password, verify_password
-from app.core.email import send_verification_email
+from app.core.security import create_token, decode_token, verify_password
 from app.core.token_blocklist import block_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-
-async def _issue_verification_token(session, user, *, commit: bool = True) -> str:
-    """Stage a new verification token. Invalidates existing unused tokens first.
-
-    When commit=False, the caller is responsible for committing (used during registration
-    to combine user + token into a single transaction).
-    """
-    from sqlmodel import select, update
-
-    from app.auth.db_models import EmailVerificationToken
-
-    # Invalidate any outstanding unused tokens for this user (MED-002).
-    await session.exec(
-        update(EmailVerificationToken)
-        .where(
-            EmailVerificationToken.user_id == user.id,
-            EmailVerificationToken.used_at.is_(None),  # type: ignore
-        )
-        .values(used_at=datetime.now(UTC))
-    )
-
-    raw_token = secrets.token_urlsafe(32)
-    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    expires_at = datetime.now(UTC) + timedelta(hours=24)
-    session.add(EmailVerificationToken(user_id=user.id, token_hash=token_hash, expires_at=expires_at))
-
-    if commit:
-        await session.commit()
-        await send_verification_email(user.id, user.email, raw_token)
-
-    return raw_token
-
-
-class LoginResponse(BaseModel):
-    access_token: str | None = None
-    refresh_token: str | None = None
-    token_type: str = "bearer"
-    mfa_required: bool = False
-    mfa_session_token: str | None = None
 
 
 @router.post(
@@ -106,8 +60,7 @@ async def register(body: RegisterRequest, session: SessionDep):
     await session.refresh(user)
 
     auth_registrations_total.inc()
-    # Send email outside the transaction — if this fails the token is still in DB
-    # and the user can trigger a resend via /auth/resend-verification.
+    # Send email outside the transaction — failure is recoverable via /auth/resend-verification.
     await send_verification_email(user.id, user.email, raw_token)
     await _audit(session, AuditEvent.EMAIL_VERIFICATION_SENT, user_id=user.id)
     return RegisterResponse(user_id=user.id)
@@ -123,11 +76,9 @@ async def register(body: RegisterRequest, session: SessionDep):
     },
 )
 async def login(body: LoginRequest, session: SessionDep, request: Request):
-    from datetime import timedelta
-
     from app.auth.services import session_service as svc
     from app.auth.sessions.device_info import parse_user_agent
-    from app.core.limiter import _redis  # use the shared redis instance if available
+    from app.core.limiter import _redis
 
     ip = request.client.host if request.client else "unknown"
     bf = get_brute_force_protection(redis=_redis)
@@ -167,7 +118,6 @@ async def login(body: LoginRequest, session: SessionDep, request: Request):
     await _audit(session, AuditEvent.LOGIN_SUCCESS, user_id=user.id, ip_address=ip)
 
     if await mfa_service.is_mfa_enabled(session, user.id):
-        # Issue a short-lived MFA session token; full tokens issued after TOTP
         mfa_token = create_token(
             {"sub": user.id, "type": "mfa_pending"},
             timedelta(minutes=5),
@@ -278,10 +228,7 @@ async def logout(
     ip = request.client.host if request.client else "unknown"
 
     if jti:
-        # Revoke the DB session (create_session uses the same JTI for access + refresh tokens).
         await svc.revoke_session_by_jti(session, jti, current_user.id)
-
-        # Also block the access token in Redis so it's rejected for its remaining lifetime.
         exp = payload.get("exp")
         if exp:
             ttl = max(0, int(exp - datetime.now(UTC).timestamp()))
@@ -291,168 +238,3 @@ async def logout(
 
     await _audit(session, AuditEvent.LOGOUT, user_id=current_user.id, ip_address=ip)
     return {"ok": True}
-
-
-@router.post(
-    "/change-password",
-    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
-)
-async def change_password(
-    body: ChangePasswordRequest, current_user: CurrentUser, session: SessionDep, request: Request
-):
-    from app.auth.security.password_history import (
-        add_password_to_history,
-        check_password_not_reused,
-    )
-
-    if not verify_password(body.current_password, current_user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Current password is incorrect"
-        )
-
-    if not await check_password_not_reused(session, current_user.id, body.new_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Password was recently used"
-        )
-
-    new_hashed = hash_password(body.new_password)
-    await add_password_to_history(session, current_user.id, current_user.hashed_password)
-    current_user.hashed_password = new_hashed
-    session.add(current_user)
-    await session.commit()
-
-    ip = request.client.host if request.client else "unknown"
-    await _audit(session, AuditEvent.PASSWORD_CHANGED, user_id=current_user.id, ip_address=ip)
-    return {"ok": True}
-
-
-@router.post("/forgot-password")
-async def forgot_password(body: ForgotPasswordRequest, session: SessionDep):
-    import hashlib
-    import logging
-    import secrets
-    from datetime import timedelta
-
-    from app.auth.db_models import PasswordResetToken
-
-    logger = logging.getLogger("fastauth.auth")
-    user = await store.get_by_email(session, body.email)
-    if user:
-        raw_token = secrets.token_urlsafe(32)
-        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-        expires_at = datetime.now(UTC) + timedelta(minutes=10)
-        reset_token = PasswordResetToken(
-            user_id=user.id,
-            token_hash=token_hash,
-            expires_at=expires_at,
-        )
-        session.add(reset_token)
-        await session.commit()
-        logger.debug("Password reset token issued for user %s", user.id)
-
-    return {"message": "If that email exists, a reset link was sent"}
-
-
-@router.post("/reset-password")
-async def reset_password(body: ResetPasswordRequest, session: SessionDep, request: Request):
-    import hashlib
-
-    from sqlmodel import select
-
-    from app.auth.db_models import PasswordResetToken
-    from app.auth.services import session_service as svc
-
-    token_hash = hashlib.sha256(body.token.encode()).hexdigest()
-    now = datetime.now(UTC)
-
-    result = await session.exec(
-        select(PasswordResetToken).where(
-            PasswordResetToken.token_hash == token_hash,
-            PasswordResetToken.used_at.is_(None),  # type: ignore
-            PasswordResetToken.expires_at > now,
-        )
-    )
-    reset_token = result.first()
-    if reset_token is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token"
-        )
-
-    user = await store.get_by_id(session, reset_token.user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
-
-    from app.auth.security.password_history import (
-        add_password_to_history,
-        check_password_not_reused,
-    )
-
-    if not await check_password_not_reused(session, user.id, body.new_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Password was recently used"
-        )
-
-    await add_password_to_history(session, user.id, user.hashed_password)
-    user.hashed_password = hash_password(body.new_password)
-    reset_token.used_at = now
-    session.add(user)
-    session.add(reset_token)
-    await session.commit()
-
-    await svc.revoke_all_user_sessions(session, user.id)
-
-    ip = request.client.host if request.client else "unknown"
-    await _audit(session, AuditEvent.PASSWORD_RESET, user_id=user.id, ip_address=ip)
-    return {"ok": True}
-
-
-@router.post("/verify-email", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
-async def verify_email(body: VerifyEmailRequest, session: SessionDep, request: Request):
-    import hashlib
-
-    from sqlmodel import select
-
-    from app.auth.db_models import EmailVerificationToken
-
-    token_hash = hashlib.sha256(body.token.encode()).hexdigest()
-    now = datetime.now(UTC)
-
-    result = await session.exec(
-        select(EmailVerificationToken)
-        .where(
-            EmailVerificationToken.token_hash == token_hash,
-            EmailVerificationToken.used_at.is_(None),  # type: ignore
-            EmailVerificationToken.expires_at > now,
-        )
-        .with_for_update()
-    )
-    vtoken = result.first()
-    if vtoken is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
-
-    user = await store.get_by_id(session, vtoken.user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
-
-    vtoken.used_at = now
-    user.email_verified = True
-    session.add(vtoken)
-    session.add(user)
-    await session.commit()
-
-    ip = request.client.host if request.client else "unknown"
-    await _audit(session, AuditEvent.EMAIL_VERIFIED, user_id=user.id, ip_address=ip)
-    return {"ok": True}
-
-
-@router.post("/resend-verification", dependencies=[Depends(RateLimiter(times=3, seconds=60))])
-async def resend_verification(body: ResendVerificationRequest, session: SessionDep):
-    _neutral = {"message": "If that email exists and is unverified, a new link was sent"}
-
-    user = await store.get_by_email(session, str(body.email))
-    if user is None or user.email_verified:
-        return _neutral
-
-    await _issue_verification_token(session, user)
-    await _audit(session, AuditEvent.EMAIL_VERIFICATION_SENT, user_id=user.id)
-    return _neutral

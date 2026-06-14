@@ -5,6 +5,11 @@ from app.auth.models import User
 from app.core.security import hash_password
 
 
+async def username_exists(session: AsyncSession, username: str) -> bool:
+    result = await session.exec(select(User.id).where(User.username == username))
+    return result.first() is not None
+
+
 async def find_by_id(session: AsyncSession, user_id: str) -> User | None:
     return await session.get(User, user_id)
 

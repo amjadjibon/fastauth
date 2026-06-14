@@ -6,7 +6,10 @@ import pytest
 
 from app.core.config import settings
 
-_PATCH_TARGET = "app.auth.router.send_verification_email"
+_PATCH_REGISTER = "app.auth.router.send_verification_email"
+_PATCH_RESEND = "app.auth.verification.router.send_verification_email"
+# Convenience alias — most tests only exercise the register path.
+_PATCH_TARGET = _PATCH_REGISTER
 
 
 async def _register(client, username: str) -> str:
@@ -128,7 +131,7 @@ async def test_resend_invalidates_old_token(client):
 
     assert first_tokens, "first send_verification_email not called"
 
-    with patch(_PATCH_TARGET, side_effect=capture_second):
+    with patch(_PATCH_RESEND, side_effect=capture_second):
         r = await client.post("/auth/resend-verification", json={"email": "ev_resend_inv@example.com"})
     assert r.status_code == 200
     assert second_tokens, "second send_verification_email not called"

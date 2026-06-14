@@ -23,7 +23,9 @@ from app.auth.audit.router import router as audit_router
 from app.auth.mfa.router import router as mfa_router
 from app.auth.oauth.router import router as oauth_router
 from app.auth.rbac.router import router as rbac_router
+from app.auth.password.router import router as password_router
 from app.auth.router import router as auth_router
+from app.auth.verification.router import router as verification_router
 from app.auth.sessions.router import router as sessions_router
 from app.auth.social.router import router as social_router
 from app.core.config import settings
@@ -135,6 +137,8 @@ app.mount("/metrics", _make_metrics_app())
 
 app.include_router(web_router)
 app.include_router(auth_router)
+app.include_router(password_router)
+app.include_router(verification_router)
 app.include_router(mfa_router)
 app.include_router(sessions_router)
 app.include_router(social_router)

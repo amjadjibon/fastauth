@@ -1,36 +1,17 @@
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+"""Thin shim — delegates to user_repository. Kept for backward compatibility."""
 
-from app.auth.models import User
-from app.core.security import hash_password
+from app.auth.repositories.user_repository import (
+    create_no_commit as create_user,
+    find_by_email as get_by_email,
+    find_by_id as get_by_id,
+    find_by_username as get_by_username,
+    username_exists,
+)
 
-
-async def create_user(session: AsyncSession, username: str, email: str, password: str, email_verified: bool = False) -> User:
-    user = User(username=username, email=email, hashed_password=hash_password(password), email_verified=email_verified)
-    session.add(user)
-    return user
-
-
-async def commit_user(session: AsyncSession, user: User) -> User:
-    await session.commit()
-    await session.refresh(user)
-    return user
-
-
-async def get_by_username(session: AsyncSession, username: str) -> User | None:
-    result = await session.exec(select(User).where(User.username == username))
-    return result.first()
-
-
-async def get_by_id(session: AsyncSession, user_id: str) -> User | None:
-    return await session.get(User, user_id)
-
-
-async def username_exists(session: AsyncSession, username: str) -> bool:
-    result = await session.exec(select(User.id).where(User.username == username))
-    return result.first() is not None
-
-
-async def get_by_email(session: AsyncSession, email: str) -> User | None:
-    result = await session.exec(select(User).where(User.email == email))
-    return result.first()
+__all__ = [
+    "create_user",
+    "get_by_email",
+    "get_by_id",
+    "get_by_username",
+    "username_exists",
+]
