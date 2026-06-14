@@ -43,15 +43,15 @@ Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. Th
 
 **Goal**: Get a working dev server with routing and styling configured so all later phases build on a stable foundation.
 
-- [ ] TASK-001: Run `npm create vite@latest frontend -- --template react-ts` from the repo root to scaffold the package.
-- [ ] TASK-002: In `frontend/`, install runtime deps: `npm i @tanstack/react-router @tanstack/react-query axios zod react-hook-form @hookform/resolvers`.
-- [ ] TASK-003: Install dev deps: `npm i -D @tanstack/router-plugin @tanstack/react-query-devtools tailwindcss @tailwindcss/vite`.
-- [ ] TASK-004: Configure `frontend/vite.config.ts` — add `@tailwindcss/vite` plugin, `@tanstack/router-plugin/vite` plugin, and a proxy for `/auth`, `/admin`, `/metrics` to `http://127.0.0.1:8000` (dev only).
-- [ ] TASK-005: Create `frontend/src/index.css` with Tailwind v4 import (`@import "tailwindcss"`) and CSS variables for the dark theme (`--color-bg: #0f0f11`, `--color-card: #1a1a1f`, `--color-border: #2a2a35`, `--color-accent: #7c6af7`).
-- [ ] TASK-006: Replace generated `frontend/src/main.tsx` — wrap app in `RouterProvider` (TanStack Router) and `QueryClientProvider` (TanStack Query).
-- [ ] TASK-007: Create `frontend/src/routeTree.gen.ts` placeholder and `frontend/src/routes/__root.tsx` as the root layout (renders `<Outlet />`).
-- [ ] TASK-008: Add `frontend/.gitignore` ignoring `node_modules/`, `dist/`, `.env`.
-- [ ] TASK-009: Update repo-root `.gitignore` to add `frontend/dist/` and `frontend/node_modules/`.
+- [x] TASK-001: Run `npm create vite@latest frontend -- --template react-ts` from the repo root to scaffold the package.
+- [x] TASK-002: In `frontend/`, install runtime deps: `npm i @tanstack/react-router @tanstack/react-query axios zod react-hook-form @hookform/resolvers`.
+- [x] TASK-003: Install dev deps: `npm i -D @tanstack/router-plugin @tanstack/react-query-devtools tailwindcss @tailwindcss/vite`.
+- [x] TASK-004: Configure `frontend/vite.config.ts` — add `@tailwindcss/vite` plugin, `@tanstack/router-plugin/vite` plugin, and a proxy for `/auth`, `/admin`, `/metrics` to `http://127.0.0.1:8000` (dev only).
+- [x] TASK-005: Create `frontend/src/index.css` with Tailwind v4 import (`@import "tailwindcss"`) and CSS variables for the dark theme (`--color-bg: #0f0f11`, `--color-card: #1a1a1f`, `--color-border: #2a2a35`, `--color-accent: #7c6af7`).
+- [x] TASK-006: Replace generated `frontend/src/main.tsx` — wrap app in `RouterProvider` (TanStack Router) and `QueryClientProvider` (TanStack Query).
+- [x] TASK-007: Create `frontend/src/routeTree.gen.ts` placeholder and `frontend/src/routes/__root.tsx` as the root layout (renders `<Outlet />`).
+- [x] TASK-008: Add `frontend/.gitignore` ignoring `node_modules/`, `dist/`, `.env`.
+- [x] TASK-009: Update repo-root `.gitignore` to add `frontend/dist/` and `frontend/node_modules/`.
 
 **Completion criteria**: `cd frontend && npm run dev` starts without errors; browser at `http://localhost:5173` shows a page without console errors.
 
