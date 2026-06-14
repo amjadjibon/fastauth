@@ -4,13 +4,13 @@ version: 1.0
 date_created: 2026-06-14
 last_updated: 2026-06-14
 owner: Amjad Hossain
-status: 'Planned'
+status: 'In progress'
 tags: [feature, architecture]
 ---
 
 # React Frontend — FastAuth SPA
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In progress](https://img.shields.io/badge/status-In%20progress-yellow)
 
 Replace the four Jinja2 templates with a proper React 19 SPA at `./frontend`. The new frontend uses TanStack Router for type-safe routing, TanStack Query for server state, Zod for form validation, and Tailwind CSS v4 with the existing dark theme. Tokens are stored in memory (never `localStorage`) and refreshed transparently via an Axios interceptor.
 
