@@ -89,8 +89,8 @@ The code review of PR #9 (`react-frontend`) identified one high-severity bug tha
 
 **Goal**: Typing in the admin search box should not fire one API call per character; debounce so the query only runs when the user pauses.
 
-- [ ] TASK-009: In `frontend/src/routes/admin.tsx`, import `useDeferredValue` from `'react'` and derive `const deferredSearch = useDeferredValue(search)` from the existing `search` state.
-- [ ] TASK-010: Replace all three references to `search` inside the `useQuery` block (query key array and the URL string) with `deferredSearch`, so rapid keystrokes update the input immediately but only commit a new fetch when React schedules it.
+- [x] TASK-009: In `frontend/src/routes/admin.tsx`, import `useDeferredValue` from `'react'` and derive `const deferredSearch = useDeferredValue(search)` from the existing `search` state.
+- [x] TASK-010: Replace all three references to `search` inside the `useQuery` block (query key array and the URL string) with `deferredSearch`, so rapid keystrokes update the input immediately but only commit a new fetch when React schedules it.
 
 **Completion criteria**: Typing rapidly in the search box triggers at most one in-flight request at a time (verify in browser Network tab — no burst of sequential requests on each keystroke).
 
