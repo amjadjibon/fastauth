@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useDeferredValue } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { AdminRoute } from '../components/AdminRoute'
@@ -74,6 +74,7 @@ function AdminDashboardPage() {
   const qc = useQueryClient()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
+  const deferredSearch = useDeferredValue(search)
   const [confirm, setConfirm] = useState<{ type: 'lock' | 'unlock' | 'delete'; userId: string } | null>(null)
 
   const { data: metrics } = useQuery({
@@ -82,11 +83,11 @@ function AdminDashboardPage() {
   })
 
   const { data: usersData } = useQuery({
-    queryKey: ['admin-users', page, search],
+    queryKey: ['admin-users', page, deferredSearch],
     queryFn: () =>
       api
         .get<{ users: UserRow[]; total: number; page: number; limit: number }>(
-          `/admin/users?page=${page}&limit=20&search=${encodeURIComponent(search)}`,
+          `/admin/users?page=${page}&limit=20&search=${encodeURIComponent(deferredSearch)}`,
         )
         .then((r) => r.data),
   })

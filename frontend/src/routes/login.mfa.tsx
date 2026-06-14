@@ -16,6 +16,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export const Route = createFileRoute('/login/mfa')({
+  validateSearch: (s: Record<string, unknown>) => ({ mfaToken: (s.mfaToken as string) ?? '' }),
   component: MfaPage,
 })
 
@@ -23,7 +24,7 @@ function MfaPage() {
   const navigate = useNavigate()
   const { setUser } = useAuth()
   const [serverError, setServerError] = useState<string | null>(null)
-  const state = (history.state ?? {}) as { mfaSessionToken?: string }
+  const { mfaToken } = Route.useSearch()
 
   const {
     register,
@@ -41,7 +42,7 @@ function MfaPage() {
         access_token: string
         refresh_token: string
       }>('/auth/login/mfa', {
-        mfa_session_token: state.mfaSessionToken,
+        mfa_session_token: mfaToken,
         code: data.code,
         is_backup_code: data.is_backup_code,
       })

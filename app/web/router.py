@@ -9,11 +9,6 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SPA_INDEX = _REPO_ROOT / "frontend" / "dist" / "index.html"
 _TEMPLATES_DIR = _REPO_ROOT / "templates"
 
-_SPA_ROUTES = ["/", "/login", "/register", "/dashboard", "/admin",
-               "/forgot-password", "/reset-password", "/verify-email",
-               "/register/success", "/login/mfa", "/dashboard/mfa"]
-
-
 def _spa_or_template(template_name: str):
     """Return the SPA index.html when the React build exists, else render a Jinja2 template."""
     async def handler(request: Request) -> HTMLResponse:
@@ -26,7 +21,7 @@ def _spa_or_template(template_name: str):
 
 router = APIRouter(include_in_schema=False)
 
-router.get("/")((_spa_or_template("login.html")))
+router.get("/")(_spa_or_template("login.html"))
 router.get("/login")(_spa_or_template("login.html"))
 router.get("/register")(_spa_or_template("register.html"))
 router.get("/dashboard")(_spa_or_template("dashboard.html"))

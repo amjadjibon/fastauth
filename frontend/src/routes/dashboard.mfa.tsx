@@ -31,8 +31,9 @@ function MfaSetupPage() {
   const navigate = useNavigate()
   const [setup, setSetup] = useState<SetupData | null>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
-  const [step, setStep] = useState<'loading' | 'setup' | 'success'>('loading')
+  const [step, setStep] = useState<'loading' | 'setup' | 'success' | 'error'>('loading')
   const [serverError, setServerError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
   const didSetup = useRef(false)
 
   useEffect(() => {
@@ -46,8 +47,14 @@ function MfaSetupPage() {
         setQrDataUrl(dataUrl)
         setStep('setup')
       })
-      .catch(() => setStep('setup'))
-  }, [])
+      .catch((err: unknown) => {
+        const detail =
+          (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+          'Failed to set up MFA. Please try again.'
+        setServerError(detail)
+        setStep('error')
+      })
+  }, [attempt])
 
   const {
     register,
@@ -156,6 +163,23 @@ function MfaSetupPage() {
                   {isSubmitting ? 'Verifying…' : 'Enable MFA'}
                 </button>
               </form>
+            </>
+          )}
+
+          {step === 'error' && (
+            <>
+              <FormError message={serverError} />
+              <button
+                onClick={() => {
+                  didSetup.current = false
+                  setServerError(null)
+                  setStep('loading')
+                  setAttempt((n) => n + 1)
+                }}
+                style={{ ...styles.submitBtn, width: 'auto', padding: '10px 20px', marginTop: '16px' }}
+              >
+                Try again
+              </button>
             </>
           )}
 
